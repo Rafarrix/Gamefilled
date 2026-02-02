@@ -1,0 +1,19 @@
+﻿@page
+@model RegisterModel
+
+<div class="container mt-5">
+    <h2>Create account</h2>
+
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger">@Model.Error</div>
+    }
+
+    <form method="post">
+        <input class="form-control mb-2" asp-for="Username" placeholder="Username" />
+        <input class="form-control mb-2" asp-for="Email" placeholder="Email" />
+        <input class="form-control mb-2" asp-for="Password" type="password" placeholder="Password" />
+        <input class="form-control mb-2" asp-for="ConfirmPassword" type="password" placeholder="Confirm password" />
+        <button class="btn btn-success">Register</button>
+    </form>
+</div>

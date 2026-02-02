@@ -1,0 +1,165 @@
+﻿/* ===== BASE ===== */
+
+html, body {
+    height: 100%;
+    background: #0e1015;
+    color: #e5e7eb;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Links */
+a {
+    color: #00b020;
+    text-decoration: none;
+}
+
+    a:hover {
+        color: #22c55e;
+        text-decoration: underline;
+    }
+
+/* ===== NAVBAR ===== */
+
+.navbar {
+    background: linear-gradient(to bottom, #14161c, #0e1015);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.navbar-brand img {
+    filter: brightness(1.2);
+}
+
+.nav-link {
+    color: #d1d5db !important;
+    font-weight: 500;
+}
+
+    .nav-link:hover {
+        color: white !important;
+    }
+
+/* Search bar */
+.search-bar {
+    background: #1f2937;
+    border: none;
+    color: white;
+}
+
+    .search-bar::placeholder {
+        color: #9ca3af;
+    }
+
+/* ===== DROPDOWNS ===== */
+
+.dropdown-menu {
+    background: #1b1e25;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: 6px 0;
+    box-shadow: 0 20px 40px rgba(0,0,0,.6);
+}
+
+.dropdown-item {
+    color: #e5e7eb;
+    padding: 8px 16px;
+}
+
+    .dropdown-item:hover {
+        background: #2a2f3a;
+        color: white;
+    }
+
+/* ===== BUTTONS ===== */
+
+.btn-primary,
+.btn-main {
+    background: #00b020;
+    border: none;
+    font-weight: 600;
+}
+
+    .btn-primary:hover,
+    .btn-main:hover {
+        background: #00961b;
+    }
+
+/* ===== FORMS ===== */
+
+.form-control {
+    background: #1f2937;
+    border: 1px solid rgba(255,255,255,.08);
+    color: white;
+    border-radius: 8px;
+}
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    .form-control:focus {
+        background: #1f2937;
+        color: white;
+        border-color: #00b020;
+        box-shadow: 0 0 0 2px rgba(0,176,32,.3);
+    }
+
+/* ===== LOGIN / AUTH ===== */
+
+#log-in-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 40px 80px rgba(0,0,0,.45);
+}
+
+#title {
+    color: #111827;
+}
+
+/* Inputs do login */
+.backloggd-field {
+    background: #f3f4f6;
+    border-radius: 10px;
+    border: none;
+    padding: 12px 14px;
+}
+
+/* ===== FOOTER ===== */
+
+.footer {
+    background: #0e1015;
+    border-top: 1px solid rgba(255,255,255,.06);
+    color: #9ca3af;
+}
+
+    .footer a {
+        color: #9ca3af;
+    }
+
+        .footer a:hover {
+            color: white;
+        }
+
+/* ===== UTILS ===== */
+
+.card {
+    border-radius: 14px;
+}
+
+.shadow-lg {
+    box-shadow: 0 30px 80px rgba(0,0,0,.5) !important;
+}
+
+/* Added styles for profile dropdown (moved from _Layout.cshtml)
+   - Hides Bootstrap caret when using FontAwesome icon
+   - Small padding tweak for the dropdown toggler
+   Keep comments — they explain purpose and help maintenance.
+*/
+.hide-caret.dropdown-toggle::after {
+    display: none !important;
+}
+
+/* Keeps the small chevron toggler aligned with the username */
+.profile-toggle {
+    padding-left: .25rem;
+    padding-right: .25rem;
+}

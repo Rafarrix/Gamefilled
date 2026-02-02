@@ -1,0 +1,238 @@
+﻿<!--
+Este é o arquivo _layout.html
+Inclui DOCTYPE, head, header, main (vazio/placeholder), footer e fechamento.
+Para personalizar: Substitua placeholders {{SEU_VALOR_AQUI}} e cole o conteúdo de index.html em <main>.
+-->
+@using Microsoft.AspNetCore.Http
+@{
+    string? user = null;
+    // Protege o acesso à sessão caso a sessão não esteja configurada nesta requisição
+    var sessionFeature = Context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>();
+    if (sessionFeature?.Session != null)
+    {
+        user = Context.Session.GetString("user");
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Gamefilled</title>
+
+	<meta name="description" content="Your personal virtual backlog of video game collection">
+	<meta itemprop="name" content="Gamefilled">
+	<meta itemprop="description" content="Your personal virtual backlog of video game collection">
+	<meta itemprop="image" content="~/imgs/Gamefilled_Logo_0removebg.png">
+
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+	<!-- site.css already referenced in the project; it now contains the dropdown styles -->
+	<link rel="stylesheet" href="~/css/site.css">
+</head>
+
+<body class="larger-footer ">
+	<div class="d-none" id="main-gradient"></div>
+
+	<header>
+		<nav class="navbar navbar-expand-md navbar-dark " id="primary-nav">
+			<div class="container">
+				<a class="navbar-brand mr-2 my-auto py-0" href="/">   
+					<img id="gamefilled-logo1"
+						 src="@Url.Content("~/lib/imgs/Gamefilled_Logo_0removebg.png")"
+						 alt="Gamefilled"
+						 height="50" />
+				</a>
+
+				<ul class="navbar-nav ml-auto">
+					<li class="nav-item mr-sm-2 d-inline d-md-none">
+						<a class="nav-link d-inline mr-1 position-relative" id="nav-notification-bell" href="/notifications/">
+							<i class="fas fa-bell"></i>
+							<span class="notification-indicator"></span>
+						</a>
+						<a class="nav-link d-inline mr-2" href="/games/lib/popular/">Games</a>
+						<button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+							<span class="navbar-toggler-icon"></span>
+						</button>
+					</li>
+				</ul>
+
+				<div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
+					<ul class="navbar-nav ml-auto">
+						<li class="nav-item d-none d-md-block">
+							<a class="nav-link position-relative" id="nav-notification-bell" href="/notifications/">
+								<i class="fas fa-bell"></i>
+								<span class="notification-indicator"></span>
+							</a>
+						</li>
+
+						@if (string.IsNullOrEmpty(user))
+						{
+							<li class="nav-item d-none d-md-block mr-2">
+								<a class="nav-link" href="/users/Register">Register</a>
+							</li>
+							<li class="nav-item d-none d-md-block mr-2">
+								<a class="nav-link" href="/users/Login">Login</a>
+							</li>
+						}
+						else
+						{
+							<li class="nav-item dropdown d-none d-md-block" id="profile-li">
+								<div class="d-flex align-items-center">
+									@* Clique no nome leva ao perfil *@
+									<a class="nav-link pr-2" href="/u/@(user)/">@user</a>
+
+									@* Toggler pequeno apenas para abrir o dropdown (usamos FontAwesome e escondemos o caret do Bootstrap) *@
+									<a class="nav-link dropdown-toggle hide-caret profile-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#" title="Menu">
+										<i class="fas fa-chevron-down fa-xs"></i>
+									</a>
+								</div>
+
+								<div class="dropdown-menu mt-0 py-0" aria-labelledby="navbarDropdown">
+									<a class="dropdown-item py-1" href="/u/@(user)/">Profile</a>
+									<div class="dropdown-divider my-0"></div>
+									<a class="dropdown-item py-1" href="/u/@(user)/games/">Played</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/playing/">Playing</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/backlog/">Backlog</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/wishlist/">Wishlist</a>
+									<div class="dropdown-divider my-0"></div>
+									<a class="dropdown-item py-1" href="/u/@(user)/journal/">Journal</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/activity/">Activity</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/reviews/">Reviews</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/lists/">Lists</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/following/">Friends</a>
+									<a class="dropdown-item py-1" href="/u/@(user)/likes/">Likes</a>
+									<div class="dropdown-divider my-0"></div>
+									<a class="dropdown-item py-1" href="/settings/">Settings</a>
+									<a data-turbo-method="delete" class="dropdown-item pt-1 pb-2" rel="nofollow" data-method="delete" href="/users/sign_out">Log Out</a>
+								</div>
+							</li>
+						}
+
+						@* Mobile: mostra links apropriados dependendo do estado de autenticação *@
+						@if (string.IsNullOrEmpty(user))
+						{
+							<li class="nav-item mr-sm-2 d-block d-md-none">
+								<a class="nav-link" href="/Account/Login">Login</a>
+							</li>
+							<li class="nav-item mr-sm-2 d-block d-md-none">
+								<a class="nav-link" href="/Account/Register">Register</a>
+							</li>
+						}
+						else
+						{
+							<li class="nav-item mr-sm-2 d-block d-md-none">
+								<div class="row mx-0" id="mobile-user-nav">
+									<div class="col-4 pr-1">
+										<a class="nav-link" href="/u/@(user)"><i class="fas fa-user-alt"></i> My Profile</a>
+									</div>
+									<div class="col-4 px-1">
+										<a class="nav-link" href="/settings/"><i class="fas fa-cogs"></i> Settings</a>
+									</div>
+									<div class="col-4 pl-1">
+										<a data-turbo-method="delete" class="nav-link" rel="nofollow" data-method="delete" href="/users/sign_out">
+											<i class="fas fa-sign-out-alt"></i> Log Out
+										</a>
+									</div>
+									<div class="col-3 pr-1">
+										<a class="nav-link" href="/u/@(user)/played/"><i class="fa-kit fa-gamepad-classic"></i><br> Played</a>
+									</div>
+									<div class="col-3 px-1">
+										<a class="nav-link" href="/u/@(user)/playing/"><i class="fas fa-play"></i><br> Playing</a>
+									</div>
+									<div class="col-3 px-1">
+										<a class="nav-link" href="/u/@(user)/backlog/"><i class="fas fa-books"></i><br> Backlog</a>
+									</div>
+									<div class="col-3 pl-1">
+										<a class="nav-link" href="/u/@(user)/wishlist/"><i class="fas fa-gift"></i><br> Wishlist</a>
+									</div>
+									<div class="col-6 pr-1">
+										<a class="nav-link" href="/u/@(user)/journal/"><i class="fas fa-book"></i> Journal</a>
+									</div>
+									<div class="col-6 pl-1">
+										<a class="nav-link" href="/u/@(user)/activity/"><i class="fas fa-history"></i> Activity</a>
+									</div>
+									<div class="col-4 pr-1">
+										<a class="nav-link" href="/u/@(user)/reviews/"><i class="fas fa-align-right"></i> Reviews</a>
+									</div>
+									<div class="col-4 px-1">
+										<a class="nav-link" href="/u/@(user)/lists/"><i class="fas fa-layer-group"></i> Lists</a>
+									</div>
+									<div class="col-4 pl-1">
+										<a class="nav-link" href="/u/@(user)/likes/"><i class="fas fa-heart"></i> Likes</a>
+									</div>
+									<div class="col-6 pr-1">
+										<a class="nav-link" href="/u/@(user)/following/"><i class="fas fa-user-friends"></i> Following</a>
+									</div>
+									<div class="col-6 pl-1">
+										<a class="nav-link" href="/u/@(user)/followers/"><i class="fas fa-user-friends fa-flip-horizontal"></i> Followers</a>
+									</div>
+								</div>
+							</li>
+						}
+
+						<li class="nav-item d-none d-md-block mr-2">
+							<a class="nav-link" href="/games/lib/popular/">Games</a>
+						</li>
+					</ul>
+
+					<form class="form-inline mx-3 mx-md-0 my-2 my-md-0" data-turbo="false" action="/search" accept-charset="UTF-8" method="post">
+						<input type="hidden" name="authenticity_token" value="{{TOKEN_CSRF}}" autocomplete="off" />
+						<div class="input-group">
+							<input class="form-control border-right-0 search-bar" id="nav-bar-search" type="search" placeholder="Search" aria-label="Search" name="query" autocomplete="off" data-behavior="autocomplete">
+							<span class="input-group-append mr-md-2">
+								<button class="btn border-left-0 pl-1 pr-2 search-btn" type="submit">
+									<i class="fas fa-search"></i>
+								</button>
+							</span>
+						</div>
+					</form>
+
+				</div>
+			</div>
+		</nav>
+	</header>
+
+<div class="container">
+	<main role="main" class="pb-3">
+		@RenderBody()
+	</main>
+</div>
+
+<footer class="footer">
+	<div class="container my-2">
+		<div class="row mx-0">
+			<div class="col px-0">
+				<div class="row mx-0 text-muted">
+					<div class="col-auto ml-auto ml-md-0 my-auto px-0 mr-2">
+						<a href="/about/">About</a>
+					</div>
+						<div class="col-auto ml-auto ml-md-0 my-auto px-0 mr-2">
+							<a href="/contact/">Contact</a>
+						</div>
+						<div class="col-auto ml-auto ml-md-0 my-auto px-0 mr-2">
+							<a href="/terms/">Terms</a>
+						</div>
+						<div class="col-auto ml-auto ml-md-0 my-auto px-0 mr-2">
+							<a href="/privacy/">Privacy</a>
+						</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+</footer>
+
+<!-- Scripts: jQuery + Bootstrap bundle (obrigatórios para dropdown) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- site.js loads the hover/dropdown behaviour moved from inline script -->
+<script src="~/js/site.js"></script>
+</body>
+</html>
