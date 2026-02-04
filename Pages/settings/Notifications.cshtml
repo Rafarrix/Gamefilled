@@ -1,0 +1,36 @@
+﻿@page
+@model Gamefilled.Pages.Settings.NotificationsModel
+@{
+    ViewData["Title"] = "Notifications";
+    ViewData["ActiveSettings"] = "Notifications";
+}
+
+<div class="container settings-wrap">
+    <div class="row">
+        <div class="col-lg-3 d-none d-lg-block">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+        </div>
+
+        <div class="col-lg-9">
+            <div class="settings-content">
+                <div class="settings-content-header">
+                    <h2 class="mb-0">Notifications</h2>
+                </div>
+
+                <p class="subtitle-text mb-3">Placeholders — mais tarde: notificações de followers, reviews, listas, etc.</p>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label class="mb-1">Email notifications</label>
+                        <select class="backloggd-field w-100">
+                            <option>Disable</option>
+                            <option>Enable</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" disabled>Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>

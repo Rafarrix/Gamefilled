@@ -1,0 +1,38 @@
+﻿@page
+@model Gamefilled.Pages.Settings.DefaultsModel
+@{
+    ViewData["Title"] = "Defaults";
+    ViewData["ActiveSettings"] = "Defaults";
+}
+
+<div class="container settings-wrap">
+    <div class="row">
+        <div class="col-lg-3 d-none d-lg-block">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+        </div>
+
+        <div class="col-lg-9">
+            <div class="settings-content">
+                <div class="settings-content-header">
+                    <h2 class="mb-0">Defaults</h2>
+                </div>
+
+                <p class="subtitle-text mb-3">Placeholders por agora — mais tarde metemos opções como plataforma preferida, idioma, etc.</p>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label class="mb-1">Default list</label>
+                        <select class="backloggd-field w-100">
+                            <option>Backlog</option>
+                            <option>Playing</option>
+                            <option>Played</option>
+                            <option>Wishlist</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" disabled>Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>

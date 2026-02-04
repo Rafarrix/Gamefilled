@@ -1,0 +1,91 @@
+﻿@{
+    var active = (ViewData["ActiveSettings"] as string) ?? "Profile";
+}
+
+<div class="settings-nav">
+    <div class="settings-nav-title">
+        <h3 class="mb-0">Settings</h3>
+    </div>
+
+    @* 
+       Usamos Bootstrap:
+       - list-group para dar “botões”
+       - list-group-item-action para hover/click
+       - dropdown-divider como separador (funciona logo)
+    *@
+    <div class="settings-nav-list list-group list-group-flush">
+
+        <!-- GROUP 1 -->
+        <a class="settings-link list-group-item list-group-item-action @(active == "Profile" ? "active" : "")"
+           href="/Settings">
+            <div class="settings-item-top">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </div>
+            <small class="d-block text-muted mt-1">Customize your avatar and profile</small>
+        </a>
+
+        <a class="settings-link list-group-item list-group-item-action @(active == "Defaults" ? "active" : "")"
+           href="/Settings/Defaults">
+            <div class="settings-item-top">
+                <i class="fas fa-ballot-check"></i>
+                <span>Defaults</span>
+            </div>
+            <small class="d-block text-muted mt-1">Set your defaults across the site</small>
+        </a>
+
+        <a class="settings-link list-group-item list-group-item-action @(active == "Notifications" ? "active" : "")"
+           href="/Settings/Notifications">
+            <div class="settings-item-top">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </div>
+            <small class="d-block text-muted mt-1">Customize how you're notified</small>
+        </a>
+
+        <!-- ✅ Separador Bootstrap -->
+        <div class="dropdown-divider my-2"></div>
+
+        <!-- GROUP 2 -->
+        <a class="settings-link list-group-item list-group-item-action @(active == "Integrations" ? "active" : "")"
+           href="/Settings/Integrations">
+            <div class="settings-item-top">
+                <i class="fas fa-plug"></i>
+                <span>Integrations</span>
+            </div>
+            <small class="d-block text-muted mt-1">Hook into external sites / apps</small>
+        </a>
+
+        <a class="settings-link list-group-item list-group-item-action @(active == "Account" ? "active" : "")"
+           href="/Settings/Account">
+            <div class="settings-item-top">
+                <i class="fas fa-cog"></i>
+                <span>Account</span>
+            </div>
+            <small class="d-block text-muted mt-1">Update your email / password</small>
+        </a>
+
+        <!-- ✅ Separador Bootstrap -->
+        <div class="dropdown-divider my-2"></div>
+
+        <!-- GROUP 3 -->
+        <a class="settings-link list-group-item list-group-item-action @(active == "Blocked" ? "active" : "")"
+           href="/Settings/Blocked">
+            <div class="settings-item-top">
+                <i class="fas fa-user-lock"></i>
+                <span>Blocked Users</span>
+            </div>
+            <small class="d-block text-muted mt-1">Manage blocked users</small>
+        </a>
+
+        <a class="settings-link list-group-item list-group-item-action @(active == "Infractions" ? "active" : "")"
+           href="/Settings/Infractions">
+            <div class="settings-item-top">
+                <i class="fas fa-gavel"></i>
+                <span>Infractions</span>
+            </div>
+            <small class="d-block text-muted mt-1">View your account's status</small>
+        </a>
+
+    </div>
+</div>

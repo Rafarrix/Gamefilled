@@ -1,0 +1,101 @@
+﻿@page
+@model Gamefilled.Pages.Settings.IndexModel
+@{
+    ViewData["Title"] = "Settings";
+    ViewData["ActiveSettings"] = "Profile";
+}
+
+<div class="container settings-wrap">
+    <div class="row">
+        <!-- Sidebar (desktop) -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+        </div>
+
+        <!-- Conteúdo -->
+        <div class="col-lg-9">
+
+            <div class="settings-content">
+                <h2 class="mb-3">Profile</h2>
+
+                @if (Model.Success != null)
+                {
+                    <div class="alert alert-success">@Model.Success</div>
+                }
+                @if (Model.Error != null)
+                {
+                    <div class="alert alert-danger">@Model.Error</div>
+                }
+
+                <form method="post">
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <label class="mb-1">Username</label>
+                            <input class="backloggd-field w-100" asp-for="Username" />
+                            <small class="subtitle-text d-block mt-1">
+                                (placeholder) podes limitar mudança a cada 30 dias mais tarde
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12 col-md-6">
+                            <label class="mb-1">Biography</label>
+                            <textarea class="backloggd-field w-100" rows="6" asp-for="Bio" placeholder="Write a bio"></textarea>
+                            <small class="subtitle-text d-block mt-1">Max 1024 chars (se quiseres, validamos no backend)</small>
+                        </div>
+
+                        <div class="col-12 col-md-6 mt-3 mt-md-0">
+                            <label class="mb-1">Social links</label>
+
+                            <!-- Por agora: 3 campos simples -->
+                            <input class="backloggd-field w-100 mb-2" asp-for="Social1" placeholder="Instagram / X / Steam link..." />
+                            <input class="backloggd-field w-100 mb-2" asp-for="Social2" placeholder="Outra rede..." />
+                            <input class="backloggd-field w-100" asp-for="Social3" placeholder="Outra rede..." />
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col">
+                            <h3 class="mb-2">Features</h3>
+                        </div>
+                    </div>
+
+                    <!-- Features (placeholders) -->
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="mb-0">Home Widgets</label>
+                            <p class="subtitle-text mb-0">Display widgets at the top of your home page</p>
+                        </div>
+                        <div class="col-5 col-md-3 my-auto">
+                            <select class="backloggd-field w-100" asp-for="HomeWidgets">
+                                <option value="true">Enable</option>
+                                <option value="false">Disable</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="mb-0">Higher Contrast</label>
+                            <p class="subtitle-text mb-0">UI colors displayed lighter</p>
+                        </div>
+                        <div class="col-5 col-md-3 my-auto">
+                            <select class="backloggd-field w-100" asp-for="HighContrast">
+                                <option value="true">Enable</option>
+                                <option value="false">Disable</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-3 ml-auto">
+                            <button class="btn btn-primary w-100 py-2" type="submit">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>

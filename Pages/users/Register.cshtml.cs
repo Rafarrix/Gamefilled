@@ -1,4 +1,5 @@
 ﻿using Gamefilled.Data;
+using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -7,45 +8,27 @@ namespace Gamefilled.Pages
 {
     public class RegisterModel : PageModel
     {
-        // ===============================
-        // CAMPOS DO FORMULÁRIO
-        // ===============================
+        private readonly AppDbContext _context;
 
-        [BindProperty]
-        public string Username { get; set; } = string.Empty;
-        // ↑ corresponde a asp-for="Username"
+        private const int BcryptWorkFactor = 11;
 
-        [BindProperty]
-        public string Email { get; set; } = string.Empty;
-        // ↑ corresponde a asp-for="Email"
-
-        [BindProperty]
-        public string Password { get; set; } = string.Empty;
-        // ↑ corresponde a asp-for="Password"
-
-        [BindProperty]
-        public string ConfirmPassword { get; set; } = string.Empty;
-        // ↑ corresponde a asp-for="ConfirmPassword"
-
-        // ===============================
-        // MENSAGEM DE ERRO
-        // ===============================
-        public string? Error { get; set; }
-
-        // ===============================
-        // GET (abrir página)
-        // ===============================
-        public void OnGet()
+        public RegisterModel(AppDbContext context)
         {
-            // Não faz nada por agora
+            _context = context;
         }
 
-        // ===============================
-        // POST (submeter registo)
-        // ===============================
-        public IActionResult OnPost()
+        [BindProperty] public string Username { get; set; } = string.Empty;
+        [BindProperty] public string Email { get; set; } = string.Empty;
+        [BindProperty] public string Password { get; set; } = string.Empty;
+        [BindProperty] public string ConfirmPassword { get; set; } = string.Empty;
+
+        public string? Error { get; set; }
+
+        public void OnGet() { }
+
+        public async Task<IActionResult> OnPostAsync()
         {
-            // Valida campos preenchidos
+            // 1) Campos preenchidos
             if (string.IsNullOrWhiteSpace(Username) ||
                 string.IsNullOrWhiteSpace(Email) ||
                 string.IsNullOrWhiteSpace(Password) ||
@@ -55,25 +38,64 @@ namespace Gamefilled.Pages
                 return Page();
             }
 
-            // Valida correspondência de passwords
-            if (Password != ConfirmPassword)
+            // 2) Normalizar
+            var username = Username.Trim();
+            var email = Email.Trim().ToLowerInvariant();
+            var password = Password.Trim();
+            var confirm = ConfirmPassword.Trim();
+
+            // 3) Passwords iguais
+            if (password != confirm)
             {
                 Error = "Passwords do not match.";
                 return Page();
             }
 
-            // Validação simples de comprimento da password (ajuste conforme necessário)
-            if (Password.Length < 6)
+            // 4) Password mínima
+            if (password.Length < 6)
             {
                 Error = "Password must be at least 6 characters.";
                 return Page();
             }
 
-            // 🔒 Ponto de extensão: aqui deve ir a lógica para verificar se o user/email já existe
-            // e para persistir o novo utilizador na base de dados (ex.: via AppDbContext).
-            // Por ora devolve ao login após registo simulado.
+            // 5) Email básico
+            if (!email.Contains("@"))
+            {
+                Error = "Please enter a valid email.";
+                return Page();
+            }
 
-            return RedirectToPage("/users/Login");
+            // 6) Username único
+            if (await _context.Users.AnyAsync(u => u.Username != null && u.Username == username))
+            {
+                Error = "That username is already taken.";
+                return Page();
+            }
+
+            // 7) Email único
+            if (await _context.Users.AnyAsync(u => u.Email != null && u.Email == email))
+            {
+                Error = "That email is already in use.";
+                return Page();
+            }
+
+            // 8) Hash da password
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: BcryptWorkFactor);
+
+            // 9) Criar utilizador
+            var newUser = new User
+            {
+                Username = username,
+                Email = email,
+                PasswordHash = passwordHash, // ✅ único campo de password que guardamos
+                Role = "User",
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage("/Users/Login");
         }
     }
 }

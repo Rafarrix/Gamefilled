@@ -1,19 +1,23 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+Ôªøusing Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Gamefilled.Pages.Users
 {
+    // ‚úÖ Logout via POST √© mais seguro (evita logout por link externo malicioso)
     public class LogoutModel : PageModel
     {
-        // GET /users/sign_out
-        public IActionResult OnGet()
+        public IActionResult OnPost()
         {
-            // Remove a key "user" da sess„o e limpa a sess„o para garantir logout completo.
-            HttpContext.Session.Remove("user");
+            // Remove tudo da sess√£o
             HttpContext.Session.Clear();
 
-            // Redireciona para a p·gina inicial (ou para a p·gina de login)
+            // Redireciona para home
+            return RedirectToPage("/Index");
+        }
+
+        // Se algu√©m abrir /Users/Logout no browser, redireciona para home
+        public IActionResult OnGet()
+        {
             return RedirectToPage("/Index");
         }
     }

@@ -4,19 +4,16 @@
 <div class="container mt-5">
     <h2>Log in</h2>
 
-    <!-- Mostra erro se existir -->
     @if (Model.Error != null)
     {
         <div class="alert alert-danger">@Model.Error</div>
     }
 
-    <!-- Formulário simples de login -->
     <form method="post">
-
-        <!-- Email ou Username -->
+        <!-- Email OU Username -->
         <input class="form-control mb-2"
-               asp-for="Login"
-               placeholder="Email or Username" />
+               asp-for="EmailOrUsername"
+               placeholder="Email ou Username" />
 
         <!-- Password -->
         <input class="form-control mb-2"
@@ -24,7 +21,6 @@
                type="password"
                placeholder="Password" />
 
-        <!-- Botão -->
         <button class="btn btn-primary">Log in</button>
     </form>
 </div>

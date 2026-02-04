@@ -1,18 +1,24 @@
-﻿namespace Gamefilled.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Gamefilled.Models
 {
+    // Garante que o EF vai mapear para a tabela dbo.Users
+    [Table("Users")]
     public class User
     {
         public int Id { get; set; }
 
-        public string Role { get; set; } = "User";
+        // Username pode ser null em registos antigos (até limpares a BD)
+        public string? Username { get; set; }
 
-        public string Login { get; set; } = string.Empty;
+        // Email pode ser null em registos antigos
+        public string? Email { get; set; }
 
-        public string Username{ get; set; } = string.Empty;
+        // ✅ NOVO: password segura (hash + salt)
+        public string? PasswordHash { get; set; }
 
-        public string Password { get; set; } = string.Empty;
-
-        public string? Email { get; set; } = string.Empty;
+        // Role pode vir null em dados antigos, mas o sistema assume "User" por defeito
+        public string? Role { get; set; } = "User";
 
         public DateTime CreatedAt { get; set; }
     }
