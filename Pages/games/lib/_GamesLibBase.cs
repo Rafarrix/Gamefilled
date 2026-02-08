@@ -415,7 +415,7 @@ namespace Gamefilled.Pages.games.lib
         {
             var offset = (PageNumber - 1) * PageSize;
 
-            // Campo correcto: game_id (não é "game") :contentReference[oaicite:2]{index=2}
+            // Campo correcto: game_id (não é "game")
             var ttbFields = "fields game_id,normally,completely;";
 
             string where;
@@ -423,12 +423,15 @@ namespace Gamefilled.Pages.games.lib
 
             if (SortKey == "avg-play")
             {
-                where = "where game_id != null & normally != null & normally > 0;";
+                // Backloggd-like: remover valores absurdos
+                // minimo 1h (3600s) e max ~200h (720000s)
+                where = "where game_id != null & normally != null & normally > 3600 & normally < 720000;";
                 sort = $"sort normally {Dir};";
             }
             else
             {
-                where = "where game_id != null & completely != null & completely > 0;";
+                // Avg finish: minimo 1h, max ~300h (1080000s)
+                where = "where game_id != null & completely != null & completely > 3600 & completely < 1080000;";
                 sort = $"sort completely {Dir};";
             }
 
@@ -517,9 +520,12 @@ namespace Gamefilled.Pages.games.lib
             var idList = string.Join(",", ids);
 
             var fields = "fields id,name,slug,cover.image_id,first_release_date,total_rating,total_rating_count;";
+            // Acrescenta exclusão por game_modes para remover MMOs / live-services (game_mode 5)
+            // e garante cover/slug/name não nulos.
             var where =
                 "where id = (" + idList + ")" +
-                " & cover != null & slug != null & name != null;";
+                " & cover != null & slug != null & name != null" +
+                " & game_modes != null & game_modes != (5);";
 
             var query = fields + where + "limit 500;";
             var content = new StringContent(query, Encoding.UTF8, "text/plain");
