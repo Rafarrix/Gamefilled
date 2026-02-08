@@ -1,0 +1,131 @@
+﻿@page
+@model Gamefilled.Pages.SearchModel
+@{
+    ViewData["Title"] = "Search";
+    var results = Model.Results ?? new List<Gamefilled.Pages.SearchModel.SearchGame>();
+}
+
+<div class="search-page mt-4">
+    <h1 class="search-title mb-4">
+        Results for <span>@(Model.Query ?? "")</span>
+    </h1>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-danger">@Model.Error</div>
+    }
+    else if (string.IsNullOrWhiteSpace(Model.Query) || (Model.Query?.Trim().Length ?? 0) < 2)
+    {
+        <div class="search-empty">Escreve algo para pesquisar.</div>
+    }
+    else if (results.Count == 0)
+    {
+        <div class="search-empty">Sem resultados.</div>
+    }
+    else
+    {
+        @* TOP RESULT *@
+        var top = results[0];
+        <a class="search-result top-result" href="/games/@Uri.EscapeDataString(top.Slug)">
+            <div class="sr-cover">
+                @if (!string.IsNullOrWhiteSpace(top.CoverImageId))
+                {
+                    <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/@(top.CoverImageId).jpg"
+                         alt="@top.Name" loading="lazy" />
+                }
+                else
+                {
+                    <div class="sr-cover-fallback"></div>
+                }
+            </div>
+
+            <div class="sr-main">
+                <div class="sr-title-row">
+                    <div class="sr-title">@top.Name</div>
+                    @if (top.Year != null)
+                    {
+                        <div class="sr-year">@top.Year</div>
+                    }
+                </div>
+
+                <div class="sr-tags">
+                    <span class="sr-pill sr-pill-main">@top.CategoryLabel</span>
+
+                    @{
+                        // TOP: plataformas (até 5)
+                        var topMaxPlats = 5;
+                        var topPlats = top.Platforms ?? new List<string>();
+                        var topShowPlats = topPlats.Take(topMaxPlats).ToList();
+                        var topMorePlats = topPlats.Count - topShowPlats.Count;
+                    }
+
+                    @foreach (var p in topShowPlats)
+                    {
+                        <span class="sr-pill">@p</span>
+                    }
+
+                    @if (topMorePlats > 0)
+                    {
+                        <span class="sr-more">+@topMorePlats more</span>
+                    }
+                </div>
+            </div>
+        </a>
+
+        <div class="sr-divider"></div>
+
+        @* RESTO *@
+        @for (int i = 1; i < results.Count; i++)
+        {
+            var g = results[i];
+
+            <a class="search-result" href="/games/@Uri.EscapeDataString(g.Slug)">
+                <div class="sr-cover">
+                    @if (!string.IsNullOrWhiteSpace(g.CoverImageId))
+                    {
+                        <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/@(g.CoverImageId).jpg"
+                             alt="@g.Name" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="sr-cover-fallback"></div>
+                    }
+                </div>
+
+                <div class="sr-main">
+                    <div class="sr-title-row">
+                        <div class="sr-title">@g.Name</div>
+                        @if (g.Year != null)
+                        {
+                            <div class="sr-year">@g.Year</div>
+                        }
+                    </div>
+
+                    <div class="sr-tags">
+                        <span class="sr-pill">@g.CategoryLabel</span>
+
+                        @{
+                            // LISTA: plataformas (até 5)
+                            var rowMaxPlats = 5;
+                            var rowPlats = g.Platforms ?? new List<string>();
+                            var rowShowPlats = rowPlats.Take(rowMaxPlats).ToList();
+                            var rowMorePlats = rowPlats.Count - rowShowPlats.Count;
+                        }
+
+                        @foreach (var p in rowShowPlats)
+                        {
+                            <span class="sr-pill">@p</span>
+                        }
+
+                        @if (rowMorePlats > 0)
+                        {
+                            <span class="sr-more">+@rowMorePlats more</span>
+                        }
+                    </div>
+                </div>
+            </a>
+
+            <div class="sr-divider"></div>
+        }
+    }
+</div>

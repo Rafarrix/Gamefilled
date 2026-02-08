@@ -1,17 +1,13 @@
 ﻿/* ============================================================================
-   Gamefilled — site.css
-   - Purpose: global styles for the Razor Pages site.
-   - NOTE: I only adjusted a few values you requested:
-     * search width reduced
-     * footer padding reduced
-     * footer and header text sizes slightly increased
-   - Nothing else removed — duplicates retained and clearly commented.
+   Gamefilled — site.css (coerente com o projeto, deduplicado, comentado PT-PT)
+   - Mantém o visual do site (dark + verde).
+   - Corrige UX do /games (Sort by numa linha + setas + dropdown por baixo).
+   - Capas menos altas (ratio 2/3).
    ============================================================================ */
 
 /* =========================
    BASE
    ========================= */
-/* Global root / typography / background */
 html, body {
     height: 100%;
     background: #0e1015;
@@ -24,73 +20,163 @@ html, body {
 /* =========================
    LINKS
    ========================= */
-/* Default link colour and hover */
 a {
     color: #00b020;
     text-decoration: none;
 }
 
-a:hover {
-    color: #22c55e;
-    text-decoration: underline;
-}
+    a:hover {
+        color: #22c55e;
+        text-decoration: underline;
+    }
 
 /* =========================
    NAVBAR
    ========================= */
-/* Navbar background, compact sizing and brand adjustments
-   NOTE: increased font-size slightly so header text is a bit larger as requested.
-*/
 .navbar {
     background: linear-gradient(to bottom, #14161c, #0e1015);
     border-bottom: 1px solid rgba(255,255,255,.06);
-    /* Increased header text size slightly */
-    font-size: 1rem; /* was 0.92rem */
+    font-size: 1rem;
     line-height: 1.45;
-    /* Header more compact still */
     padding-top: 0.4rem;
     padding-bottom: 0.4rem;
 }
 
 .navbar-brand img {
-    filter: brightness(1.2);            
+    filter: brightness(1.2);
 }
 
-/* Links of navbar — override Bootstrap defaults where needed */
 .nav-link {
     color: #d1d5db !important;
     font-weight: 500;
-    /* ensure nav links follow navbar size; keep slightly larger */
     font-size: 0.98rem;
 }
 
-.nav-link:hover {
-    color: white !important;
-}
+    .nav-link:hover {
+        color: #fff !important;
+    }
 
-/* Logo size */
 #gamefilled-logo1 {
     height: 42px;
 }
 
-/* =========================
-   SEARCH BAR (base)
-   ========================= */
-/* Basic search input styles */
-.search-bar {
-    background: #1f2937;
-    border: none;
-    color: white;
+/* =========================================================
+   HEADER / NAV — ajustes finos (perfil)
+   ========================================================= */
+#profile-li #nav-username {
+    padding-right: 0.25rem !important;
 }
+
+#profile-li .profile-toggle {
+    padding-left: 0.15rem !important;
+    padding-right: 0.15rem !important;
+    margin-left: 0 !important;
+}
+
+#profile-li #profile-compact {
+    gap: 0;
+}
+
+/* =========================
+   SEARCH (header)
+   ========================= */
+.search-wrap {
+    width: 200px;
+    position: relative;
+}
+
+    .search-wrap .search-bar {
+        width: 100%;
+        background: #1f2937;
+        border: none;
+        color: #fff;
+        padding-right: 2.6rem !important;
+        border-radius: 6px;
+    }
 
 .search-bar::placeholder {
     color: #9ca3af;
 }
 
+/* botão lupa “invisível” */
+.search-icon-btn,
+.search-icon-inside {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+    .search-icon-btn:hover,
+    .search-icon-inside:hover {
+        color: #fff;
+        background: rgba(255,255,255,0.04);
+    }
+
+    .search-icon-btn:focus,
+    .search-icon-inside:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0,176,32,.18);
+    }
+
+    /* Override para manter mesmo “invisível” como tinhas */
+    .search-icon-btn:hover,
+    .search-icon-btn:focus,
+    .search-icon-btn:active {
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+@media (max-width: 768px) {
+    .search-wrap {
+        width: 100%;
+    }
+}
+
 /* =========================
-   DROPDOWNS
+   SEARCH INPUT — BOTÃO "X"
    ========================= */
-/* Dropdown menu visual style (dark theme) */
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 14px;
+    width: 14px;
+    cursor: pointer;
+    background-color: #00b020;
+    /* máscara SVG para o X */
+    mask-image: url("data:image/svg+xml;utf8,\
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+        <path d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='2' stroke-linecap='round'/>\
+        </svg>");
+    -webkit-mask-image: url("data:image/svg+xml;utf8,\
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+        <path d='M18 6L6 18M6 6l12 12' stroke='black' stroke-width='2' stroke-linecap='round'/>\
+        </svg>");
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
+
+    input[type="search"]::-webkit-search-cancel-button:hover {
+        background-color: #22c55e;
+    }
+
+/* =========================
+   DROPDOWNS (global)
+   ========================= */
 .dropdown-menu {
     background: #1b1e25;
     border: 1px solid rgba(255,255,255,.08);
@@ -104,17 +190,15 @@ a:hover {
     padding: 8px 16px;
 }
 
-.dropdown-item:hover {
-    background: #2a2f3a;
-    color: white;
-}
+    .dropdown-item:hover {
+        background: #2a2f3a;
+        color: #fff;
+    }
 
-/* Hide Bootstrap caret when using a FontAwesome chevron */
 .hide-caret.dropdown-toggle::after {
     display: none !important;
 }
 
-/* Small alignment tweak for the chevron toggle */
 .profile-toggle {
     padding-left: .25rem;
     padding-right: .25rem;
@@ -123,7 +207,6 @@ a:hover {
 /* =========================
    BUTTONS
    ========================= */
-/* Primary / main buttons (green brand) */
 .btn-primary,
 .btn-main {
     background: #00b020;
@@ -131,39 +214,37 @@ a:hover {
     font-weight: 600;
 }
 
-.btn-primary:hover,
-.btn-main:hover {
-    background: #00961b;
-}
+    .btn-primary:hover,
+    .btn-main:hover {
+        background: #00961b;
+    }
 
 /* =========================
    FORMS
    ========================= */
-/* Generic form control dark styling */
 .form-control {
     background: #1f2937;
     border: 1px solid rgba(255,255,255,.08);
-    color: white;
+    color: #fff;
     border-radius: 8px;
 }
 
-.form-control::placeholder {
-    color: #9ca3af;
-}
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
 
-.form-control:focus {
-    background: #1f2937;
-    color: white;
-    border-color: #00b020;
-    box-shadow: 0 0 0 2px rgba(0,176,32,.3);
-}
+    .form-control:focus {
+        background: #1f2937;
+        color: #fff;
+        border-color: #00b020;
+        box-shadow: 0 0 0 2px rgba(0,176,32,.3);
+    }
 
 /* =========================
    AUTH / LOGIN
    ========================= */
-/* Card and title styles used on login/register pages */
 #log-in-card {
-    background: #ffffff;
+    background: #fff;
     border-radius: 14px;
     box-shadow: 0 40px 80px rgba(0,0,0,.45);
 }
@@ -172,7 +253,6 @@ a:hover {
     color: #111827;
 }
 
-/* backloggd-like input field style (reuseable) */
 .backloggd-field {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.08);
@@ -181,54 +261,47 @@ a:hover {
     padding: 10px 12px;
 }
 
-.backloggd-field:focus {
-    outline: none;
-    border-color: rgba(255,255,255,0.18);
-    box-shadow: none;
-}
+    .backloggd-field:focus {
+        outline: none;
+        border-color: rgba(255,255,255,0.18);
+        box-shadow: none;
+    }
 
 /* =========================
    FOOTER
    ========================= */
-/* Make footer smaller (reduced vertical padding) and slightly larger text as requested.
-   NOTE: kept colors and other behaviour intact.
-*/
 .footer {
     background: #0e1015;
     border-top: 1px solid rgba(255,255,255,.06);
     color: #9ca3af;
-    /* Reduced vertical padding to make footer smaller */
-    padding-top: 1.0rem;   /* was 2.5rem */
-    padding-bottom: 1.0rem;/* was 2.5rem */
+    padding-top: 1.0rem;
+    padding-bottom: 1.0rem;
     height: auto;
     min-height: 0;
     margin: 0;
-    /* Slightly larger base font for footer text */
     font-size: 0.95rem;
 }
 
-.footer .container {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-}
+    .footer .container {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
 
-/* Footer links: increased size a bit */
-.footer a {
-    color: #9ca3af;
-    font-size: 0.95rem; /* was 0.9rem */
-    line-height: 1.6;
-}
+    .footer a {
+        color: #9ca3af;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
 
-.footer a:hover {
-    color: white;
-}
+        .footer a:hover {
+            color: #fff;
+        }
 
-/* Remove vertical margins from rows inside footer */
-.footer .row {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    align-items: center;
-}
+    .footer .row {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        align-items: center;
+    }
 
 /* =========================
    UTILS
@@ -243,7 +316,6 @@ a:hover {
 
 /* =========================
    SETTINGS
-   - Styles used on Settings pages and list groups
    ========================= */
 .settings-wrap {
     margin-top: 14px;
@@ -266,10 +338,10 @@ a:hover {
     border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-.settings-nav-title h3 {
-    font-size: 1.35rem;
-    font-weight: 600;
-}
+    .settings-nav-title h3 {
+        font-size: 1.35rem;
+        font-weight: 600;
+    }
 
 .settings-nav-list {
     padding: 10px;
@@ -290,10 +362,10 @@ a:hover {
     color: inherit;
 }
 
-.settings-link:hover {
-    text-decoration: none;
-    color: inherit;
-}
+    .settings-link:hover {
+        text-decoration: none;
+        color: inherit;
+    }
 
 .settings-item {
     position: relative;
@@ -304,15 +376,15 @@ a:hover {
     transition: background .15s ease, border-color .15s ease, transform .12s ease;
 }
 
-.settings-item:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.12);
-    transform: translateY(-1px);
-}
+    .settings-item:hover {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.12);
+        transform: translateY(-1px);
+    }
 
-.settings-item:active {
-    transform: translateY(0);
-}
+    .settings-item:active {
+        transform: translateY(0);
+    }
 
 .settings-item-top {
     display: flex;
@@ -321,11 +393,11 @@ a:hover {
     font-weight: 650;
 }
 
-.settings-item-top i {
-    width: 18px;
-    text-align: center;
-    opacity: 0.9;
-}
+    .settings-item-top i {
+        width: 18px;
+        text-align: center;
+        opacity: 0.9;
+    }
 
 .settings-item p {
     margin: 4px 0 0 28px;
@@ -338,16 +410,16 @@ a:hover {
     border-color: rgba(255,255,255,0.18);
 }
 
-.settings-item.current::before {
-    content: "";
-    position: absolute;
-    left: -1px;
-    top: 8px;
-    bottom: 8px;
-    width: 4px;
-    border-radius: 10px;
-    background: #00b020;
-}
+    .settings-item.current::before {
+        content: "";
+        position: absolute;
+        left: -1px;
+        top: 8px;
+        bottom: 8px;
+        width: 4px;
+        border-radius: 10px;
+        background: #00b020;
+    }
 
 .settings-content {
     background: rgba(255,255,255,0.02);
@@ -367,7 +439,7 @@ a:hover {
     font-size: 0.86rem;
 }
 
-/* SETTINGS – BOOTSTRAP LIST-GROUP (dark theme) */
+/* list-group overrides */
 .settings-nav .list-group-item {
     background: rgba(255,255,255,0.015) !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
@@ -376,176 +448,639 @@ a:hover {
     color: inherit !important;
 }
 
-.settings-nav .list-group-item:hover {
-    background: rgba(255,255,255,0.06) !important;
-    border-color: rgba(255,255,255,0.12) !important;
-}
+    .settings-nav .list-group-item:hover {
+        background: rgba(255,255,255,0.06) !important;
+        border-color: rgba(255,255,255,0.12) !important;
+    }
 
-.settings-nav .list-group-item.active {
-    background: rgba(255,255,255,0.09) !important;
-    border-color: rgba(255,255,255,0.18) !important;
-    color: inherit !important;
-}
+    .settings-nav .list-group-item.active {
+        background: rgba(255,255,255,0.09) !important;
+        border-color: rgba(255,255,255,0.18) !important;
+        color: inherit !important;
+    }
 
-.settings-nav .list-group-item.active::before {
-    content: "";
-    position: absolute;
-    left: -1px;
-    top: 8px;
-    bottom: 8px;
-    width: 4px;
-    border-radius: 10px;
-    background: #00b020;
-}
+        .settings-nav .list-group-item.active::before {
+            content: "";
+            position: absolute;
+            left: -1px;
+            top: 8px;
+            bottom: 8px;
+            width: 4px;
+            border-radius: 10px;
+            background: #00b020;
+        }
 
 .settings-nav .dropdown-divider {
     border-top: 1px solid rgba(255,255,255,0.08) !important;
 }
 
+/* =====================================================================
+   IGDB AUTOCOMPLETE (dropdown do header)
+   ===================================================================== */
+.igdb-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 2000;
+    background: #151821;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.65);
+    overflow: hidden;
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+/* estilo final: sem thumbs e sem subtítulo */
+.igdb-thumb {
+    display: none !important;
+}
+
+.igdb-sub {
+    display: none !important;
+}
+
+.igdb-item {
+    display: block;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .igdb-item:hover {
+        background: rgba(255,255,255,0.06);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .igdb-item.active {
+        background: rgba(0, 176, 32, 0.14);
+    }
+
+.igdb-title {
+    font-weight: 600;
+    font-size: 0.82rem;
+    line-height: 1.05rem;
+    margin: 0;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.igdb-footer {
+    padding: 10px 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.85rem;
+    opacity: 0.78;
+}
+
+.igdb-dropdown::-webkit-scrollbar {
+    width: 10px;
+}
+
+.igdb-dropdown::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.10);
+    border-radius: 10px;
+}
+
+    .igdb-dropdown::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,255,255,0.16);
+    }
+
 /* =========================================================
-   HEADER / NAV – AJUSTES FINOS (NOVO)
-   - Small adjustments for username + chevron and search layout
+   SEARCH PAGE (como estava bonito)
    ========================================================= */
-
-/* 1) Username + chevron proximity:
-   The nav-link default padding is large; reduce it for the username area. */
-#profile-li #nav-username {
-    padding-right: 0.25rem !important;
+.search-page {
+    max-width: 920px;
+    margin: 0 auto;
 }
 
-#profile-li .profile-toggle {
-    padding-left: 0.15rem !important;
-    padding-right: 0.15rem !important;
-    margin-left: 0 !important;
+.search-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #e5e7eb;
 }
 
-/* Remove extra gap between name and chevron */
-#profile-li #profile-compact {
-    gap: 0;
+    .search-title span {
+        color: #c7d2fe;
+    }
+
+.search-empty {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: rgba(229,231,235,0.85);
 }
 
-/* 2) Search with icon inside the input:
-   Use .search-wrap (position-relative) and absolute button for the icon
-   NOTE: Reduced width to make the search less long as requested.
-*/
-.search-wrap {
-    width: 200px; /* reduced from 260px */
-}
-
-.search-wrap .search-bar {
-    width: 100%;
-    /* espaço à direita para a lupa não tapar texto */
-    padding-right: 2.6rem !important;
-}
-
-/* Botão lupa “dentro” do input */
-.search-icon-btn {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent; /* sem fundo */
-    border: none; /* sem borda */
-    box-shadow: none; /* sem sombra */
-
-    color: #9ca3af;
-    width: 34px;
-    height: 34px;
-    border-radius: 0; /* evita parecer botão */
-
+.search-result {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    gap: 14px;
+    padding: 14px 10px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
 }
 
-    /* Hover: APENAS muda a cor do ícone */
-    .search-icon-btn:hover {
-        color: #ffffff;
-        background: transparent; /* garante que nunca aparece fundo */
+    .search-result:hover {
+        background: rgba(255,255,255,0.04);
+        text-decoration: none;
+        color: inherit;
     }
 
-    /* Focus: remove completamente o efeito de botão */
-    .search-icon-btn:focus,
-    .search-icon-btn:active {
-        outline: none;
-        box-shadow: none;
-        background: transparent;
-    }
+.top-result {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.08);
+}
 
-    /* Evita efeitos estranhos no ícone */
-    .search-icon-btn i {
-        pointer-events: none;
-    }
-/* Responsive: search becomes full width on small screens */
-@media (max-width: 768px) {
-    .search-wrap {
+.sr-cover {
+    width: 74px;
+    height: 104px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex: 0 0 auto;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+    .sr-cover img {
         width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
     }
-}
 
-/* =========================
-   HEADER FIXES (mínimo)
-   - DUPLICATE BLOCK BELOW KEPT FOR COMPATIBILITY (do not remove)
-   - This repeat preserves prior overrides used elsewhere in the project.
-   ========================= */
-
-/* 1) Username more compact (duplicate of above — retained intentionally) */
-#profile-li #nav-username {
-    padding-right: 0.25rem !important; /* antes era pr-2 (muito) */
-}
-
-#profile-li .profile-toggle {
-    padding-left: 0.15rem !important;
-    padding-right: 0.15rem !important;
-}
-
-/* 2) Search: duplicate search-wrap block (retained intentionally)
-   NOTE: also reduced here to maintain consistent behavior when duplicate rules apply.
-*/
-.search-wrap {
-    width: 200px; /* reduced from 260px (duplicate block) */
-}
-
-.search-wrap .search-bar {
+.sr-cover-fallback {
     width: 100%;
-    padding-right: 2.6rem !important;
-}
-
-/* Botão "invisível" dentro do input (duplicate naming: search-icon-inside)
-   This block is kept so templates that reference .search-icon-inside continue to work. */
-.search-icon-inside {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    /* sem fundo / sem borda */
-    background: transparent;
-    border: none;
-    /* cor do icon */
-    color: #9ca3af;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.search-icon-inside:hover {
-    color: #ffffff;
+    height: 100%;
     background: rgba(255,255,255,0.06);
 }
 
-.search-icon-inside:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0,176,32,.35);
+.sr-main {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
-/* =========================
-   END OF FILE
-   - No rules deleted; duplicates retained and marked.
-   - If you want, I can produce a cleaned version that merges duplicates
-     (recommended for long-term maintenance), but this file keeps behavior stable.
-   ========================= */
+.sr-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.sr-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #f3f4f6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.top-result .sr-title {
+    font-size: 2.1rem;
+}
+
+.sr-year {
+    font-size: 0.95rem;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.sr-tags {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.sr-pill {
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(229,231,235,0.92);
+}
+
+.sr-pill-main {
+    background: rgba(168, 85, 247, 0.18);
+    border-color: rgba(168, 85, 247, 0.25);
+}
+
+.sr-more {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.sr-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 10px 0;
+}
+
+/* =========================================================
+   /games — UX tipo Backloggd, mas com cores Gamefilled
+   - Sort by numa linha + setas + dropdown por baixo do texto
+   - Capas menos altas (2/3)
+   ========================================================= */
+.games-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    /* ✅ evita colar ao header */
+    padding-top: 18px;
+}
+
+/* Barra superior: esquerda (contador) + direita (sort) */
+.games-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* permite abrir dropdown sem “mexer” na linha */
+    gap: 14px;
+}
+
+.games-count {
+    color: rgba(229,231,235,0.75);
+    font-size: 1rem;
+    padding-top: 2px;
+}
+
+/* Sort bar (tudo na mesma linha) */
+.games-sortbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* texto "Sort by" */
+.games-sortbar-label {
+    opacity: 0.75;
+    font-weight: 600;
+    margin-right: 2px;
+}
+
+/* setas: discretas e verdes ao hover */
+.games-sortbar-arrow {
+    color: rgba(229,231,235,0.75);
+    text-decoration: none;
+    padding: 2px 4px;
+    line-height: 1;
+}
+
+    .games-sortbar-arrow:hover {
+        color: #00b020;
+        text-decoration: none;
+    }
+
+/* texto selecionado (gatilho do dropdown) */
+.games-sortbar-selected {
+    color: #00b020;
+    font-weight: 800;
+    text-decoration: none;
+    padding: 0;
+}
+
+    .games-sortbar-selected:hover {
+        color: #22c55e;
+        text-decoration: none;
+    }
+
+/* Tirar caret do bootstrap aqui (fica mais clean) */
+.games-sortbar-dd .dropdown-toggle::after {
+    display: none !important;
+}
+
+/* ✅ dropdown por baixo do texto e alinhado à direita */
+.games-sortbar-dd {
+    position: relative; /* âncora do menu */
+}
+
+    .games-sortbar-dd .dropdown-menu {
+        margin-top: 8px;
+        min-width: 220px;
+        /* força alinhamento à direita do trigger */
+        right: 0;
+        left: auto;
+    }
+
+/* GRID de capas */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+}
+
+/* Card do jogo */
+.game-card {
+    display: block;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.03);
+    box-shadow: 0 18px 34px rgba(0,0,0,0.45);
+    transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+
+    .game-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.045);
+        text-decoration: none;
+    }
+
+/* ✅ Capa menos alta (ratio 2/3) */
+.game-cover {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+}
+
+    .game-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+.game-cover-fallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+}
+
+/* Paginação (1 2 3 …) */
+.games-pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+    .games-pagination .pg {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #e5e7eb;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+        .games-pagination .pg:hover {
+            background: rgba(255,255,255,0.08);
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .games-pagination .pg.active {
+            background: rgba(0,176,32,0.18);
+            border-color: rgba(0,176,32,0.35);
+            color: #eaffef;
+        }
+
+        .games-pagination .pg.disabled {
+            opacity: .45;
+            pointer-events: none;
+        }
+
+    .games-pagination .dots {
+        background: transparent;
+        border: none;
+        opacity: .65;
+        user-select: none;
+    }
+
+/* Responsivo */
+@media (max-width: 1200px) {
+    .games-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .games-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .games-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .games-topbar {
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .games-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* =========================================================
+   /games — Dropdown "Sort by" (como o menu do user)
+   - garante que o menu abre por baixo e alinhado à direita do texto
+   - NÃO mexer no position do dropdown-menu (Bootstrap precisa dele)
+   ========================================================= */
+
+#games-sort-li {
+    position: relative;
+}
+
+#games-sort-compact {
+    gap: 0;
+}
+
+/* Texto selecionado (verde) */
+.games-sort-selected {
+    color: #00b020 !important;
+    font-weight: 800;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Toggle igual ao user */
+.games-sort-toggle {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Menu do sort: encostar ao lado direito e descer um bocadinho */
+.games-sort-dropdown {
+    right: 0;
+    left: auto;
+    margin-top: 6px !important;
+    min-width: 220px;
+    z-index: 3000; /* para não ficar atrás de nada */
+}
+
+/* =========================================================
+   /games — extras Backloggd-like (Gamefilled)
+   - Mostrar nome no hover (overlay)
+   - Mostrar "meta" por baixo (data / rating / horas)
+   - Comentários em PT e regras pensadas para encaixar no CSS existente
+   ========================================================= */
+
+/* garante que o card pode ter meta por baixo sem quebrar */
+.game-card {
+    display: block;
+    text-decoration: none;
+}
+
+/* cover precisa de ser âncora para o overlay */
+.game-cover {
+    position: relative;
+}
+
+/* Título aparece ao passar o rato (como na tua imagem do Minecraft) */
+.game-hover-title {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+
+    padding: 8px 10px;
+    border-radius: 10px;
+
+    font-weight: 800;
+    font-size: 0.92rem;
+    line-height: 1.15;
+
+    color: #ffffff;
+    background: rgba(15, 18, 24, 0.78);
+    border: 1px solid rgba(255,255,255,0.10);
+
+    /* 2 linhas no máximo */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .12s ease, transform .12s ease;
+}
+
+/* Ao hover do card mostramos o título */
+.game-card:hover .game-hover-title {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* linha por baixo do cover (release date / rating / horas) */
+.game-meta {
+    margin-top: 6px;
+    text-align: center;
+
+    font-size: 0.86rem;
+    font-weight: 700;
+
+    color: rgba(229,231,235,0.82);
+}
+
+/* ligeiro “brilho” no hover para combinar com o teu verde */
+.game-card:hover .game-meta {
+    color: rgba(229,231,235,0.92);
+}
+
+/* Touch devices: tornar o overlay acessível sem hover
+   - no touch, permitem que o título esteja sempre visível se necessário,
+     mas por agora mantemos comportamento hover-only para consistência.
+   - Se quiseres, podemos ativar um comportamento "tap-to-toggle" via JS. */
+@media (hover: none) and (pointer: coarse) {
+    .game-hover-title {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   /games — TÍTULO NO HOVER (estilo Backloggd / Zelda)
+   - Adicionar perto de .game-card / .game-cover no site.css
+   - Comentários em PT
+   ========================================================= */
+
+/* O card precisa de ser âncora para o overlay */
+.game-card {
+    position: relative; /* importante para o ::before/::after */
+}
+
+/* Gradiente escuro por cima da capa (invisível por defeito) */
+.game-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;               /* igual ao teu card */
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.88) 0%,
+        rgba(0,0,0,0.55) 50%,
+        rgba(0,0,0,0.20) 100%
+    );
+    opacity: 0;
+    transition: opacity .14s ease;
+    pointer-events: none;              /* não bloqueia o clique */
+    z-index: 2;
+}
+
+/* Texto do título (centrado, 2 linhas) */
+.game-card::after {
+    content: attr(data-title);
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+
+    font-weight: 800;
+    font-size: 0.95rem;
+    line-height: 1.15;
+    color: #ffffff;
+
+    opacity: 0;
+    transition: opacity .14s ease, transform .14s ease;
+    pointer-events: none;
+    z-index: 3;
+
+    /* clamp a 2 linhas (como na imagem do Zelda) */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Mostrar overlay no hover / focus */
+.game-card:hover::before,
+.game-card:hover::after,
+.game-card:focus-visible::before,
+.game-card:focus-visible::after {
+    opacity: 1;
+}
+
+/* Leve “pop” do texto */
+.game-card:hover::after {
+    transform: translateY(-50%) scale(1.01);
+}
+
+/* Acessível: também aparece ao navegar com teclado */
+.game-card:focus,
+.game-card:focus-visible {
+    outline: none;
+}

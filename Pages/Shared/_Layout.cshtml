@@ -1,16 +1,11 @@
 ﻿@using Microsoft.AspNetCore.Http
 @{
-    // displayName: o que aparece no menu
     string? displayName = null;
-
-    // username: o que vais usar para construir URLs /u/{username}
     string? username = null;
 
-    // Protege o acesso à sessão caso a sessão não esteja configurada nesta requisição
     var sessionFeature = Context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>();
     if (sessionFeature?.Session != null)
     {
-        // ✅ chaves corretas (iguais às do Login.cshtml.cs)
         displayName = Context.Session.GetString("displayName");
         username = Context.Session.GetString("username");
     }
@@ -35,25 +30,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- ✅ Teu CSS (carrega por último para ganhar prioridade) -->
+    <!-- CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 </head>
 
-@*
-   ✅ Body como flex column (Bootstrap):
-   - min-vh-100 garante altura mínima do ecrã
-   - d-flex flex-column permite empurrar o footer para baixo
-*@
 <body class="d-flex flex-column min-vh-100">
 
     <div class="d-none" id="main-gradient"></div>
 
-    <!-- =========================
-         HEADER / NAVBAR
-         ========================= -->
     <header>
         <nav class="navbar navbar-expand-md navbar-dark" id="primary-nav">
             <div class="container">
+
                 <!-- LOGO -->
                 <a class="navbar-brand mr-2 my-auto py-1" href="/">
                     <img id="gamefilled-logo1"
@@ -62,7 +50,7 @@
                          height="50" />
                 </a>
 
-                <!-- MOBILE (linha compacta à direita) -->
+                <!-- MOBILE (linha compacta) -->
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item mr-sm-2 d-inline d-md-none">
                         <a class="nav-link d-inline mr-1 position-relative" id="nav-notification-bell" href="/notifications/">
@@ -70,7 +58,8 @@
                             <span class="notification-indicator"></span>
                         </a>
 
-                        <a class="nav-link d-inline mr-2" href="/games/lib/popular/">Games</a>
+                        <!-- ✅ Games aponta para a nova lib -->
+                        <a class="nav-link d-inline mr-2" href="/games">Games</a>
 
                         <button class="navbar-toggler collapsed" type="button"
                                 data-toggle="collapse"
@@ -87,7 +76,6 @@
                 <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
 
                     <ul class="navbar-nav ml-auto align-items-md-center">
-                        <!-- Notification bell (desktop) -->
                         <li class="nav-item d-none d-md-block">
                             <a class="nav-link position-relative" id="nav-notification-bell" href="/notifications/">
                                 <i class="fas fa-bell"></i>
@@ -95,7 +83,6 @@
                             </a>
                         </li>
 
-                        @* Desktop: se NÃO houver sessão mostra Register/Login *@
                         @if (string.IsNullOrEmpty(username))
                         {
                             <li class="nav-item d-none d-md-block mr-2">
@@ -107,13 +94,8 @@
                         }
                         else
                         {
-                            <!-- =========================
-                                 USER (desktop)
-                                 - Ajustado para o nome ficar mais perto do chevron
-                                 ========================= -->
                             <li class="nav-item dropdown d-none d-md-block" id="profile-li">
                                 <div class="d-flex align-items-center" id="profile-compact">
-                                    @* Mostra displayName mas usa username para o link *@
                                     <a class="nav-link pr-1" id="nav-username" href="/u/@(username)/">@displayName</a>
 
                                     <a class="nav-link dropdown-toggle hide-caret profile-toggle pl-1 pr-1"
@@ -126,7 +108,6 @@
                                        title="Menu">
                                         <i class="fas fa-chevron-down fa-xs"></i>
                                     </a>
-
                                 </div>
 
                                 <div class="dropdown-menu mt-0 py-0" aria-labelledby="navbarDropdown">
@@ -149,19 +130,18 @@
 
                                     <div class="dropdown-divider my-0"></div>
 
-                                    @* settings *@
                                     <a class="dropdown-item py-1" href="/Settings">Settings</a>
 
-                                    @* logout (troca para o teu logout real) *@
-                                    <form method="post" action="/Users/Logout" class="m-0">
-                                        <button type="submit" class="dropdown-item pt-1 pb-2">Log Out</button>
+                                    <form method="post" asp-page="/users/Logout" class="m-0 p-0">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item pt-1 pb-2 w-100 text-left">
+                                            Log Out
+                                        </button>
                                     </form>
-
                                 </div>
                             </li>
                         }
 
-                        @* Mobile: mostra links apropriados *@
                         @if (string.IsNullOrEmpty(username))
                         {
                             <li class="nav-item mr-sm-2 d-block d-md-none">
@@ -190,57 +170,44 @@
                             </li>
                         }
 
+                        <!-- ✅ Games (desktop) -->
                         <li class="nav-item d-none d-md-block mr-2">
-                            <a class="nav-link" href="/games/lib/popular/">Games</a>
+                            <a class="nav-link" href="/games">Games</a>
                         </li>
                     </ul>
 
-                    <!-- =========================
-                         SEARCH
-                         - Lupa dentro do input
-                         - Sem input-group-append
-                         ========================= -->
+                    <!-- SEARCH -->
                     <form class="form-inline mx-3 mx-md-0 my-2 my-md-0"
                           data-turbo="false"
                           action="/search"
-                          accept-charset="UTF-8"
-                          method="post">
-                        <input type="hidden" name="authenticity_token" value="{{TOKEN_CSRF}}" autocomplete="off" />
+                          method="get">
 
-                        <!-- wrapper position-relative para colocar a lupa dentro -->
-                        <div class="search-wrap position-relative">
+                        <div class="search-wrap position-relative" id="nav-search-wrap">
                             <input class="form-control search-bar"
                                    id="nav-bar-search"
                                    type="search"
                                    placeholder="Search"
                                    aria-label="Search"
                                    name="query"
-                                   autocomplete="off"
-                                   data-behavior="autocomplete" />
+                                   autocomplete="off" />
 
-                            <!-- botão transparente (sem fundo) em cima do input -->
                             <button class="search-icon-btn" type="submit" aria-label="Search">
                                 <i class="fas fa-search"></i>
                             </button>
+
+                            <div class="igdb-dropdown d-none" id="igdb-dropdown" role="listbox" aria-label="Search results"></div>
                         </div>
                     </form>
-
 
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- =========================
-         MAIN
-         ========================= -->
     <main role="main" class="container flex-grow-1 pb-3">
         @RenderBody()
     </main>
 
-    <!-- =========================
-         FOOTER
-         ========================= -->
     <footer class="footer mt-auto">
         <div class="container py-2">
             <div class="row mx-0">
@@ -264,7 +231,7 @@
         </div>
     </footer>
 
-    <!-- Scripts: jQuery + Bootstrap bundle (dropdown precisa disto) -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 

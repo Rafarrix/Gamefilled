@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Gamefilled.Pages
+namespace Gamefilled.Pages.Users
 {
     public class LoginModel : PageModel
     {
@@ -17,6 +17,10 @@ namespace Gamefilled.Pages
             _logger = logger;
         }
 
+        // ===============================
+        // INPUTS DO FORM
+        // ===============================
+
         // Campo único: Email OU Username
         [BindProperty]
         public string EmailOrUsername { get; set; } = string.Empty;
@@ -24,31 +28,55 @@ namespace Gamefilled.Pages
         [BindProperty]
         public string Password { get; set; } = string.Empty;
 
+        // ✅ returnUrl precisa de ser BindProperty também,
+        // para sobreviver do OnGet -> form -> OnPost
+        [BindProperty(SupportsGet = true)]
+        public string? ReturnUrl { get; set; }
+
         public string? Error { get; set; }
 
         // ===============================
-        // CONFIG DO RATE LIMIT
+        // RATE LIMIT (5 tentativas / 5 min)
         // ===============================
         private const int MaxAttempts = 5;
         private static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(5);
 
-        // Chaves na Session
         private const string KeyFailCount = "login_fail_count";
         private const string KeyLockUntil = "login_lock_until_utc"; // ISO string
 
-        public void OnGet() { }
+        // ===============================
+        // GET
+        // ===============================
+        public void OnGet()
+        {
+            // ✅ Segurança: se ReturnUrl vier vazio ou não for local, ignora.
+            if (!IsSafeLocalReturnUrl(ReturnUrl))
+            {
+                ReturnUrl = null;
+            }
+        }
 
+        // ===============================
+        // POST
+        // ===============================
         public async Task<IActionResult> OnPostAsync()
         {
             // -------------------------------
-            // 0) Rate limit: está bloqueado?
+            // 0) Segurança do ReturnUrl
+            // -------------------------------
+            if (!IsSafeLocalReturnUrl(ReturnUrl))
+            {
+                ReturnUrl = null;
+            }
+
+            // -------------------------------
+            // 1) Rate limit: está bloqueado?
             // -------------------------------
             var lockUntilUtc = GetLockUntilUtc();
             if (lockUntilUtc != null)
             {
                 var nowUtc = DateTimeOffset.UtcNow;
 
-                // Ainda está bloqueado
                 if (nowUtc < lockUntilUtc.Value)
                 {
                     var remaining = lockUntilUtc.Value - nowUtc;
@@ -59,23 +87,26 @@ namespace Gamefilled.Pages
                 }
                 else
                 {
-                    // Já passou o bloqueio -> limpa lock
-                    ClearLock();
+                    // ✅ CORREÇÃO: lock expirou -> limpa lock + contador
+                    ClearFailCounterAndLock();
                 }
             }
 
-            // 1) Validar campos
+            // -------------------------------
+            // 2) Validar campos
+            // -------------------------------
             if (string.IsNullOrWhiteSpace(EmailOrUsername) || string.IsNullOrWhiteSpace(Password))
             {
                 Error = "Preenche todos os campos.";
                 return Page();
             }
 
-            // 2) Normalizar inputs
+            // -------------------------------
+            // 3) Normalizar inputs
+            // -------------------------------
             var identifier = EmailOrUsername.Trim();
             var password = Password.Trim();
 
-            // Se for email, normaliza para minúsculas
             if (identifier.Contains("@"))
                 identifier = identifier.ToLowerInvariant();
 
@@ -83,7 +114,9 @@ namespace Gamefilled.Pages
             {
                 _logger.LogInformation("Login attempt. DB={DbName}", _context.Database.GetDbConnection().Database);
 
-                // 3) Procurar user por Username OU Email
+                // -------------------------------
+                // 4) Procurar user por Username OU Email
+                // -------------------------------
                 var user = await _context.Users.FirstOrDefaultAsync(u =>
                     (u.Username != null && u.Username == identifier) ||
                     (u.Email != null && u.Email == identifier));
@@ -95,16 +128,16 @@ namespace Gamefilled.Pages
                     return Page();
                 }
 
-                // 4) Verificar hash
+                // -------------------------------
+                // 5) Validar PasswordHash
+                // -------------------------------
                 if (string.IsNullOrWhiteSpace(user.PasswordHash))
                 {
-                    // Conta “inválida” (não tem hash)
                     RegisterFailAttempt();
                     Error = "Conta sem password definida.";
                     return Page();
                 }
 
-                // BCrypt verify
                 var ok = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
                 if (!ok)
                 {
@@ -113,10 +146,12 @@ namespace Gamefilled.Pages
                     return Page();
                 }
 
-                // ✅ Sucesso: limpa contador de falhas/lock
+                // ✅ Sucesso: limpa rate limit
                 ClearFailCounterAndLock();
 
-                // 5) Sessão (nunca null)
+                // -------------------------------
+                // 6) Criar sessão
+                // -------------------------------
                 var usernameForSession = !string.IsNullOrWhiteSpace(user.Username)
                     ? user.Username
                     : $"user{user.Id}";
@@ -130,6 +165,14 @@ namespace Gamefilled.Pages
                 HttpContext.Session.SetString("displayName", displayNameForSession);
                 HttpContext.Session.SetString("role", user.Role ?? "User");
 
+                // -------------------------------
+                // 7) Redirect inteligente (ReturnUrl)
+                // -------------------------------
+                // ✅ Se veio de uma página protegida (ex: /Settings),
+                // volta para lá. Senão vai para /Index.
+                if (!string.IsNullOrWhiteSpace(ReturnUrl))
+                    return LocalRedirect(ReturnUrl);
+
                 return RedirectToPage("/Index");
             }
             catch (Exception e)
@@ -141,26 +184,22 @@ namespace Gamefilled.Pages
         }
 
         // ===============================
-        // Helpers de Rate Limit (Session)
+        // HELPERS: Rate limit (Session)
         // ===============================
 
         private void RegisterFailAttempt()
         {
-            // Incrementa falhas
             var count = HttpContext.Session.GetInt32(KeyFailCount) ?? 0;
             count++;
             HttpContext.Session.SetInt32(KeyFailCount, count);
 
-            // Se atingiu o limite, bloqueia
             if (count >= MaxAttempts)
             {
                 var lockUntil = DateTimeOffset.UtcNow.Add(LockDuration);
-
-                // Guardar em ISO para ser fácil de parse
                 HttpContext.Session.SetString(KeyLockUntil, lockUntil.ToString("O"));
 
-                // (Opcional) log
-                _logger.LogWarning("Login locked for {Minutes} minutes (attempts={Count}).", LockDuration.TotalMinutes, count);
+                _logger.LogWarning("Login locked for {Minutes} minutes (attempts={Count}).",
+                    LockDuration.TotalMinutes, count);
             }
         }
 
@@ -175,15 +214,32 @@ namespace Gamefilled.Pages
             return null;
         }
 
-        private void ClearLock()
-        {
-            HttpContext.Session.Remove(KeyLockUntil);
-        }
-
         private void ClearFailCounterAndLock()
         {
             HttpContext.Session.Remove(KeyFailCount);
             HttpContext.Session.Remove(KeyLockUntil);
+        }
+
+        // ===============================
+        // HELPERS: ReturnUrl seguro
+        // ===============================
+
+        /// <summary>
+        /// ✅ Impede Open Redirect:
+        /// só aceitamos URLs locais do teu site (ex: "/Settings", "/u/admin").
+        /// </summary>
+        private bool IsSafeLocalReturnUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+
+            // Tem de ser local
+            if (!Url.IsLocalUrl(url)) return false;
+
+            // Bloqueia //example.com ou /\evil
+            if (url.StartsWith("//") || url.StartsWith("/\\"))
+                return false;
+
+            return true;
         }
     }
 }

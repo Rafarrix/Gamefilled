@@ -1,5 +1,5 @@
 ﻿@page
-@model LoginModel
+@model Gamefilled.Pages.Users.LoginModel
 
 <div class="container mt-5">
     <h2>Log in</h2>
@@ -10,6 +10,9 @@
     }
 
     <form method="post">
+        @* ✅ Mantém o returnUrl entre GET e POST *@
+        <input type="hidden" asp-for="ReturnUrl" />
+
         <!-- Email OU Username -->
         <input class="form-control mb-2"
                asp-for="EmailOrUsername"

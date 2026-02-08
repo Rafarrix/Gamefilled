@@ -1,0 +1,167 @@
+﻿@model Gamefilled.Pages.games.lib._GamesLibBase
+
+@{
+    // Links dos filtros (fallback para evitar null warnings)
+    string titleUrl = Url.Page("/games/lib/Title") ?? "/games/lib/title/";
+    string trendingUrl = Url.Page("/games/lib/Trending") ?? "/games/lib/trending/";
+    string releaseUrl = Url.Page("/games/lib/ReleaseDate") ?? "/games/lib/releasedate/";
+    string popularUrl = Url.Page("/games/lib/Popular") ?? "/games/lib/popular/";
+    string topUrl = Url.Page("/games/lib/TopRated") ?? "/games/lib/toprated/";
+    string avgPlayUrl = Url.Page("/games/lib/AvgPlayTime") ?? "/games/lib/avgplaytime/";
+    string avgFinishUrl = Url.Page("/games/lib/AvgFinishTime") ?? "/games/lib/avgfinishtime/";
+
+    // path atual
+    string currentPath = Context?.Request?.Path.Value ?? popularUrl;
+
+    // dir atual
+    string dir = (Model.Dir ?? "desc").ToLowerInvariant();
+
+    // helpers
+    string PageLink(int p) => $"{currentPath}?pageNumber={p}&pageSize={Model.PageSize}&dir={dir}";
+    string DirLink(string d) => $"{currentPath}?pageNumber=1&pageSize={Model.PageSize}&dir={d}";
+    string SortLink(string url) => $"{url}?pageNumber=1&pageSize={Model.PageSize}&dir={dir}";
+
+    // para decidir o “meta” por baixo do cover
+    string key = (Model.SortKey ?? "").ToLowerInvariant();
+}
+
+<div class="games-page">
+
+    <!-- TOPBAR -->
+    <div class="games-topbar mb-3">
+        <div class="games-count">
+            @(Model.TotalCount > 0 ? Model.TotalCount.ToString("N0") : "0") Games
+        </div>
+
+        <div class="games-sortbar">
+            <span class="games-sortbar-label">Sort by</span>
+
+            <a class="games-sortbar-arrow" href="@DirLink("asc")" title="Ascendente" aria-label="Ascendente">
+                <i class="fas fa-chevron-up"></i>
+            </a>
+            <a class="games-sortbar-arrow" href="@DirLink("desc")" title="Descendente" aria-label="Descendente">
+                <i class="fas fa-chevron-down"></i>
+            </a>
+
+            <div class="dropdown games-sortbar-dd">
+                <a class="games-sortbar-selected dropdown-toggle"
+                   href="#"
+                   id="gamesSortDropdown"
+                   data-toggle="dropdown"
+                   aria-haspopup="true"
+                   aria-expanded="false">
+                    @Model.PageTitle
+                </a>
+
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="gamesSortDropdown">
+                    <a class="dropdown-item" href="@SortLink(titleUrl)">Game Title</a>
+                    <a class="dropdown-item" href="@SortLink(trendingUrl)">Trending</a>
+                    <a class="dropdown-item" href="@SortLink(releaseUrl)">Release Date</a>
+                    <a class="dropdown-item" href="@SortLink(popularUrl)">Popularity</a>
+                    <a class="dropdown-item" href="@SortLink(topUrl)">Top Rated</a>
+                    <a class="dropdown-item" href="@SortLink(avgPlayUrl)">Avg. Play Time</a>
+                    <a class="dropdown-item" href="@SortLink(avgFinishUrl)">Avg. Finish Time</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Games == null || Model.Games.Count == 0)
+    {
+        <div class="text-muted">
+            Nenhum resultado.
+        </div>
+    }
+    else
+    {
+        <div class="games-grid">
+            @foreach (var g in Model.Games)
+            {
+                <a class="game-card"
+                   href="/games/@g.Slug"
+                   title="@g.Name"
+                   data-title="@g.Name">
+
+                    <div class="game-cover">
+                        @if (!string.IsNullOrWhiteSpace(g.CoverUrl))
+                        {
+                            <img src="@g.CoverUrl" alt="@g.Name" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="game-cover-fallback"></div>
+                        }
+
+                        @* Se tinhas um título pequeno dentro do card, podes remover esse elemento.
+                           Agora usamos data-title + pseudo-elements para o overlay. *@
+                    </div>
+
+                    @* Mantém a meta por baixo da capa (data / rating / horas) como estava no ficheiro original. *@
+                    @if (key == "release-date")
+                    {
+                        <div class="game-meta">
+                            @(g.ReleaseDateText ?? (g.Year?.ToString() ?? ""))
+                        </div>
+                    }
+                    else if (key == "top-rated")
+                    {
+                        <div class="game-meta">
+                            @(g.RatingText ?? "")
+                        </div>
+                    }
+                    else if (key == "avg-play")
+                    {
+                        <div class="game-meta">
+                            @(g.AvgPlayHoursText ?? "")
+                        </div>
+                    }
+                    else if (key == "avg-finish")
+                    {
+                        <div class="game-meta">
+                            @(g.AvgFinishHoursText ?? "")
+                        </div>
+                    }
+                </a>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="games-pagination mt-4">
+                @{
+                    int current = Model.PageNumber;
+                    int total = Model.TotalPages;
+
+                    int start = Math.Max(1, current - 2);
+                    int end = Math.Min(total, current + 2);
+
+                    while (end - start < 4 && start > 1) start--;
+                    while (end - start < 4 && end < total) end++;
+                }
+
+                @if (start > 1)
+                {
+                    <a class="pg" href="@PageLink(1)">1</a>
+                    @if (start > 2)
+                    {
+                        <span class="pg dots">…</span>
+                    }
+                }
+
+                @for (int p = start; p <= end; p++)
+                {
+                    <a class="pg @(p == current ? "active" : "")" href="@PageLink(p)">@p</a>
+                }
+
+                @if (end < total)
+                {
+                    @if (end < total - 1)
+                    {
+                        <span class="pg dots">…</span>
+                    }
+                    <a class="pg" href="@PageLink(total)">@total</a>
+                }
+            </nav>
+        }
+    }
+</div>

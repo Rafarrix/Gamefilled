@@ -1,48 +1,62 @@
 ﻿using Gamefilled.Data;
+using Gamefilled.Infrastructure;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Razor Pages
-builder.Services.AddRazorPages();
+// ✅ Razor Pages + Proteção por pasta
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AddFolderApplicationModelConvention("/Settings", model =>
+    {
+        model.Filters.Add(new RequireLoginFilter());
+    });
+});
 
 // ✅ EF Core + SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ Sessão: precisa de cache + AddSession
+// ===============================
+// ✅ IGDB: Options + Token + Client
+// ===============================
+
+// Lê "IGDB" do appsettings.json
+builder.Services.Configure<IgdbOptions>(builder.Configuration.GetSection("IGDB"));
+
+// HttpClient para token Twitch
+builder.Services.AddHttpClient<IgdbTokenProvider>();
+
+// HttpClient para IGDB (base address v4)
+builder.Services.AddHttpClient<IgdbClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.igdb.com/v4");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+// ✅ Sessão
 builder.Services.AddDistributedMemoryCache();
 
-// ✅ Cookie Policy (ajuda a controlar SameSite / consent, etc.)
-// Nota: não é obrigatório, mas é bom para "arrumar" regras de cookies.
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    // Lax costuma ser o equilíbrio certo (não quebra navegação normal e ajuda contra CSRF)
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
 });
 
 builder.Services.AddSession(options =>
 {
-    // ✅ Segurança básica
-    options.Cookie.HttpOnly = true;     // cookie não acessível por JS
-    options.Cookie.IsEssential = true;  // essencial (útil em dev)
-
-    // ✅ Ajuda contra CSRF
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-
-    // ✅ HTTPS:
-    // - Em produção querias Always
-    // - Em desenvolvimento, SameAsRequest evita problemas se estiveres em http
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
-    // ✅ Expiração da sessão
     options.IdleTimeout = TimeSpan.FromHours(1);
 });
 
+// (mantém se já tinhas)
+builder.Services.AddScoped<RequireLoginFilter>();
+
 var app = builder.Build();
 
-// ✅ Erros / HSTS
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -54,11 +68,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ✅ Aplica política de cookies (antes da sessão)
 app.UseCookiePolicy();
-
-// ✅ Sessão tem de vir antes de MapRazorPages
 app.UseSession();
 
 app.MapRazorPages();
+
 app.Run();
