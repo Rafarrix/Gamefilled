@@ -1,0 +1,349 @@
+﻿/* ============================================================================
+   Gamefilled — game.css (SÓ /games/{id})
+   Background “Backloggd-like”:
+   - Blur forte + escala grande (nunca corta)
+   - Overlay com vinheta suave
+   - Noise subtil para ficar natural
+   - Topo mais escuro para o header ficar legível SEM fundo
+   ============================================================================ */
+
+.bl-hero {
+    position: relative;
+    overflow: hidden;
+    /* ✅ hero só no topo (não ocupa a página toda) */
+    height: 640px;
+    min-height: 640px;
+    padding: 0;
+    --muted: rgba(229,231,235,0.70);
+}
+
+/* FUNDO: super largo, blur forte, baixa opacidade (mais “suave”) */
+.bl-hero__bg {
+    position: absolute;
+    top: -220px;
+    bottom: -220px;
+    left: 50%;
+    width: 190vw;
+    transform: translateX(-50%) scale(1.14);
+    background-image: var(--bg);
+    background-size: cover;
+    background-position: center;
+    /* 🔥 aqui está a diferença principal */
+    filter: blur(46px) saturate(1.10) brightness(0.92);
+    opacity: 0.42;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* OVERLAY: vinheta suave + topo escuro (para nav legível) + base escura */
+.bl-hero__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+    /* ✅ topo escuro (substitui “bg do header”) */
+    linear-gradient(to bottom, rgba(10,12,16,0.92) 0%, rgba(10,12,16,0.55) 22%, rgba(10,12,16,0.22) 45%, rgba(10,12,16,0.08) 62%, rgba(14,16,21,0.00) 72% ),
+    /* ✅ vinheta muito suave (lados) */
+    radial-gradient(85% 125% at 50% 38%, rgba(10,12,16,0.02) 0%, rgba(10,12,16,0.30) 55%, rgba(10,12,16,0.82) 100% ),
+    /* ✅ “assenta” o hero no fundo do site */
+    linear-gradient(to bottom, rgba(14,16,21,0.00) 0%, rgba(14,16,21,0.65) 78%, rgba(14,16,21,1.00) 100% );
+}
+
+/* ✅ Noise/grão subtil: dá aquele look “natural” */
+.bl-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background-image: repeating-linear-gradient( 0deg, rgba(255,255,255,0.020), rgba(255,255,255,0.020) 1px, rgba(0,0,0,0.020) 2px, rgba(0,0,0,0.020) 3px );
+    opacity: 0.18;
+    mix-blend-mode: overlay;
+}
+
+/* “shell” do conteúdo */
+.bl-shell {
+    position: relative;
+    z-index: 3;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 56px 0 0;
+}
+
+/* Layout: cover + info */
+.bl-top {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+/* Cover */
+.bl-cover img {
+    width: 190px;
+    border-radius: 12px;
+    box-shadow: 0 18px 55px rgba(0,0,0,0.60);
+    display: block;
+}
+
+/* Main */
+.bl-main {
+    padding-top: 6px;
+}
+
+.bl-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.bl-title {
+    margin: 0;
+    font-weight: 800;
+    font-size: 36px;
+    letter-spacing: 0.2px;
+}
+
+.bl-release {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.pill {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.06);
+    color: rgba(229,231,235,0.88);
+    white-space: nowrap;
+}
+
+.pill-muted {
+    background: rgba(0,0,0,0.22);
+    color: rgba(229,231,235,0.75);
+}
+
+.bl-byline {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+    .bl-byline strong {
+        color: rgba(229,231,235,0.92);
+    }
+
+.bl-summary {
+    margin: 10px 0 14px;
+    color: rgba(229,231,235,0.86);
+    line-height: 1.6;
+    font-size: 14px;
+    max-width: 860px;
+}
+
+/* Rows */
+.bl-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.bl-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.bl-row__label {
+    color: rgba(229,231,235,0.55);
+    font-size: 11px;
+    letter-spacing: 0.8px;
+}
+
+.bl-row__value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.bl-chip {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(0,0,0,0.18);
+    color: rgba(229,231,235,0.82);
+}
+
+/* Cards */
+.bl-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.bl-card {
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 12px 14px;
+    backdrop-filter: blur(10px);
+    transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
+}
+
+.bl-card__label {
+    font-size: 12px;
+    color: rgba(229,231,235,0.70);
+    margin-bottom: 4px;
+}
+
+.bl-card__value {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+.bl-card__sub {
+    font-size: 12px;
+    color: rgba(229,231,235,0.60);
+    margin-top: 4px;
+}
+
+.bl-card:hover {
+    border-color: rgba(0,176,32,0.30);
+    background: rgba(255,255,255,0.065);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+}
+
+/* Time-to-beat */
+.bl-ttb {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.bl-ttb__item {
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(0,0,0,0.18);
+    border-radius: 12px;
+    padding: 10px 10px;
+    text-align: center;
+}
+
+.bl-ttb__value {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.bl-ttb__label {
+    margin-top: 2px;
+    font-size: 11px;
+    color: rgba(229,231,235,0.65);
+}
+
+/* Screenshots */
+.bl-media {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.bl-media__img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.30);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .bl-hero {
+        height: 700px;
+        min-height: 700px;
+    }
+
+    .bl-shell {
+        padding: 44px 18px 0;
+        max-width: 980px;
+    }
+
+    .bl-top {
+        grid-template-columns: 160px 1fr;
+    }
+
+    .bl-cover img {
+        width: 160px;
+    }
+
+    .bl-title {
+        font-size: 30px;
+    }
+
+    .bl-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .bl-media {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .bl-hero {
+        height: 820px;
+        min-height: 820px;
+    }
+
+    .bl-shell {
+        padding: 34px 14px 0;
+    }
+
+    .bl-top {
+        grid-template-columns: 1fr;
+    }
+
+    .bl-cover img {
+        width: 180px;
+    }
+
+    .bl-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .bl-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .bl-hero__bg {
+        width: 220vw;
+        transform: translateX(-50%) scale(1.16);
+        top: -240px;
+        bottom: -240px;
+        filter: blur(52px) saturate(1.10) brightness(0.92);
+        opacity: 0.40;
+    }
+
+    .bl-media {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Hero começa “atrás” do header, mas sem bloquear cliques */
+body.fullbleed .bl-hero {
+    margin-top: -74px;
+    padding-top: 74px;
+}

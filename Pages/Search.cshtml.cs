@@ -49,7 +49,7 @@ namespace Gamefilled.Pages
 
                 Results = ParseApiResponse(json);
 
-                // ordena: jogo base primeiro + popularidade
+                // ordenação: jogo base primeiro + popularidade
                 Results = Results
                     .OrderByDescending(g => g.Category == 0) // Main Game
                     .ThenByDescending(g => g.Follows)
@@ -64,19 +64,20 @@ namespace Gamefilled.Pages
             }
         }
 
+        // =========================================================
+        // Parsing
+        // =========================================================
         private static List<SearchGame> ParseApiResponse(string json)
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            // { results: [...] }
             if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("results", out var resultsEl))
             {
                 if (resultsEl.ValueKind == JsonValueKind.Array)
                     return ParseGamesArray(resultsEl);
             }
 
-            // fallback: array direto
             if (root.ValueKind == JsonValueKind.Array)
                 return ParseGamesArray(root);
 
@@ -89,9 +90,17 @@ namespace Gamefilled.Pages
 
             foreach (var el in arr.EnumerateArray())
             {
+                // 🔑 ID (OBRIGATÓRIO)
+                if (!el.TryGetProperty("id", out var idEl) || idEl.ValueKind != JsonValueKind.Number)
+                    continue;
+
+                int id = idEl.GetInt32();
+                if (id <= 0) continue;
+
                 var name = el.TryGetProperty("name", out var n) ? n.GetString() : null;
+                if (string.IsNullOrWhiteSpace(name)) continue;
+
                 var slug = el.TryGetProperty("slug", out var s) ? s.GetString() : null;
-                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(slug)) continue;
 
                 int? category = null;
                 if (el.TryGetProperty("category", out var c) && c.ValueKind == JsonValueKind.Number)
@@ -109,10 +118,10 @@ namespace Gamefilled.Pages
                 if (el.TryGetProperty("first_release_date", out var frd) && frd.ValueKind == JsonValueKind.Number)
                 {
                     var unix = frd.GetInt64();
-                    if (unix > 0) year = DateTimeOffset.FromUnixTimeSeconds(unix).Year;
+                    if (unix > 0)
+                        year = DateTimeOffset.FromUnixTimeSeconds(unix).Year;
                 }
 
-                // cover.image_id
                 string? coverImageId = null;
                 if (el.TryGetProperty("cover", out var coverEl) && coverEl.ValueKind == JsonValueKind.Object)
                 {
@@ -120,24 +129,27 @@ namespace Gamefilled.Pages
                         coverImageId = imgIdEl.GetString();
                 }
 
-                // platforms.name
                 var platforms = new List<string>();
                 if (el.TryGetProperty("platforms", out var platsEl) && platsEl.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var p in platsEl.EnumerateArray())
                     {
-                        if (p.ValueKind == JsonValueKind.Object && p.TryGetProperty("name", out var pn) && pn.ValueKind == JsonValueKind.String)
+                        if (p.ValueKind == JsonValueKind.Object &&
+                            p.TryGetProperty("name", out var pn) &&
+                            pn.ValueKind == JsonValueKind.String)
                         {
                             var pnStr = pn.GetString();
-                            if (!string.IsNullOrWhiteSpace(pnStr)) platforms.Add(pnStr!);
+                            if (!string.IsNullOrWhiteSpace(pnStr))
+                                platforms.Add(pnStr!);
                         }
                     }
                 }
 
                 list.Add(new SearchGame
                 {
+                    Id = id,                // 🔑
                     Name = name!,
-                    Slug = slug!,
+                    Slug = slug ?? "",
                     Year = year,
                     Category = category,
                     CategoryLabel = CategoryToLabel(category),
@@ -169,8 +181,12 @@ namespace Gamefilled.Pages
             };
         }
 
+        // =========================================================
+        // VM
+        // =========================================================
         public class SearchGame
         {
+            public int Id { get; set; }      // 🔑 USADO NO LINK
             public string Name { get; set; } = "";
             public string Slug { get; set; } = "";
             public int? Year { get; set; }

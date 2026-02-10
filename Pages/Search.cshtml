@@ -26,7 +26,7 @@
     {
         @* TOP RESULT *@
         var top = results[0];
-        <a class="search-result top-result" href="/games/@Uri.EscapeDataString(top.Slug)">
+        <a class="search-result top-result" href="/games/@top.Id">
             <div class="sr-cover">
                 @if (!string.IsNullOrWhiteSpace(top.CoverImageId))
                 {
@@ -79,7 +79,7 @@
         {
             var g = results[i];
 
-            <a class="search-result" href="/games/@Uri.EscapeDataString(g.Slug)">
+            <a class="search-result" href="/games/@top.Id">
                 <div class="sr-cover">
                     @if (!string.IsNullOrWhiteSpace(g.CoverImageId))
                     {

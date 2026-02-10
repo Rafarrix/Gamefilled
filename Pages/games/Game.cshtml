@@ -1,0 +1,167 @@
+﻿@page "/games/{id:int}"
+@model Gamefilled.Pages.games.GameModel
+@{
+    ViewData["Title"] = Model.Game?.Name ?? "Game";
+    ViewData["FullBleed"] = true; // ✅ gatilho no _Layout
+}
+
+<link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
+
+<div class="bl-hero" style="--bg:url('@(Model.BgUrl ?? "")')">
+    <div class="bl-hero__bg"></div>
+    <div class="bl-hero__overlay"></div>
+
+    <div class="bl-shell">
+        <div class="bl-top">
+            <div class="bl-cover">
+                @if (!string.IsNullOrWhiteSpace(Model.CoverUrl))
+                {
+                    <img src="@Model.CoverUrl" alt="@Model.Game?.Name" />
+                }
+            </div>
+
+            <div class="bl-main">
+                <div class="bl-title-row">
+                    <h1 class="bl-title">@Model.Game?.Name</h1>
+
+                    @if (Model.Game?.FirstReleaseDateUnix != null)
+                    {
+                        <div class="bl-release">
+                            <span class="pill pill-muted">Released</span>
+                            <span class="pill">@UnixToDate(Model.Game.FirstReleaseDateUnix.Value)</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="bl-byline">
+                    @{
+                        var dev = Model.Game?.InvolvedCompanies?
+                        .Where(x => x.Developer == true && !string.IsNullOrWhiteSpace(x.Company?.Name))
+                        .Select(x => x.Company!.Name!)
+                        .Distinct()
+                        .FirstOrDefault();
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(dev))
+                    {
+                        <span>by <strong>@dev</strong></span>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Game?.Summary))
+                {
+                    <p class="bl-summary">@Model.Game.Summary</p>
+                }
+
+                <div class="bl-rows">
+                    <div class="bl-row">
+                        <div class="bl-row__label">GENRES</div>
+                        <div class="bl-row__value">
+                            @foreach (var g in (Model.Game?.Genres ?? new()).Take(8))
+                            {
+                                if (!string.IsNullOrWhiteSpace(g.Name))
+                                {
+                                    <span class="bl-chip">@g.Name</span>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="bl-row">
+                        <div class="bl-row__label">PLATFORMS</div>
+                        <div class="bl-row__value">
+                            @foreach (var p in (Model.Game?.Platforms ?? new()).Take(8))
+                            {
+                                if (!string.IsNullOrWhiteSpace(p.Name))
+                                {
+                                    <span class="bl-chip">@p.Name</span>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bl-cards">
+                    <div class="bl-card">
+                        <div class="bl-card__label">Avg Rating</div>
+                        <div class="bl-card__value">@Fmt(Model.Game?.AggregatedRating ?? Model.Game?.Rating)</div>
+                        <div class="bl-card__sub">@Count(Model.Game?.AggregatedRatingCount ?? Model.Game?.RatingCount) votes</div>
+                    </div>
+
+                    <div class="bl-card">
+                        <div class="bl-card__label">Follows</div>
+                        <div class="bl-card__value">@Count(Model.Game?.Follows)</div>
+                        <div class="bl-card__sub">followers</div>
+                    </div>
+
+                    <div class="bl-card">
+                        <div class="bl-card__label">Hypes</div>
+                        <div class="bl-card__value">@Count(Model.Game?.Hypes)</div>
+                        <div class="bl-card__sub">hype</div>
+                    </div>
+
+                    <div class="bl-card">
+                        <div class="bl-card__label">Time to beat</div>
+
+                        <div class="bl-ttb">
+                            <div class="bl-ttb__item">
+                                <div class="bl-ttb__value">@Ttb(Model.TtbNormallySeconds)</div>
+                                <div class="bl-ttb__label">average</div>
+                            </div>
+
+                            <div class="bl-ttb__item">
+                                <div class="bl-ttb__value">@Ttb(Model.TtbCompletelySeconds)</div>
+                                <div class="bl-ttb__label">to finish</div>
+                            </div>
+
+                            <div class="bl-ttb__item">
+                                <div class="bl-ttb__value">@Ttb(MasterLike(Model.TtbCompletelySeconds))</div>
+                                <div class="bl-ttb__label">to master</div>
+                            </div>
+                        </div>
+
+                        <div class="bl-card__sub">IGDB time_to_beat (best effort)</div>
+                    </div>
+                </div>
+
+                @if (Model.Game?.Screenshots?.Any() == true)
+                {
+                    <div class="bl-media">
+                        @foreach (var s in Model.Game.Screenshots.Take(6))
+                        {
+                            var url = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{s.ImageId}.jpg";
+                            <img class="bl-media__img" src="@url" alt="Screenshot" loading="lazy" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bl-after">
+    @* aqui podes meter no futuro: tabs, related games, reviews *@
+</div>
+
+@functions {
+    static string UnixToDate(long unix)
+    {
+        try { return DateTimeOffset.FromUnixTimeSeconds(unix).ToString("MMM dd, yyyy"); }
+        catch { return ""; }
+    }
+
+    static string Fmt(double? v) => v == null ? "—" : Math.Round(v.Value, 1).ToString("0.0");
+    static string Count(int? v) => v == null ? "—" : v.Value.ToString("N0");
+
+    // IGDB vem em SEGUNDOS
+    static string Ttb(int? seconds)
+    {
+        if (seconds == null || seconds <= 0) return "—";
+        var h = Math.Round(seconds.Value / 3600.0);
+        if (h <= 0) h = 1;
+        return $"{h}h";
+    }
+
+    static int? MasterLike(int? completelySeconds)
+        => completelySeconds == null ? null : (int)(completelySeconds.Value * 2.2);
+}

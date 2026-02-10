@@ -9,6 +9,8 @@
         displayName = Context.Session.GetString("displayName");
         username = Context.Session.GetString("username");
     }
+
+    var isFullBleed = (ViewData["FullBleed"] as bool?) == true;
 }
 
 <!DOCTYPE html>
@@ -34,11 +36,11 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 </head>
 
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100 @(isFullBleed ? "fullbleed" : "")">
 
     <div class="d-none" id="main-gradient"></div>
 
-    <header>
+    <header class="site-header">
         <nav class="navbar navbar-expand-md navbar-dark" id="primary-nav">
             <div class="container">
 
@@ -58,7 +60,6 @@
                             <span class="notification-indicator"></span>
                         </a>
 
-                        <!-- ✅ Games aponta para a nova lib -->
                         <a class="nav-link d-inline mr-2" href="/games">Games</a>
 
                         <button class="navbar-toggler collapsed" type="button"
@@ -142,38 +143,18 @@
                             </li>
                         }
 
-                        @if (string.IsNullOrEmpty(username))
+                        @if (!string.IsNullOrEmpty(username))
                         {
-                            <li class="nav-item mr-sm-2 d-block d-md-none">
-                                <a class="nav-link" href="/Account/Login">Login</a>
-                            </li>
-                            <li class="nav-item mr-sm-2 d-block d-md-none">
-                                <a class="nav-link" href="/Account/Register">Register</a>
+                            <li class="nav-item d-none d-md-block mr-2">
+                                <a class="nav-link" href="/games">Games</a>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item mr-sm-2 d-block d-md-none">
-                                <div class="row mx-0" id="mobile-user-nav">
-                                    <div class="col-4 pr-1">
-                                        <a class="nav-link" href="/u/@(username)"><i class="fas fa-user-alt"></i> My Profile</a>
-                                    </div>
-                                    <div class="col-4 px-1">
-                                        <a class="nav-link" href="/Settings"><i class="fas fa-cogs"></i> Settings</a>
-                                    </div>
-                                    <div class="col-4 pl-1">
-                                        <a class="nav-link" href="/users/Logout">
-                                            <i class="fas fa-sign-out-alt"></i> Log Out
-                                        </a>
-                                    </div>
-                                </div>
+                            <li class="nav-item d-none d-md-block mr-2">
+                                <a class="nav-link" href="/games">Games</a>
                             </li>
                         }
-
-                        <!-- ✅ Games (desktop) -->
-                        <li class="nav-item d-none d-md-block mr-2">
-                            <a class="nav-link" href="/games">Games</a>
-                        </li>
                     </ul>
 
                     <!-- SEARCH -->
@@ -204,7 +185,7 @@
         </nav>
     </header>
 
-    <main role="main" class="container flex-grow-1 pb-3">
+    <main role="main" class="@(isFullBleed ? "flex-grow-1 p-0" : "container flex-grow-1 pb-3")">
         @RenderBody()
     </main>
 
@@ -234,7 +215,6 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <script src="~/js/site.js" asp-append-version="true"></script>
 </body>
 </html>
