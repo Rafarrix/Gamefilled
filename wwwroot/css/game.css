@@ -1,77 +1,67 @@
 ﻿/* ============================================================================
-   Gamefilled — game.css (SÓ /games/{id})
-   Background “Backloggd-like”:
-   - Blur forte + escala grande (nunca corta)
-   - Overlay com vinheta suave
-   - Noise subtil para ficar natural
-   - Topo mais escuro para o header ficar legível SEM fundo
+   /games/{id} — game.css (Backloggd-like cover art strip)
+   - Conteúdo mais “baixo” dentro do BG (como o Backloggd)
+   - 3 cards de cima maiores/quase quadrados
+   - TTB em retângulo centrado (sem texto extra)
+   - Screenshots mais abaixo
+   - Sem overflow lateral
    ============================================================================ */
 
-.bl-hero {
+.gf-game-page {
     position: relative;
-    overflow: hidden;
-    /* ✅ hero só no topo (não ocupa a página toda) */
-    height: 640px;
-    min-height: 640px;
-    padding: 0;
-    --muted: rgba(229,231,235,0.70);
+    overflow-x: clip; /* evita scroll lateral por 1-2px de blur/rounding */
 }
 
-/* FUNDO: super largo, blur forte, baixa opacidade (mais “suave”) */
-.bl-hero__bg {
+/* ✅ BG só no topo */
+#game-cover-art,
+.gf-cover-art {
     position: absolute;
-    top: -220px;
-    bottom: -220px;
-    left: 50%;
-    width: 190vw;
-    transform: translateX(-50%) scale(1.14);
-    background-image: var(--bg);
-    background-size: cover;
-    background-position: center;
-    /* 🔥 aqui está a diferença principal */
-    filter: blur(46px) saturate(1.10) brightness(0.92);
-    opacity: 0.42;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 520px; /* <-- BG um bocadinho menos “comprido” */
+    overflow: hidden;
     z-index: 0;
-    pointer-events: none;
 }
 
-/* OVERLAY: vinheta suave + topo escuro (para nav legível) + base escura */
-.bl-hero__overlay {
+    /* imagem */
+    #game-cover-art img,
+    .gf-cover-art img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 42%;
+        display: block;
+        /* “natural” */
+        filter: saturate(1.05) brightness(0.90);
+    }
+
+/* gradiente (tapa o corte e dá contraste ao topo) */
+#gradient {
     position: absolute;
     inset: 0;
     z-index: 1;
     pointer-events: none;
     background:
-    /* ✅ topo escuro (substitui “bg do header”) */
-    linear-gradient(to bottom, rgba(10,12,16,0.92) 0%, rgba(10,12,16,0.55) 22%, rgba(10,12,16,0.22) 45%, rgba(10,12,16,0.08) 62%, rgba(14,16,21,0.00) 72% ),
-    /* ✅ vinheta muito suave (lados) */
-    radial-gradient(85% 125% at 50% 38%, rgba(10,12,16,0.02) 0%, rgba(10,12,16,0.30) 55%, rgba(10,12,16,0.82) 100% ),
-    /* ✅ “assenta” o hero no fundo do site */
-    linear-gradient(to bottom, rgba(14,16,21,0.00) 0%, rgba(14,16,21,0.65) 78%, rgba(14,16,21,1.00) 100% );
+    /* topo escuro p/ navbar */
+    linear-gradient(to bottom, rgba(10,12,16,0.92) 0%, rgba(10,12,16,0.68) 18%, rgba(10,12,16,0.30) 40%, rgba(10,12,16,0.14) 60%, rgba(10,12,16,0.05) 72%, rgba(10,12,16,0.00) 78% ),
+    /* vinheta */
+    radial-gradient(110% 120% at 50% 35%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.30) 58%, rgba(10,12,16,0.86) 100% ),
+    /* fade para o fundo do site */
+    linear-gradient(to bottom, rgba(14,16,21,0.00) 0%, rgba(14,16,21,0.74) 80%, rgba(14,16,21,1.00) 100% );
 }
 
-/* ✅ Noise/grão subtil: dá aquele look “natural” */
-.bl-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background-image: repeating-linear-gradient( 0deg, rgba(255,255,255,0.020), rgba(255,255,255,0.020) 1px, rgba(0,0,0,0.020) 2px, rgba(0,0,0,0.020) 3px );
-    opacity: 0.18;
-    mix-blend-mode: overlay;
-}
-
-/* “shell” do conteúdo */
+/* ✅ Conteúdo por cima do BG */
 .bl-shell {
     position: relative;
-    z-index: 3;
+    z-index: 2;
     max-width: 1100px;
     margin: 0 auto;
-    padding: 56px 0 0;
+    /* IMPORTANTE: baixa o conteúdo (como o Backloggd) */
+    padding: 180px 0 0; /* <-- aumenta/diminui aqui se quiseres mais baixo/alto */
 }
 
-/* Layout: cover + info */
+/* Layout */
 .bl-top {
     display: grid;
     grid-template-columns: 190px 1fr;
@@ -87,9 +77,17 @@
     display: block;
 }
 
-/* Main */
+.bl-cover-fallback {
+    width: 190px;
+    aspect-ratio: 2 / 3;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Title row */
 .bl-main {
-    padding-top: 6px;
+    padding-top: 10px;
 }
 
 .bl-title-row {
@@ -99,6 +97,10 @@
     gap: 16px;
 }
 
+.bl-title-wrap {
+    min-width: 0;
+}
+
 .bl-title {
     margin: 0;
     font-weight: 800;
@@ -106,12 +108,23 @@
     letter-spacing: 0.2px;
 }
 
+.bl-byline {
+    margin-top: 6px;
+    opacity: .75;
+    font-size: 13px;
+}
+
+    .bl-byline strong {
+        opacity: 1;
+    }
+
 .bl-release {
     display: inline-flex;
     gap: 8px;
     align-items: center;
     margin-top: 6px;
     flex-wrap: wrap;
+    white-space: nowrap;
 }
 
 .pill {
@@ -121,23 +134,12 @@
     border: 1px solid rgba(255,255,255,0.10);
     background: rgba(255,255,255,0.06);
     color: rgba(229,231,235,0.88);
-    white-space: nowrap;
 }
 
 .pill-muted {
     background: rgba(0,0,0,0.22);
     color: rgba(229,231,235,0.75);
 }
-
-.bl-byline {
-    margin-top: 6px;
-    color: var(--muted);
-    font-size: 13px;
-}
-
-    .bl-byline strong {
-        color: rgba(229,231,235,0.92);
-    }
 
 .bl-summary {
     margin: 10px 0 14px;
@@ -183,39 +185,51 @@
     color: rgba(229,231,235,0.82);
 }
 
-/* Cards */
+/* =========================
+   CARDS (3 em cima) — maiores/quase quadrados + texto centrado
+   ========================= */
 .bl-cards {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 12px;
+    margin-top: 14px;
+}
+
+.bl-cards--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .bl-card {
     border: 1px solid rgba(255,255,255,0.10);
     background: rgba(255,255,255,0.05);
     border-radius: 14px;
-    padding: 12px 14px;
+    padding: 16px 16px;
     backdrop-filter: blur(10px);
     transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
+    /* faz “mais quadrado” */
+    min-height: 108px;
+}
+
+.bl-card--center {
+    text-align: center;
 }
 
 .bl-card__label {
     font-size: 12px;
     color: rgba(229,231,235,0.70);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .bl-card__value {
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 800;
     letter-spacing: 0.2px;
+    line-height: 1.0;
 }
 
 .bl-card__sub {
     font-size: 12px;
     color: rgba(229,231,235,0.60);
-    margin-top: 4px;
+    margin-top: 8px;
 }
 
 .bl-card:hover {
@@ -224,36 +238,71 @@
     box-shadow: 0 12px 30px rgba(0,0,0,0.22);
 }
 
-/* Time-to-beat */
+/* =========================
+   TTB (retângulo centrado)
+   ========================= */
+.bl-ttb-panel {
+    margin-top: 14px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    backdrop-filter: blur(10px);
+}
+
+.bl-ttb-panel__title {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.7px;
+    text-transform: none;
+    color: rgba(229,231,235,0.78);
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* grid dos 3 valores */
 .bl-ttb {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 8px;
+    gap: 12px;
 }
 
 .bl-ttb__item {
     border: 1px solid rgba(255,255,255,0.10);
     background: rgba(0,0,0,0.18);
     border-radius: 12px;
-    padding: 10px 10px;
+    padding: 16px 10px;
     text-align: center;
 }
 
 .bl-ttb__value {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.05;
 }
 
 .bl-ttb__label {
-    margin-top: 2px;
-    font-size: 11px;
+    margin-top: 6px;
+    font-size: 12px;
     color: rgba(229,231,235,0.65);
 }
 
-/* Screenshots */
+/* =========================
+   Screenshots (mais abaixo)
+   ========================= */
+.bl-screens {
+    margin-top: 26px; /* <-- baixa os screenshots */
+}
+
+.bl-section-title {
+    margin-top: 0;
+    font-weight: 800;
+    font-size: 14px;
+    opacity: .9;
+}
+
 .bl-media {
-    margin-top: 22px;
+    margin-top: 10px;
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 10px;
@@ -268,15 +317,17 @@
     box-shadow: 0 12px 30px rgba(0,0,0,0.30);
 }
 
-/* Responsive */
+/* =========================
+   Responsive
+   ========================= */
 @media (max-width: 992px) {
-    .bl-hero {
-        height: 700px;
-        min-height: 700px;
+    #game-cover-art,
+    .gf-cover-art {
+        height: 560px;
     }
 
     .bl-shell {
-        padding: 44px 18px 0;
+        padding: 190px 18px 0; /* mantém “baixo” em tablets */
         max-width: 980px;
     }
 
@@ -284,7 +335,7 @@
         grid-template-columns: 160px 1fr;
     }
 
-    .bl-cover img {
+    .bl-cover img, .bl-cover-fallback {
         width: 160px;
     }
 
@@ -292,8 +343,8 @@
         font-size: 30px;
     }
 
-    .bl-cards {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .bl-cards--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .bl-media {
@@ -302,20 +353,20 @@
 }
 
 @media (max-width: 576px) {
-    .bl-hero {
-        height: 820px;
-        min-height: 820px;
+    #game-cover-art,
+    .gf-cover-art {
+        height: 620px;
     }
 
     .bl-shell {
-        padding: 34px 14px 0;
+        padding: 170px 14px 0;
     }
 
     .bl-top {
         grid-template-columns: 1fr;
     }
 
-    .bl-cover img {
+    .bl-cover img, .bl-cover-fallback {
         width: 180px;
     }
 
@@ -324,17 +375,12 @@
         align-items: flex-start;
     }
 
-    .bl-cards {
+    .bl-cards--3 {
         grid-template-columns: 1fr;
     }
 
-    .bl-hero__bg {
-        width: 220vw;
-        transform: translateX(-50%) scale(1.16);
-        top: -240px;
-        bottom: -240px;
-        filter: blur(52px) saturate(1.10) brightness(0.92);
-        opacity: 0.40;
+    .bl-ttb {
+        grid-template-columns: 1fr;
     }
 
     .bl-media {
@@ -342,8 +388,8 @@
     }
 }
 
-/* Hero começa “atrás” do header, mas sem bloquear cliques */
-body.fullbleed .bl-hero {
+/* FullBleed: encaixe com navbar transparente */
+body.fullbleed .gf-game-page {
     margin-top: -74px;
     padding-top: 74px;
 }

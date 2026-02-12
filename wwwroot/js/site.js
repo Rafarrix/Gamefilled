@@ -4,7 +4,8 @@
    - Header: autocomplete IGDB
    - Mostra: "Nome (Ano)"
    - Enter sem seleção -> abre /search (submit do form)
-   - Enter com seleção -> abre o jogo selecionado
+   - Enter com seleção -> abre o jogo selecionado (/games/{id:int})
+   - ✅ NOVO: Header loading bar (durante fetch IGDB e navegação interna)
    ============================================================ */
 
 
@@ -14,17 +15,21 @@
 (function ($) {
     "use strict";
 
+    // Se o jQuery não existir, não quebra o resto do JS
     if (typeof $ === "undefined") {
         console.warn("jQuery não encontrado — dropdown do perfil desativado.");
         return;
     }
 
     $(function () {
+
         function enableHoverDropdown() {
             var $profile = $('#profile-li');
 
+            // limpa handlers antigos (evita duplicar eventos)
             $profile.off('mouseenter.profileHover mouseleave.profileHover');
 
+            // só no desktop
             if (window.matchMedia("(min-width: 768px)").matches) {
                 $profile.on('mouseenter.profileHover', function () {
                     $(this).addClass('show');
@@ -42,13 +47,46 @@
 
         enableHoverDropdown();
 
+        // re-aplica ao redimensionar
         var resizeTimer = null;
         $(window).on('resize', function () {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(enableHoverDropdown, 150);
         });
     });
+
 }(jQuery));
+
+
+/* ============================================================
+   HEADER LOADER — API simples
+   - Mostra/Esconde a linha de loading por baixo do header
+   - Usa um contador para aguentar vários requests ao mesmo tempo
+   ============================================================ */
+(function () {
+    const loader = document.getElementById("header-loader");
+    if (!loader) return;
+
+    let activeRequests = 0;
+
+    window.HeaderLoader = {
+        start() {
+            activeRequests++;
+            loader.classList.add("active");
+        },
+
+        stop() {
+            activeRequests = Math.max(0, activeRequests - 1);
+
+            // só esconde quando já não há requests
+            if (activeRequests === 0) {
+                setTimeout(() => {
+                    loader.classList.remove("active");
+                }, 200);
+            }
+        }
+    };
+})();
 
 
 /* ============================================================
@@ -139,6 +177,7 @@
     const wrap = qs("#nav-search-wrap");
     const dropdown = qs("#igdb-dropdown");
 
+    // se não existir, saímos sem rebentar nada
     if (!input || !wrap || !dropdown) return;
 
     /* ----------------------------
@@ -162,6 +201,7 @@
 
     function setActive(index) {
         activeIndex = index;
+
         const els = qsa(".igdb-item", dropdown);
         els.forEach((el, i) => el.classList.toggle("active", i === index));
 
@@ -188,12 +228,17 @@
 
         const htmlItems = items.map((g, idx) => {
             const name = g.name || "Untitled";
-            const slug = g.slug || "";
-
             const year = unixToYear(g.bestReleaseDate ?? g.firstReleaseDate);
-            const label = year ? `${escapeHtml(name)} (${escapeHtml(year)})` : `${escapeHtml(name)}`;
 
-            const href = slug ? `/games/${encodeURIComponent(slug)}` : "#";
+            // Label: Nome (Ano)
+            const label = year
+                ? `${escapeHtml(name)} (${escapeHtml(year)})`
+                : `${escapeHtml(name)}`;
+
+            // ✅ O TEU SITE USA /games/{id:int}
+            // Logo: temos de ir por ID NUMÉRICO, nunca por slug.
+            const id = Number(g.id);
+            const href = Number.isFinite(id) && id > 0 ? `/games/${id}` : "#";
 
             return `
                 <a class="igdb-item" role="option" data-idx="${idx}" href="${href}">
@@ -212,23 +257,29 @@
     }
 
     /* ----------------------------
-       Fetch
+       Fetch (✅ COM LOADER)
     ----------------------------- */
     async function fetchResults(term) {
         term = (term || "").trim();
 
+        // mínimo de 2 chars
         if (term.length < 2) {
             closeDropdown();
             return;
         }
 
+        // evita re-fetch se não mudou e dropdown já está aberto
         if (term === lastTerm && isVisible(dropdown)) return;
         lastTerm = term;
 
+        // cancela pedidos anteriores
         if (abortController) abortController.abort();
         abortController = new AbortController();
 
         try {
+            // ✅ 4) Mostrar loading bar durante o fetch do autocomplete
+            window.HeaderLoader?.start();
+
             const url = `/api/igdbsearch?term=${encodeURIComponent(term)}`;
             log("IGDB fetch ->", url);
 
@@ -255,6 +306,7 @@
                 gamesArray = data.results;
             }
 
+            // Normaliza nomes de campos (IGDB + DTOs C#)
             let normalized = gamesArray.map(x => ({
                 id: x.id ?? x.Id,
                 name: x.name ?? x.Name,
@@ -285,6 +337,7 @@
 
             const shortTerm = term.length <= 4;
 
+            // ordenação: jogo base + match de título + popularidade
             normalized.sort((a, b) => {
                 const aScore =
                     baseGameBoost(a) +
@@ -308,6 +361,9 @@
             warn("Erro IGDB:", err);
             dropdown.innerHTML = `<div class="igdb-footer">Erro a carregar resultados.</div>`;
             openDropdown();
+        } finally {
+            // ✅ 4) Esconder loading bar quando termina (ok/erro)
+            window.HeaderLoader?.stop();
         }
     }
 
@@ -324,7 +380,7 @@
     });
 
     // ENTER:
-    // - se houver item ativo: abre o jogo
+    // - se houver item ativo: abre o jogo (via href)
     // - se não houver item ativo: deixa o submit normal do form (abre /search)
     input.addEventListener("keydown", (e) => {
         if (!isVisible(dropdown)) return;
@@ -342,10 +398,18 @@
         }
         else if (e.key === "Enter") {
             if (activeIndex >= 0 && els[activeIndex]) {
-                e.preventDefault();
-                els[activeIndex].click();
+                // se o item tiver href "#", não faz nada
+                const href = els[activeIndex].getAttribute("href") || "#";
+                if (href !== "#") {
+                    e.preventDefault();
+
+                    // ✅ 5) Ao navegar, mostra loading bar imediatamente
+                    window.HeaderLoader?.start();
+
+                    window.location.href = href; // navega direto
+                }
             }
-            // ✅ sem item ativo: NÃO bloqueia -> o browser faz submit do form
+            // ✅ sem item ativo: NÃO bloqueia -> o browser faz submit do form (/search)
         }
         else if (e.key === "Escape") {
             e.preventDefault();
@@ -376,4 +440,57 @@
         }, 120);
     });
 
+})();
+
+
+/* ============================================================
+   PARTE 3 — LOADING AO MUDAR DE PÁGINA (links internos)
+   - ✅ 5) Mostra a linha quando clicas num link interno (/...)
+   - Ignora: anchors (#), javascript:, mailto:, tel:
+   - Ignora: Ctrl/Shift/Alt/Meta (abrir em nova tab, etc.)
+   ============================================================ */
+(function () {
+    document.addEventListener("click", (e) => {
+        const a = e.target.closest("a[href]");
+        if (!a) return;
+
+        // se já foi prevenido por outra coisa, não mexemos
+        if (e.defaultPrevented) return;
+
+        const href = a.getAttribute("href") || "";
+
+        // ignora links que não são navegação normal
+        if (!href || href === "#") return;
+        if (href.startsWith("#")) return;
+        if (href.startsWith("javascript:")) return;
+        if (href.startsWith("mailto:")) return;
+        if (href.startsWith("tel:")) return;
+
+        // se for para outra origem (http/https) não mexemos
+        if (href.startsWith("http://") || href.startsWith("https://")) return;
+
+        // se o user está a abrir em nova tab/janela, não faz sentido mostrar loader
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+        // só links internos
+        if (href.startsWith("/")) {
+            window.HeaderLoader?.start();
+        }
+    });
+
+    // também ativa quando há submit de forms (ex: /search)
+    document.addEventListener("submit", (e) => {
+        const form = e.target;
+        if (!form || form.tagName !== "FORM") return;
+
+        // se for GET/POST normal -> mostra loader
+        window.HeaderLoader?.start();
+    });
+
+    // segurança: quando a página termina de carregar, garante que o loader não fica preso
+    window.addEventListener("pageshow", () => {
+        // se o browser voltou do cache (bfcache) pode ficar ativo -> limpamos
+        const loader = document.getElementById("header-loader");
+        if (loader) loader.classList.remove("active");
+    });
 })();

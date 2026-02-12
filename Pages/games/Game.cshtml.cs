@@ -1,4 +1,4 @@
-using Gamefilled.Infrastructure;
+﻿using Gamefilled.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
@@ -73,8 +73,11 @@ namespace Gamefilled.Pages.games
                     Game.Screenshots?.FirstOrDefault()?.ImageId ??
                     Game.Cover?.ImageId;
 
-                BgUrl = BuildIgdbImage(bgId, "t_1080p");
-                CoverUrl = BuildIgdbImage(Game.Cover?.ImageId, "t_cover_big");
+                // Backloggd-like: 1080p 2x + webp
+                BgUrl = BuildIgdbImage(bgId, "t_1080p_2x", "webp");
+
+                // cover grande (podes trocar p/ t_cover_big_2x se quiseres)
+                CoverUrl = BuildIgdbImage(Game.Cover?.ImageId, "t_cover_big", "jpg");
 
                 return Page();
             }
@@ -105,9 +108,9 @@ namespace Gamefilled.Pages.games
             }
         }
 
-        private static string? BuildIgdbImage(string? imageId, string size)
+        private static string? BuildIgdbImage(string? imageId, string size, string ext)
             => string.IsNullOrWhiteSpace(imageId)
                 ? null
-                : $"https://images.igdb.com/igdb/image/upload/{size}/{imageId}.jpg";
+                : $"https://images.igdb.com/igdb/image/upload/{size}/{imageId}.{ext}";
     }
 }

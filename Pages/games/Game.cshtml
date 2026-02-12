@@ -2,27 +2,57 @@
 @model Gamefilled.Pages.games.GameModel
 @{
     ViewData["Title"] = Model.Game?.Name ?? "Game";
-    ViewData["FullBleed"] = true; // ✅ gatilho no _Layout
+    ViewData["FullBleed"] = true; // full-bleed no _Layout
 }
 
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
 
-<div class="bl-hero" style="--bg:url('@(Model.BgUrl ?? "")')">
-    <div class="bl-hero__bg"></div>
-    <div class="bl-hero__overlay"></div>
+<div class="gf-game-page">
 
+    <!-- BG strip (Backloggd-like) -->
+    <div class="gf-cover-art" id="game-cover-art">
+        <div id="gradient"></div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.BgUrl))
+        {
+            <img src="@Model.BgUrl" alt="" aria-hidden="true" />
+        }
+    </div>
+
+    <!-- Conteúdo -->
     <div class="bl-shell">
         <div class="bl-top">
+
             <div class="bl-cover">
                 @if (!string.IsNullOrWhiteSpace(Model.CoverUrl))
                 {
                     <img src="@Model.CoverUrl" alt="@Model.Game?.Name" />
                 }
+                else
+                {
+                    <div class="bl-cover-fallback"></div>
+                }
             </div>
 
             <div class="bl-main">
+
                 <div class="bl-title-row">
-                    <h1 class="bl-title">@Model.Game?.Name</h1>
+                    <div class="bl-title-wrap">
+                        <h1 class="bl-title">@Model.Game?.Name</h1>
+
+                        @{
+                            var dev = Model.Game?.InvolvedCompanies?
+                            .Where(x => x.Developer == true && !string.IsNullOrWhiteSpace(x.Company?.Name))
+                            .Select(x => x.Company!.Name!)
+                            .Distinct()
+                            .FirstOrDefault();
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(dev))
+                        {
+                            <div class="bl-byline">by <strong>@dev</strong></div>
+                        }
+                    </div>
 
                     @if (Model.Game?.FirstReleaseDateUnix != null)
                     {
@@ -30,21 +60,6 @@
                             <span class="pill pill-muted">Released</span>
                             <span class="pill">@UnixToDate(Model.Game.FirstReleaseDateUnix.Value)</span>
                         </div>
-                    }
-                </div>
-
-                <div class="bl-byline">
-                    @{
-                        var dev = Model.Game?.InvolvedCompanies?
-                        .Where(x => x.Developer == true && !string.IsNullOrWhiteSpace(x.Company?.Name))
-                        .Select(x => x.Company!.Name!)
-                        .Distinct()
-                        .FirstOrDefault();
-                    }
-
-                    @if (!string.IsNullOrWhiteSpace(dev))
-                    {
-                        <span>by <strong>@dev</strong></span>
                     }
                 </div>
 
@@ -81,66 +96,67 @@
                     </div>
                 </div>
 
-                <div class="bl-cards">
-                    <div class="bl-card">
+                <!-- 3 blocos (mais quadrados e maiores) -->
+                <div class="bl-cards bl-cards--3">
+                    <div class="bl-card bl-card--center">
                         <div class="bl-card__label">Avg Rating</div>
                         <div class="bl-card__value">@Fmt(Model.Game?.AggregatedRating ?? Model.Game?.Rating)</div>
                         <div class="bl-card__sub">@Count(Model.Game?.AggregatedRatingCount ?? Model.Game?.RatingCount) votes</div>
                     </div>
 
-                    <div class="bl-card">
+                    <div class="bl-card bl-card--center">
                         <div class="bl-card__label">Follows</div>
                         <div class="bl-card__value">@Count(Model.Game?.Follows)</div>
                         <div class="bl-card__sub">followers</div>
                     </div>
 
-                    <div class="bl-card">
+                    <div class="bl-card bl-card--center">
                         <div class="bl-card__label">Hypes</div>
                         <div class="bl-card__value">@Count(Model.Game?.Hypes)</div>
                         <div class="bl-card__sub">hype</div>
                     </div>
+                </div>
 
-                    <div class="bl-card">
-                        <div class="bl-card__label">Time to beat</div>
+                <!-- TTB (retângulo, centrado, sem o texto "best effort") -->
+                <div class="bl-ttb-panel">
+                    <div class="bl-ttb-panel__title">Time to beat</div>
 
-                        <div class="bl-ttb">
-                            <div class="bl-ttb__item">
-                                <div class="bl-ttb__value">@Ttb(Model.TtbNormallySeconds)</div>
-                                <div class="bl-ttb__label">average</div>
-                            </div>
-
-                            <div class="bl-ttb__item">
-                                <div class="bl-ttb__value">@Ttb(Model.TtbCompletelySeconds)</div>
-                                <div class="bl-ttb__label">to finish</div>
-                            </div>
-
-                            <div class="bl-ttb__item">
-                                <div class="bl-ttb__value">@Ttb(MasterLike(Model.TtbCompletelySeconds))</div>
-                                <div class="bl-ttb__label">to master</div>
-                            </div>
+                    <div class="bl-ttb">
+                        <div class="bl-ttb__item">
+                            <div class="bl-ttb__value">@Ttb(Model.TtbNormallySeconds)</div>
+                            <div class="bl-ttb__label">average</div>
                         </div>
 
-                        <div class="bl-card__sub">IGDB time_to_beat (best effort)</div>
+                        <div class="bl-ttb__item">
+                            <div class="bl-ttb__value">@Ttb(Model.TtbCompletelySeconds)</div>
+                            <div class="bl-ttb__label">to finish</div>
+                        </div>
+
+                        <div class="bl-ttb__item">
+                            <div class="bl-ttb__value">@Ttb(MasterLike(Model.TtbCompletelySeconds))</div>
+                            <div class="bl-ttb__label">to master</div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Screenshots (mais abaixo) -->
                 @if (Model.Game?.Screenshots?.Any() == true)
                 {
-                    <div class="bl-media">
-                        @foreach (var s in Model.Game.Screenshots.Take(6))
-                        {
-                            var url = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{s.ImageId}.jpg";
-                            <img class="bl-media__img" src="@url" alt="Screenshot" loading="lazy" />
-                        }
+                    <div class="bl-screens">
+                        <div class="bl-section-title">Screenshots</div>
+
+                        <div class="bl-media">
+                            @foreach (var s in Model.Game.Screenshots.Take(6))
+                            {
+                                var url = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{s.ImageId}.jpg";
+                                <img class="bl-media__img" src="@url" alt="Screenshot" loading="lazy" />
+                            }
+                        </div>
                     </div>
                 }
             </div>
         </div>
     </div>
-</div>
-
-<div class="bl-after">
-    @* aqui podes meter no futuro: tabs, related games, reviews *@
 </div>
 
 @functions {

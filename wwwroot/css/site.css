@@ -6,8 +6,32 @@
    ============================================================================ */
 
 /* =========================
-   BASE
+   BASE + FIX OVERFLOW-X (sem scroll lateral / sem barras estranhas)
    ========================= */
+
+/* ✅ Box sizing global (evita elementos a “crescerem” além do viewport) */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ✅ Garante que nada usa “larguras fantasma” */
+html {
+    width: 100%;
+}
+
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
+
+/* ✅ Se algum elemento estourar, bloqueia scroll horizontal (sem quebrar layout) */
+body {
+    overflow-x: hidden;
+}
+
 html, body {
     height: 100%;
     background: #0e1015;
@@ -900,7 +924,7 @@ input[type="search"]::-webkit-search-cancel-button {
     position: absolute;
     inset: 0;
     border-radius: 14px;
-    background: linear-gradient( to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.20) 100% );
+    background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.20) 100%);
     opacity: 0;
     transition: opacity .14s ease;
     pointer-events: none;
@@ -967,8 +991,6 @@ input[type="search"]::-webkit-search-cancel-button {
 
 /* =========================================================
    FULLBLEED NAV (estilo Backloggd)
-   - navbar totalmente transparente
-   - o contraste vem do gradiente no topo do hero
    ========================================================= */
 body.fullbleed #primary-nav.navbar {
     background: transparent !important;
@@ -983,5 +1005,75 @@ body.fullbleed #primary-nav.navbar {
     z-index: 9999;
 }
 
-/* NÃO usar footer transparente aqui (hero não chega lá).
-   Mantemos o footer normal mas sem bordas (já está). */
+/* =========================================================
+   HEADER LOADING BAR (refresh / loading visual)
+   ========================================================= */
+#header-loader {
+    position: fixed;
+    top: 56px; /* altura aproximada da navbar (ajusta se precisares) */
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 5000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+    #header-loader.active {
+        opacity: 1;
+    }
+
+.header-loader-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #22c55e, #00b020, #4ade80);
+    box-shadow: 0 0 12px rgba(34,197,94,.55);
+    animation: header-loader-move 1.2s ease-in-out infinite;
+}
+
+/* animação tipo "indeterminate" */
+@keyframes header-loader-move {
+    0% {
+        width: 0%;
+        transform: translateX(0);
+    }
+
+    40% {
+        width: 60%;
+    }
+
+    100% {
+        width: 100%;
+        transform: translateX(100%);
+    }
+}
+
+/* =========================================================
+   GLOBAL SCROLLBAR — Verde Gamefilled
+   ========================================================= */
+
+/* Firefox */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #00b020 rgba(255,255,255,0.08);
+}
+
+/* Chrome / Edge / Safari */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.06);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #22c55e, #00b020);
+    border-radius: 999px;
+    border: 2px solid #0e1015; /* cor do fundo do site */
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #4ade80, #00b020);
+    }
