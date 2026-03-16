@@ -31,7 +31,7 @@ builder.Services.AddHttpClient<IgdbTokenProvider>();
 // HttpClient para IGDB (base address v4)
 builder.Services.AddHttpClient<IgdbClient>(client =>
 {
-    client.BaseAddress = new Uri("https://api.igdb.com/v4");
+    client.BaseAddress = new Uri("https://api.igdb.com/v4/");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 

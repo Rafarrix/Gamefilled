@@ -40,8 +40,8 @@
 
     <div class="d-none" id="main-gradient"></div>
 
-    <header class="site-header">
-        <nav class="navbar navbar-expand-md navbar-dark" id="primary-nav">
+    <header class="site-header @(isFullBleed ? "site-header--overlay" : "")">
+        <nav class="navbar navbar-expand-md navbar-dark @(isFullBleed ? "navbar--overlay" : "")" id="primary-nav">
             <div class="container">
 
                 <!-- LOGO -->
@@ -143,18 +143,9 @@
                             </li>
                         }
 
-                        @if (!string.IsNullOrEmpty(username))
-                        {
-                            <li class="nav-item d-none d-md-block mr-2">
-                                <a class="nav-link" href="/games">Games</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item d-none d-md-block mr-2">
-                                <a class="nav-link" href="/games">Games</a>
-                            </li>
-                        }
+                        <li class="nav-item d-none d-md-block mr-2">
+                            <a class="nav-link" href="/games">Games</a>
+                        </li>
                     </ul>
 
                     <!-- SEARCH -->
@@ -183,7 +174,8 @@
                 </div>
             </div>
         </nav>
-        <!-- 🔄 Barra de loading (overlay, não mexe no layout) -->
+
+        <!-- 🔄 Barra de loading -->
         <div id="header-loader">
             <div class="header-loader-bar"></div>
         </div>

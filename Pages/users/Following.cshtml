@@ -1,0 +1,26 @@
+﻿@page "/u/{username}/following"
+@model Gamefilled.Pages.users.FollowingModel
+@{
+    ViewData["Title"] = $"{Model.ProfileUser?.Username} Following";
+}
+
+<div class="container py-4">
+    <h1 class="mb-4">@Model.ProfileUser?.Username is Following</h1>
+
+    @if (Model.Users.Any())
+    {
+        <div class="list-group">
+            @foreach (var user in Model.Users)
+            {
+                <a class="list-group-item list-group-item-action bg-transparent text-light border-secondary"
+                   href="/u/@user.Username">
+                    @user.Username
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-muted">Not following anyone yet.</div>
+    }
+</div>

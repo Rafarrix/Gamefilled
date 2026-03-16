@@ -1,10 +1,270 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Gamefilled";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="gf-home-page">
+
+    <section class="gf-home-hero">
+        <div class="gf-home-hero__bg" aria-hidden="true">
+            <img src="/lib/imgs/indexbackground.png" alt="" />
+            <div class="gf-home-hero__overlay"></div>
+        </div>
+
+        <div class="gf-home-shell">
+            @if (!Model.IsLoggedIn)
+            {
+                <div class="gf-home-hero__content">
+                    <div class="gf-home-kicker">Track. Rate. Share.</div>
+
+                    <h1 class="gf-home-title">Gamefilled</h1>
+
+                    <p class="gf-home-subtitle">
+                        Your personal place to track games, build your backlog, discover new favourites,
+                        and share your gaming journey with friends.
+                    </p>
+
+                    <div class="gf-home-actions">
+                        <a class="btn btn-main gf-home-btn" href="/games">Explore Games</a>
+                        <a class="btn gf-home-btn gf-home-btn--ghost" href="/users/Register">Create Account</a>
+                    </div>
+
+                    <div class="gf-home-features">
+                        <div class="gf-home-feature">
+                            <div class="gf-home-feature__icon"><i class="fas fa-gamepad"></i></div>
+                            <div class="gf-home-feature__text">
+                                <strong>Track games</strong>
+                                <span>Keep your played, playing and wishlist organised.</span>
+                            </div>
+                        </div>
+
+                        <div class="gf-home-feature">
+                            <div class="gf-home-feature__icon"><i class="fas fa-layer-group"></i></div>
+                            <div class="gf-home-feature__text">
+                                <strong>Build your backlog</strong>
+                                <span>Save the games you want to play next.</span>
+                            </div>
+                        </div>
+
+                        <div class="gf-home-feature">
+                            <div class="gf-home-feature__icon"><i class="fas fa-user-friends"></i></div>
+                            <div class="gf-home-feature__text">
+                                <strong>Follow friends</strong>
+                                <span>See what others are playing and discovering.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="gf-home-hero__content gf-home-hero__content--logged">
+                    <div class="gf-home-kicker">Welcome back</div>
+
+                    <h1 class="gf-home-title gf-home-title--logged">
+                        Welcome back, @(Model.DisplayName ?? Model.Username)
+                    </h1>
+
+                    <p class="gf-home-subtitle">
+                        Pick up where you left off, explore more games, and keep building your profile.
+                    </p>
+
+                    <div class="gf-home-actions">
+                        <a class="btn btn-main gf-home-btn" href="/u/@Model.Username/">Go to Profile</a>
+                        <a class="btn gf-home-btn gf-home-btn--ghost" href="/games">Browse Games</a>
+                    </div>
+
+                    <div class="gf-home-features gf-home-features--logged">
+                        <div class="gf-home-feature">
+                            <div class="gf-home-feature__icon"><i class="fas fa-user"></i></div>
+                            <div class="gf-home-feature__text">
+                                <strong>@(Model.DisplayName ?? "Profile ready")</strong>
+                                <span>Your profile is ready to keep growing.</span>
+                            </div>
+                        </div>
+
+                        <div class="gf-home-feature">
+                            <div class="gf-home-feature__icon"><i class="fas fa-bookmark"></i></div>
+                            <div class="gf-home-feature__text">
+                                <strong>Backlog</strong>
+                                <span>Keep adding the next games you want to play.</span>
+                            </div>
+                        </div>
+
+                        <div class="gf-home-feature">
+                            <div class="gf-home-feature__icon"><i class="fas fa-users"></i></div>
+                            <div class="gf-home-feature__text">
+                                <strong>Social</strong>
+                                <span>Friends and profile customisation come next.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <div class="gf-home-main">
+        <div class="container">
+
+            <section class="gf-home-section">
+                <div class="gf-home-section__head">
+                    <div>
+                        <div class="gf-home-section__eyebrow">Discover</div>
+                        <h2 class="gf-home-section__title">Trending</h2>
+                    </div>
+                    <a class="gf-home-section__link" href="/games/lib/Trending">View all</a>
+                </div>
+
+                @if (Model.TrendingGames.Any())
+                {
+                    <div class="games-grid">
+                        @foreach (var game in Model.TrendingGames)
+                        {
+                            var title = game.Name ?? "Unknown game";
+                            var coverUrl = Model.BuildCoverUrl(game.Cover?.ImageId);
+                            var year = Model.GetYear(game.FirstReleaseDateUnix);
+
+                            <a class="game-card"
+                               href="/games/@game.Id"
+                               data-title="@title"
+                               title="@title">
+                                <div class="game-cover">
+                                    @if (!string.IsNullOrWhiteSpace(coverUrl))
+                                    {
+                                        <img src="@coverUrl" alt="@title" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="game-cover-fallback"></div>
+                                    }
+                                </div>
+                                <div class="game-meta">
+                                    @if (year != null)
+                                    {
+                                        <span>@year</span>
+                                    }
+                                    else
+                                    {
+                                        <span>&nbsp;</span>
+                                    }
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="gf-home-empty">No trending games available right now.</div>
+                }
+            </section>
+
+            <section class="gf-home-section">
+                <div class="gf-home-section__head">
+                    <div>
+                        <div class="gf-home-section__eyebrow">New and fresh</div>
+                        <h2 class="gf-home-section__title">Recent Releases</h2>
+                    </div>
+                    <a class="gf-home-section__link" href="/games/lib/ReleaseDate">View all</a>
+                </div>
+
+                @if (Model.RecentReleaseGames.Any())
+                {
+                    <div class="games-grid">
+                        @foreach (var game in Model.RecentReleaseGames)
+                        {
+                            var title = game.Name ?? "Unknown game";
+                            var coverUrl = Model.BuildCoverUrl(game.Cover?.ImageId);
+                            var year = Model.GetYear(game.FirstReleaseDateUnix);
+
+                            <a class="game-card"
+                               href="/games/@game.Id"
+                               data-title="@title"
+                               title="@title">
+                                <div class="game-cover">
+                                    @if (!string.IsNullOrWhiteSpace(coverUrl))
+                                    {
+                                        <img src="@coverUrl" alt="@title" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="game-cover-fallback"></div>
+                                    }
+                                </div>
+                                <div class="game-meta">
+                                    @if (year != null)
+                                    {
+                                        <span>@year</span>
+                                    }
+                                    else
+                                    {
+                                        <span>&nbsp;</span>
+                                    }
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="gf-home-empty">No recent releases available right now.</div>
+                }
+            </section>
+
+            <section class="gf-home-section">
+                <div class="gf-home-section__head">
+                    <div>
+                        <div class="gf-home-section__eyebrow">Highest rated</div>
+                        <h2 class="gf-home-section__title">Top Rated</h2>
+                    </div>
+                    <a class="gf-home-section__link" href="/games/lib/TopRated">View all</a>
+                </div>
+
+                @if (Model.TopRatedGames.Any())
+                {
+                    <div class="games-grid">
+                        @foreach (var game in Model.TopRatedGames)
+                        {
+                            var title = game.Name ?? "Unknown game";
+                            var coverUrl = Model.BuildCoverUrl(game.Cover?.ImageId);
+                            var year = Model.GetYear(game.FirstReleaseDateUnix);
+
+                            <a class="game-card"
+                               href="/games/@game.Id"
+                               data-title="@title"
+                               title="@title">
+                                <div class="game-cover">
+                                    @if (!string.IsNullOrWhiteSpace(coverUrl))
+                                    {
+                                        <img src="@coverUrl" alt="@title" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="game-cover-fallback"></div>
+                                    }
+                                </div>
+                                <div class="game-meta">
+                                    @if (year != null)
+                                    {
+                                        <span>@year</span>
+                                    }
+                                    else
+                                    {
+                                        <span>&nbsp;</span>
+                                    }
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="gf-home-empty">No top rated games available right now.</div>
+                }
+            </section>
+
+        </div>
+    </div>
 </div>

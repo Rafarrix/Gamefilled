@@ -5,11 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace Gamefilled.Infrastructure
 {
-    /// <summary>
-    /// ✅ Cliente IGDB (apicalypse)
-    /// - Faz POST para endpoints v4 (ex: /games)
-    /// - Mete headers Client-ID e Authorization Bearer
-    /// </summary>
     public class IgdbClient
     {
         private readonly HttpClient _http;
@@ -25,15 +20,11 @@ namespace Gamefilled.Infrastructure
             _options = options.Value;
         }
 
-        /// <summary>
-        /// Search básico de jogos (para autocomplete e página de search).
-        /// </summary>
         public async Task<List<IgdbGameDto>> SearchGamesAsync(string term, int limit = 10, CancellationToken ct = default)
         {
             term = (term ?? string.Empty).Trim();
             if (term.Length < 2) return new List<IgdbGameDto>();
 
-            // Corpo (Apicalypse) - enviado como texto/plain
             var body = $@"
 fields id,name,slug,first_release_date,cover.image_id;
 search ""{EscapeApicalypseString(term)}"";
@@ -51,9 +42,6 @@ limit {limit};
             return data ?? new List<IgdbGameDto>();
         }
 
-        /// <summary>
-        /// ✅ Detalhes de 1 jogo (para a página /games/{id})
-        /// </summary>
         public async Task<IgdbGameDetailsDto?> GetGameDetailsAsync(int id, CancellationToken ct = default)
         {
             if (id <= 0) return null;
@@ -87,10 +75,87 @@ limit 1;
             return data?.FirstOrDefault();
         }
 
-        /// <summary>
-        /// Monta request com token válido + headers IGDB.
-        /// ✅ Usa URL absoluto para evitar problemas com proxies/headers a serem reescritos.
-        /// </summary>
+        public async Task<List<IgdbGameDto>> GetTrendingGamesAsync(int limit = 12, CancellationToken ct = default)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var fiveYearsAgo = DateTimeOffset.UtcNow.AddYears(-5).ToUnixTimeSeconds();
+
+            var body = $@"
+fields id,name,slug,first_release_date,cover.image_id;
+where cover != null
+  & first_release_date != null
+  & first_release_date >= {fiveYearsAgo}
+  & first_release_date <= {now}
+  & rating_count != null
+  & rating_count > 10;
+sort rating_count desc;
+limit {limit};
+";
+
+            using var req = await CreateIgdbRequestAsync("games", body, ct);
+            using var resp = await _http.SendAsync(req, ct);
+
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            if (!resp.IsSuccessStatusCode)
+                throw new HttpRequestException($"IGDB trending failed: {(int)resp.StatusCode} {resp.ReasonPhrase}\nBody: {raw}");
+
+            var data = JsonSerializer.Deserialize<List<IgdbGameDto>>(raw, JsonOpts);
+            return data ?? new List<IgdbGameDto>();
+        }
+
+        public async Task<List<IgdbGameDto>> GetRecentReleasesAsync(int limit = 12, CancellationToken ct = default)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var twoYearsAgo = DateTimeOffset.UtcNow.AddYears(-2).ToUnixTimeSeconds();
+
+            var body = $@"
+fields id,name,slug,first_release_date,cover.image_id;
+where cover != null
+  & first_release_date != null
+  & first_release_date >= {twoYearsAgo}
+  & first_release_date <= {now};
+sort first_release_date desc;
+limit {limit};
+";
+
+            using var req = await CreateIgdbRequestAsync("games", body, ct);
+            using var resp = await _http.SendAsync(req, ct);
+
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            if (!resp.IsSuccessStatusCode)
+                throw new HttpRequestException($"IGDB recent releases failed: {(int)resp.StatusCode} {resp.ReasonPhrase}\nBody: {raw}");
+
+            var data = JsonSerializer.Deserialize<List<IgdbGameDto>>(raw, JsonOpts);
+            return data ?? new List<IgdbGameDto>();
+        }
+
+        public async Task<List<IgdbGameDto>> GetTopRatedGamesAsync(int limit = 12, CancellationToken ct = default)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            var body = $@"
+fields id,name,slug,first_release_date,cover.image_id;
+where cover != null
+  & first_release_date != null
+  & first_release_date <= {now}
+  & aggregated_rating != null
+  & aggregated_rating_count != null
+  & aggregated_rating_count > 20;
+sort aggregated_rating desc;
+limit {limit};
+";
+
+            using var req = await CreateIgdbRequestAsync("games", body, ct);
+            using var resp = await _http.SendAsync(req, ct);
+
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            if (!resp.IsSuccessStatusCode)
+                throw new HttpRequestException($"IGDB top rated failed: {(int)resp.StatusCode} {resp.ReasonPhrase}\nBody: {raw}");
+
+            var data = JsonSerializer.Deserialize<List<IgdbGameDto>>(raw, JsonOpts);
+            return data ?? new List<IgdbGameDto>();
+        }
+
         private async Task<HttpRequestMessage> CreateIgdbRequestAsync(string endpoint, string body, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(_options.ClientId))
@@ -100,27 +165,18 @@ limit 1;
                 throw new InvalidOperationException("IgdbClient HttpClient BaseAddress não configurado (Program.cs).");
 
             var token = await _tokenProvider.GetAccessTokenAsync(ct);
-
-            // ✅ URL absoluto (garante que vai mesmo para https://api.igdb.com/v4/<endpoint>)
             var url = new Uri(_http.BaseAddress, endpoint.TrimStart('/'));
 
             var req = new HttpRequestMessage(HttpMethod.Post, url);
 
-            // Headers pedidos pelo IGDB
             req.Headers.Remove("Client-ID");
             req.Headers.Add("Client-ID", _options.ClientId);
-
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // Apicalypse como texto
             req.Content = new StringContent(body, Encoding.UTF8, "text/plain");
-
             return req;
         }
 
-        /// <summary>
-        /// Apicalypse usa aspas; isto evita quebra do body.
-        /// </summary>
         private static string EscapeApicalypseString(string s)
             => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
