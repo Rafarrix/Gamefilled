@@ -12,6 +12,8 @@ namespace Gamefilled.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Follow> Follows { get; set; }
+        public DbSet<UserFavoriteGame> UserFavoriteGames { get; set; }
+        public DbSet<UserActivity> UserActivities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +34,32 @@ namespace Gamefilled.Data
             modelBuilder.Entity<Follow>()
                 .HasIndex(f => new { f.FollowerId, f.FollowingId })
                 .IsUnique();
+
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasIndex(x => new { x.UserId, x.SortOrder })
+                .IsUnique();
+
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasIndex(x => new { x.UserId, x.GameId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserActivity>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserActivity>()
+                .HasOne(x => x.TargetUser)
+                .WithMany()
+                .HasForeignKey(x => x.TargetUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

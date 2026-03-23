@@ -1,0 +1,47 @@
+﻿@page "/u/{username}/friends"
+@model Gamefilled.Pages.u.FriendsModel
+@{
+    ViewData["Title"] = $"{Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username} - Friends";
+}
+
+<div class="container py-4">
+    <div class="gf-profile-panel">
+        <div class="gf-profile-panel__head">
+            <h2>Friends</h2>
+        </div>
+
+        @if (Model.Friends.Any())
+        {
+            <div class="gf-profile-userlist">
+                @foreach (var user in Model.Friends)
+                {
+                    var avatar = string.IsNullOrWhiteSpace(user.AvatarUrl)
+                    ? "/lib/imgs/defaultavatar.png"
+                    : user.AvatarUrl;
+
+                    var displayName = user.DisplayName ?? user.Username ?? "User";
+
+                    <a class="gf-profile-userlist__item" href="/u/@user.Username">
+                        <img class="gf-profile-userlist__avatar" src="@avatar" alt="@displayName avatar" />
+
+                        <div class="gf-profile-userlist__meta">
+                            <div class="gf-profile-userlist__name">@displayName</div>
+                            <div class="gf-profile-userlist__username">@@@user.Username</div>
+
+                            <div class="gf-profile-userlist__status @(user.IsOnlineNow ? "is-online" : "is-offline")">
+                                <span class="gf-profile-userlist__status-dot"></span>
+                                <span>@(user.IsOnlineNow ? "Online" : "Offline")</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="gf-profile-empty-state">
+                No friends yet.
+            </div>
+        }
+    </div>
+</div>

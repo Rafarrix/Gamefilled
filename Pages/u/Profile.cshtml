@@ -1,0 +1,483 @@
+﻿@page "/u/{username}"
+@model Gamefilled.Pages.u.ProfileModel
+@{
+    ViewData["Title"] = Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username;
+    ViewData["FullBleed"] = true;
+
+    var bannerUrl = string.IsNullOrWhiteSpace(Model.ProfileUser.BannerUrl)
+        ? "/lib/imgs/defaultbanner.jpg"
+        : Model.ProfileUser.BannerUrl;
+
+    var avatarUrl = string.IsNullOrWhiteSpace(Model.ProfileUser.AvatarUrl)
+        ? "/lib/imgs/defaultavatar.png"
+        : Model.ProfileUser.AvatarUrl;
+
+    var displayName = Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username ?? "User";
+    var username = Model.ProfileUser.Username ?? "";
+
+    string TabClass(string key) => Model.ActiveTab == key ? "active" : "";
+}
+
+<div class="gf-profile-page">
+
+    <section class="gf-profile-hero">
+        @if (Model.IsOwnProfile)
+        {
+            <a class="gf-profile-hero__bg gf-profile-hero__bg--editable"
+               href="/Settings/Profile"
+               title="Edit banner"
+               style="background-image:url('@bannerUrl')">
+            </a>
+        }
+        else
+        {
+            <div class="gf-profile-hero__bg" style="background-image:url('@bannerUrl')"></div>
+        }
+
+        <div class="gf-profile-hero__overlay"></div>
+
+        <div class="container gf-profile-hero__inner">
+            <div class="gf-profile-summary">
+
+                <div class="gf-profile-avatar-wrap">
+                    @if (Model.IsOwnProfile)
+                    {
+                        <a class="gf-profile-avatar-edit" href="/Settings/Profile" title="Edit avatar">
+                            <img class="gf-profile-avatar" src="@avatarUrl" alt="@displayName avatar" />
+                            <span class="gf-profile-avatar-edit__overlay">
+                                <i class="fas fa-camera"></i>
+                            </span>
+                        </a>
+                    }
+                    else
+                    {
+                        <img class="gf-profile-avatar" src="@avatarUrl" alt="@displayName avatar" />
+                    }
+                </div>
+
+                <div class="gf-profile-identity">
+                    <h1 class="gf-profile-name">@displayName</h1>
+                    <div class="gf-profile-username">@@@username</div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.ProfileUser.Bio))
+                    {
+                        <p class="gf-profile-bio">@Model.ProfileUser.Bio</p>
+                    }
+                    else
+                    {
+                        <p class="gf-profile-bio gf-profile-bio--empty">This user has not added a bio yet.</p>
+                    }
+                </div>
+
+                <div class="gf-profile-header-side">
+                    <div class="gf-profile-stats">
+                        <a class="gf-profile-stat gf-profile-stat--link" href="/u/@username?tab=following">
+                            <strong>@Model.FollowingCount</strong>
+                            <span>Following</span>
+                        </a>
+
+                        <a class="gf-profile-stat gf-profile-stat--link" href="/u/@username?tab=followers">
+                            <strong>@Model.FollowersCount</strong>
+                            <span>Followers</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="gf-profile-tabs">
+        <div class="container gf-profile-tabs__bar">
+            <div class="gf-profile-tabs__inner">
+                <a class="@TabClass("profile")" href="/u/@username?tab=profile">Profile</a>
+                <a class="@TabClass("activity")" href="/u/@username?tab=activity">Activity</a>
+                <a class="@TabClass("reviews")" href="/u/@username?tab=reviews">Reviews</a>
+                <a class="@TabClass("lists")" href="/u/@username?tab=lists">Lists</a>
+                <a class="@TabClass("following")" href="/u/@username?tab=following">Following</a>
+                <a class="@TabClass("followers")" href="/u/@username?tab=followers">Followers</a>
+            </div>
+
+            <div class="gf-profile-tabs__actions">
+                @if (Model.IsOwnProfile)
+                {
+                    <a class="btn btn-main gf-profile-btn gf-profile-btn--small" href="/Settings/Profile">Edit Profile</a>
+                }
+                else
+                {
+                    <form method="post" asp-page="/users/Follow" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="username" value="@username" />
+                        <input type="hidden" name="returnUrl" value="@($"{HttpContext.Request.Path}?tab={Model.ActiveTab}")" />
+
+                        @if (Model.IsFollowing)
+                        {
+                            <button type="submit" class="btn btn-secondary gf-profile-btn gf-profile-btn--small">Following</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-main gf-profile-btn gf-profile-btn--small">Follow</button>
+                        }
+                    </form>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="gf-profile-content">
+        <div class="container">
+
+            @if (Model.ActiveTab == "profile")
+            {
+                <div class="row">
+
+                    <div class="col-lg-8">
+                        @if (Model.FavoriteGames.Any())
+                        {
+                            <div class="gf-profile-panel">
+                                <div class="gf-profile-panel__head">
+                                    <h2>Favourite Games</h2>
+
+                                    @if (Model.IsOwnProfile)
+                                    {
+                                        <a href="/Settings/FavoriteGames">Edit</a>
+                                    }
+                                </div>
+
+                                <div class="gf-profile-favorites-grid">
+                                    @foreach (var fav in Model.FavoriteGames
+                                                                .OrderBy(x => x.IsPrimary ? 0 : 1)
+                                                                .ThenBy(x => x.SortOrder))
+                                    {
+                                        <a class="gf-profile-favorite-card @(fav.IsPrimary ? "is-primary" : "")"
+                                           href="/games/@fav.GameId"
+                                           title="@fav.Name">
+                                            @if (!string.IsNullOrWhiteSpace(fav.CoverUrl))
+                                            {
+                                                <img src="@fav.CoverUrl" alt="@fav.Name" />
+                                            }
+                                            else
+                                            {
+                                                <div class="gf-profile-favorite-slot"></div>
+                                            }
+
+                                            @if (fav.IsPrimary)
+                                            {
+                                                <div class="gf-profile-favorite-card__badge">
+                                                    <i class="fas fa-crown"></i>
+                                                    <span>Favorite</span>
+                                                </div>
+                                            }
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else if (Model.IsOwnProfile)
+                        {
+                            <div class="gf-profile-panel">
+                                <div class="gf-profile-panel__head">
+                                    <h2>Favourite Games</h2>
+                                    <a href="/Settings/FavoriteGames">Add games</a>
+                                </div>
+
+                                <div class="gf-profile-empty-state">
+                                    You have no favorite games yet.
+                                </div>
+                            </div>
+                        }
+
+                        <div class="gf-profile-panel">
+                            <div class="gf-profile-panel__head">
+                                <h2>Recent Activity</h2>
+                                <a href="/u/@username/activity">View all</a>
+                            </div>
+
+                            @if (Model.ActivityItems.Any())
+                            {
+                                <div class="gf-activity-list">
+                                    @foreach (var item in Model.ActivityItems.Take(5))
+                                    {
+                                        <div class="gf-activity-item">
+                                            <div class="gf-activity-item__text">
+                                                @if (item.Type == "followed_user")
+                                                {
+                                                    <span>
+                                                        <strong>@displayName</strong> followed
+                                                        <a href="/u/@item.TargetUsername">@(item.TargetDisplayName ?? item.TargetUsername)</a>
+                                                    </span>
+                                                }
+                                                else if (item.Type == "updated_favorites")
+                                                {
+                                                    <span>
+                                                        <strong>@displayName</strong> updated favorite games
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>
+                                                        <strong>@displayName</strong> did something
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="gf-activity-item__time">
+                                                @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="gf-profile-empty-state">
+                                    No activity yet.
+                                </div>
+                            }
+                        </div>
+
+                        <div class="gf-profile-panel">
+                            <div class="gf-profile-panel__head">
+                                <h2>Recent Reviews</h2>
+                                <a href="/u/@username?tab=reviews">View all</a>
+                            </div>
+
+                            <div class="gf-profile-empty-state">
+                                No reviews yet.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="gf-profile-panel">
+                            <div class="gf-profile-panel__head">
+                                <h2>Quick Stats</h2>
+                            </div>
+
+                            <div class="gf-profile-quickstats">
+                                <div class="gf-profile-quickstat">
+                                    <span>Status</span>
+                                    <strong class="@(Model.IsOnlineNow ? "gf-online" : "gf-offline")">
+                                        @(Model.IsOnlineNow ? "Online" : "Offline")
+                                    </strong>
+                                </div>
+
+                                <div class="gf-profile-quickstat">
+                                    <span>Member since</span>
+                                    <strong>@Model.MemberSinceText</strong>
+                                </div>
+
+                                <div class="gf-profile-quickstat">
+                                    <span>Followers</span>
+                                    <strong>@Model.FollowersCount</strong>
+                                </div>
+
+                                <div class="gf-profile-quickstat">
+                                    <span>Following</span>
+                                    <strong>@Model.FollowingCount</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gf-profile-panel">
+                            <div class="gf-profile-panel__head">
+                                <h2>Backlog Preview</h2>
+                            </div>
+
+                            <div class="gf-profile-empty-state">
+                                Backlog preview coming soon.
+                            </div>
+                        </div>
+
+                        <div class="gf-profile-panel">
+                            <div class="gf-profile-panel__head">
+                                <h2>Wishlist Preview</h2>
+                            </div>
+
+                            <div class="gf-profile-empty-state">
+                                Wishlist preview coming soon.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            }
+            else if (Model.ActiveTab == "activity")
+            {
+                <div class="gf-profile-panel">
+                    <div class="gf-profile-panel__head">
+                        <h2>Activity</h2>
+                    </div>
+
+                    @if (Model.ActivityItems.Any())
+                    {
+                        <div class="gf-activity-list">
+                            @foreach (var item in Model.ActivityItems)
+                            {
+                                <div class="gf-activity-item">
+                                    <div class="gf-activity-item__text">
+                                        @if (item.Type == "followed_user")
+                                        {
+                                            <span>
+                                                <strong>@displayName</strong> followed
+                                                <a href="/u/@item.TargetUsername">@(item.TargetDisplayName ?? item.TargetUsername)</a>
+                                            </span>
+                                        }
+                                        else if (item.Type == "updated_favorites")
+                                        {
+                                            <span>
+                                                <strong>@displayName</strong> updated favorite games
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>
+                                                <strong>@displayName</strong> did something
+                                            </span>
+                                        }
+                                    </div>
+
+                                    <div class="gf-activity-item__time">
+                                        @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="gf-profile-empty-state">
+                            No activity yet.
+                        </div>
+                    }
+                </div>
+            }
+            else if (Model.ActiveTab == "reviews")
+            {
+                <div class="gf-profile-panel">
+                    <div class="gf-profile-panel__head">
+                        <h2>Reviews</h2>
+                    </div>
+
+                    <div class="gf-profile-empty-state">
+                        No reviews yet.
+                    </div>
+                </div>
+            }
+            else if (Model.ActiveTab == "lists")
+            {
+                <div class="gf-profile-panel">
+                    <div class="gf-profile-panel__head">
+                        <h2>Lists</h2>
+                    </div>
+
+                    <div class="gf-profile-empty-state">
+                        No lists yet.
+                    </div>
+                </div>
+            }
+            else if (Model.ActiveTab == "following")
+            {
+                <div class="gf-profile-panel">
+                    <div class="gf-profile-panel__head">
+                        <h2>Following</h2>
+                    </div>
+
+                    @if (Model.FollowingUsers.Any())
+                    {
+                        <div class="gf-profile-userlist">
+                            @foreach (var user in Model.FollowingUsers)
+                            {
+                                var itemAvatar = string.IsNullOrWhiteSpace(user.AvatarUrl)
+                                ? "/lib/imgs/defaultavatar.png"
+                                : user.AvatarUrl;
+
+                                var itemName = user.DisplayName ?? user.Username ?? "User";
+
+                                <a class="gf-profile-userlist__item" href="/u/@user.Username">
+                                    <img class="gf-profile-userlist__avatar" src="@itemAvatar" alt="@itemName avatar" />
+
+                                    <div class="gf-profile-userlist__meta">
+                                        <div class="gf-profile-userlist__topline">
+                                            <div class="gf-profile-userlist__name">@itemName</div>
+
+                                            @if (user.IsFriend)
+                                            {
+                                                <span class="gf-profile-userlist__friend-badge">Friend</span>
+                                            }
+                                        </div>
+
+                                        <div class="gf-profile-userlist__username">@@@user.Username</div>
+
+                                        <div class="gf-profile-userlist__status @(user.IsOnlineNow ? "is-online" : "is-offline")">
+                                            <span class="gf-profile-userlist__status-dot"></span>
+                                            <span>@user.StatusText</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="gf-profile-empty-state">
+                            This user is not following anyone yet.
+                        </div>
+                    }
+                </div>
+            }
+            else if (Model.ActiveTab == "followers")
+            {
+                <div class="gf-profile-panel">
+                    <div class="gf-profile-panel__head">
+                        <h2>Followers</h2>
+                    </div>
+
+                    @if (Model.FollowersUsers.Any())
+                    {
+                        <div class="gf-profile-userlist">
+                            @foreach (var user in Model.FollowersUsers)
+                            {
+                                var itemAvatar = string.IsNullOrWhiteSpace(user.AvatarUrl)
+                                ? "/lib/imgs/defaultavatar.png"
+                                : user.AvatarUrl;
+
+                                var itemName = user.DisplayName ?? user.Username ?? "User";
+
+                                <a class="gf-profile-userlist__item" href="/u/@user.Username">
+                                    <img class="gf-profile-userlist__avatar" src="@itemAvatar" alt="@itemName avatar" />
+
+                                    <div class="gf-profile-userlist__meta">
+                                        <div class="gf-profile-userlist__topline">
+                                            <div class="gf-profile-userlist__name">@itemName</div>
+
+                                            @if (user.IsFriend)
+                                            {
+                                                <span class="gf-profile-userlist__friend-badge">Friend</span>
+                                            }
+                                        </div>
+
+                                        <div class="gf-profile-userlist__username">@@@user.Username</div>
+
+                                        <div class="gf-profile-userlist__status @(user.IsOnlineNow ? "is-online" : "is-offline")">
+                                            <span class="gf-profile-userlist__status-dot"></span>
+                                            <span>@user.StatusText</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="gf-profile-empty-state">
+                            This user has no followers yet.
+                        </div>
+                    }
+                </div>
+            }
+
+        </div>
+    </section>
+
+</div>

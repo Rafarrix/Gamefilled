@@ -177,6 +177,35 @@ limit {limit};
             return req;
         }
 
+        public async Task<List<IgdbGameDto>> GetGamesByIdsAsync(IEnumerable<int> ids, CancellationToken ct = default)
+        {
+            var cleanIds = ids
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+            if (!cleanIds.Any())
+                return new List<IgdbGameDto>();
+
+            var idsCsv = string.Join(",", cleanIds);
+
+            var body = $@"
+fields id,name,slug,first_release_date,cover.image_id;
+where id = ({idsCsv});
+limit {cleanIds.Count};
+";
+
+            using var req = await CreateIgdbRequestAsync("games", body, ct);
+            using var resp = await _http.SendAsync(req, ct);
+
+            var raw = await resp.Content.ReadAsStringAsync(ct);
+            if (!resp.IsSuccessStatusCode)
+                throw new HttpRequestException($"IGDB games by ids failed: {(int)resp.StatusCode} {resp.ReasonPhrase}\nBody: {raw}");
+
+            var data = JsonSerializer.Deserialize<List<IgdbGameDto>>(raw, JsonOpts);
+            return data ?? new List<IgdbGameDto>();
+        }
+
         private static string EscapeApicalypseString(string s)
             => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }

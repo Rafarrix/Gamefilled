@@ -1,0 +1,102 @@
+﻿@page
+@model Gamefilled.Pages.Settings.ProfileModel
+@{
+    ViewData["Title"] = "Edit Profile";
+
+    var avatarPreview = string.IsNullOrWhiteSpace(Model.AvatarUrl)
+        ? "/lib/imgs/defaultavatar.png"
+        : Model.AvatarUrl;
+
+    var bannerPreview = string.IsNullOrWhiteSpace(Model.BannerUrl)
+        ? "/lib/imgs/defaultbanner.jpg"
+        : Model.BannerUrl;
+}
+
+<div class="container py-4 gf-edit-profile-page">
+    <div class="gf-edit-profile-head">
+        <div>
+            <h1>Edit Profile</h1>
+            <p class="subtitle-text mb-0">Update your display name, bio, avatar and banner.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
+        {
+            <a class="btn btn-outline-light" href="/u/@Model.CurrentUsername">Back to Profile</a>
+        }
+    </div>
+
+    <form method="post" class="gf-edit-profile-form">
+
+        <div class="gf-edit-profile-preview">
+            <div class="gf-edit-profile-banner-preview"
+                 style="background-image:url('@bannerPreview')">
+            </div>
+
+            <div class="gf-edit-profile-avatar-preview-wrap">
+                <img class="gf-edit-profile-avatar-preview" src="@avatarPreview" alt="Avatar preview" />
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-lg-8">
+
+                <div class="gf-edit-profile-card">
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input class="form-control" asp-for="DisplayName" maxlength="100" />
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label>Bio</label>
+                        <textarea class="form-control gf-edit-profile-bio" asp-for="Bio" rows="6"></textarea>
+                        <small class="form-text text-muted">Maximum: 200 words.</small>
+                        <span asp-validation-for="Bio" class="text-danger d-block mt-1"></span>
+                    </div>
+                </div>
+
+                <div class="gf-edit-profile-card">
+                    <div class="form-group">
+                        <label>Avatar URL</label>
+                        <input class="form-control" asp-for="AvatarUrl" placeholder="https://..." />
+                        <small class="form-text text-muted">Paste a direct image link for your avatar.</small>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label>Banner URL</label>
+                        <input class="form-control" asp-for="BannerUrl" placeholder="https://..." />
+                        <small class="form-text text-muted">Paste a direct image link for your banner.</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+                <div class="gf-edit-profile-card">
+                    <h3 class="gf-edit-profile-side-title">Tips</h3>
+
+                    <div class="gf-edit-profile-tip">
+                        Use a square image for the avatar.
+                    </div>
+
+                    <div class="gf-edit-profile-tip">
+                        Wide images work better for banners.
+                    </div>
+
+                    <div class="gf-edit-profile-tip">
+                        Leave avatar or banner empty to use the default image.
+                    </div>
+                </div>
+
+                <div class="gf-edit-profile-actions">
+                    <button type="submit" class="btn btn-main btn-block">Save Changes</button>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
+                    {
+                        <a class="btn btn-outline-light btn-block" href="/u/@Model.CurrentUsername">Cancel</a>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>

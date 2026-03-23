@@ -45,6 +45,14 @@ namespace Gamefilled.Pages.users
                     FollowingId = targetUser.Id,
                     CreatedAt = DateTime.UtcNow
                 });
+
+                _db.UserActivities.Add(new UserActivity
+                {
+                    UserId = currentUser.Id,
+                    Type = "followed_user",
+                    TargetUserId = targetUser.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
             else
             {
@@ -53,7 +61,10 @@ namespace Gamefilled.Pages.users
 
             await _db.SaveChangesAsync();
 
-            return Redirect(returnUrl ?? $"/u/{username}");
+            if (string.IsNullOrWhiteSpace(returnUrl) || !Url.IsLocalUrl(returnUrl))
+                return Redirect($"/u/{username}");
+
+            return Redirect(returnUrl);
         }
     }
 }

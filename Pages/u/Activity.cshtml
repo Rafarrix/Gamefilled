@@ -1,0 +1,59 @@
+﻿@page "/u/{username}/activity"
+@model Gamefilled.Pages.u.ActivityModel
+@{
+    ViewData["Title"] = $"{Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username} - Activity";
+
+    var displayName = Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username ?? "User";
+    var username = Model.ProfileUser.Username ?? "";
+}
+
+<div class="container py-4">
+    <div class="gf-profile-panel">
+        <div class="gf-profile-panel__head">
+            <h2>Activity</h2>
+            <a href="/u/@username">Back to Profile</a>
+        </div>
+
+        @if (Model.ActivityItems.Any())
+        {
+            <div class="gf-activity-list">
+                @foreach (var item in Model.ActivityItems)
+                {
+                    <div class="gf-activity-item">
+                        <div class="gf-activity-item__text">
+                            @if (item.Type == "followed_user")
+                            {
+                                <span>
+                                    <strong>@displayName</strong> followed
+                                    <a href="/u/@item.TargetUsername">@(item.TargetDisplayName ?? item.TargetUsername)</a>
+                                </span>
+                            }
+                            else if (item.Type == "updated_favorites")
+                            {
+                                <span>
+                                    <strong>@displayName</strong> updated favorite games
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    <strong>@displayName</strong> did something
+                                </span>
+                            }
+                        </div>
+
+                        <div class="gf-activity-item__time">
+                            @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="gf-profile-empty-state">
+                No activity yet.
+            </div>
+        }
+    </div>
+</div>

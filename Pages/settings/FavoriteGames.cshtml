@@ -1,0 +1,456 @@
+﻿@page
+@model Gamefilled.Pages.Settings.FavoriteGamesModel
+@{
+    ViewData["Title"] = "Edit Favorite Games";
+}
+
+<div class="container py-4 gf-edit-profile-page gf-favorites-page">
+    <div class="gf-edit-profile-head">
+        <div>
+            <h1>Edit Favorite Games</h1>
+            <p class="subtitle-text mb-0">Build your favorites shelf and highlight one as your top game.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
+        {
+            <a class="btn btn-outline-light" href="/u/@Model.CurrentUsername">Back to Profile</a>
+        }
+    </div>
+
+    <form method="post" id="favorite-games-form">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="PayloadJson" id="favorite-games-payload" />
+
+        <div class="gf-favorites-toolbar">
+            <button type="button" class="btn btn-main" id="gf-add-favorite-btn">
+                <i class="fas fa-plus mr-2"></i>Add game
+            </button>
+
+            <div class="gf-favorites-toolbar__hint">
+                Up to 5 games. Drag cards to reorder. One can be highlighted with a crown.
+            </div>
+        </div>
+
+        <div class="gf-favorite-picker d-none" id="gf-favorite-picker">
+            <div class="gf-favorite-picker__box">
+                <div class="gf-favorite-picker__head">
+                    <h3>Search game</h3>
+                    <button type="button" class="gf-favorite-picker__close" id="gf-favorite-picker-close">&times;</button>
+                </div>
+
+                <input type="text"
+                       class="form-control"
+                       id="gf-favorite-picker-input"
+                       placeholder="Search game..."
+                       autocomplete="off" />
+
+                <div class="gf-favorite-picker__results d-none" id="gf-favorite-picker-results"></div>
+            </div>
+        </div>
+
+        <div class="gf-favorites-canvas">
+            <div class="gf-favorites-empty @(Model.FavoriteGames.Any() ? "d-none" : "")" id="gf-favorites-empty">
+                <div class="gf-favorites-empty__title">No favorite games yet.</div>
+                <div class="gf-favorites-empty__text">Add games to build your favorites shelf.</div>
+            </div>
+
+            <div class="gf-favorites-cards" id="gf-favorites-cards">
+                @foreach (var game in Model.FavoriteGames.OrderBy(x => x.SortOrder))
+                {
+                    <div class="gf-favorite-card-editor @(game.IsPrimary ? "is-primary" : "")"
+                         data-game-id="@game.GameId"
+                         data-is-primary="@(game.IsPrimary ? "true" : "false")"
+                         draggable="true">
+
+                        <div class="gf-favorite-card-editor__media">
+                            @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
+                            {
+                                <img src="@game.CoverUrl" alt="@game.Name" />
+                            }
+                            else
+                            {
+                                <div class="gf-favorite-card-editor__fallback"></div>
+                            }
+
+                            <div class="gf-favorite-card-editor__actions">
+                                <button type="button"
+                                        class="gf-favorite-card-editor__btn gf-favorite-primary-btn"
+                                        title="Highlight as top favorite">
+                                    <i class="fas fa-crown"></i>
+                                </button>
+
+                                <button type="button"
+                                        class="gf-favorite-card-editor__btn gf-favorite-remove-btn"
+                                        title="Remove game">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="gf-favorite-card-editor__badge">Top Favorite</div>
+                        </div>
+
+                        <div class="gf-favorite-card-editor__meta">
+                            <div class="gf-favorite-card-editor__title">@game.Name</div>
+                            <div class="gf-favorite-card-editor__sub">
+                                @if (game.Year != null)
+                                {
+                                    <span>@game.Year</span>
+                                }
+                                else
+                                {
+                                    <span>IGDB ID @game.GameId</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="gf-edit-profile-card mt-4">
+            <h3 class="gf-edit-profile-side-title">How it works</h3>
+
+            <div class="gf-edit-profile-tip">
+                Add games one by one using search.
+            </div>
+
+            <div class="gf-edit-profile-tip">
+                Hover a card to remove it or mark it as your top favorite.
+            </div>
+
+            <div class="gf-edit-profile-tip">
+                Drag and drop cards to change the order before saving.
+            </div>
+        </div>
+
+        <div class="gf-edit-profile-actions">
+            <button type="submit" class="btn btn-main btn-block">Save Favorite Games</button>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
+            {
+                <a class="btn btn-outline-light btn-block" href="/u/@Model.CurrentUsername">Cancel</a>
+            }
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const addBtn = document.getElementById("gf-add-favorite-btn");
+        const picker = document.getElementById("gf-favorite-picker");
+        const pickerClose = document.getElementById("gf-favorite-picker-close");
+        const pickerInput = document.getElementById("gf-favorite-picker-input");
+        const pickerResults = document.getElementById("gf-favorite-picker-results");
+        const cardsWrap = document.getElementById("gf-favorites-cards");
+        const emptyState = document.getElementById("gf-favorites-empty");
+        const payloadInput = document.getElementById("favorite-games-payload");
+
+        if (!addBtn || !picker || !pickerInput || !pickerResults || !cardsWrap || !emptyState || !payloadInput) return;
+
+        const MAX_FAVORITES = 5;
+
+        const transparentDragImage = new Image();
+        transparentDragImage.src =
+            "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjwvc3ZnPg==";
+
+        function escapeHtml(s) {
+            return String(s ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function debounce(fn, ms) {
+            let t = null;
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), ms);
+            };
+        }
+
+        function yearFromUnix(unix) {
+            if (!unix || typeof unix !== "number") return "";
+            try {
+                return String(new Date(unix * 1000).getFullYear());
+            } catch {
+                return "";
+            }
+        }
+
+        function coverUrl(item) {
+            const imageId = item?.cover?.imageId ?? item?.cover?.image_id ?? null;
+            return imageId ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg` : "";
+        }
+
+        function getCards() {
+            return [...cardsWrap.querySelectorAll(".gf-favorite-card-editor")];
+        }
+
+        function getState() {
+            return getCards().map((card, index) => ({
+                gameId: Number(card.dataset.gameId),
+                isPrimary: card.dataset.isPrimary === "true",
+                sortOrder: index + 1
+            }));
+        }
+
+        function syncPayload() {
+            const state = getState().map(x => ({
+                GameId: x.gameId,
+                IsPrimary: x.isPrimary
+            }));
+
+            payloadInput.value = JSON.stringify(state);
+
+            if (state.length === 0) {
+                emptyState.classList.remove("d-none");
+            } else {
+                emptyState.classList.add("d-none");
+            }
+
+            addBtn.disabled = state.length >= MAX_FAVORITES;
+        }
+
+        function ensureSinglePrimary(targetCard) {
+            getCards().forEach(card => {
+                const active = card === targetCard;
+                card.dataset.isPrimary = active ? "true" : "false";
+                card.classList.toggle("is-primary", active);
+            });
+            syncPayload();
+        }
+
+        function removeCard(card) {
+            card.remove();
+            syncPayload();
+        }
+
+        function attachCardEvents(card) {
+            const removeBtn = card.querySelector(".gf-favorite-remove-btn");
+            const primaryBtn = card.querySelector(".gf-favorite-primary-btn");
+
+            if (removeBtn) {
+                removeBtn.addEventListener("click", () => {
+                    const wasPrimary = card.dataset.isPrimary === "true";
+                    removeCard(card);
+
+                    const cards = getCards();
+                    if (wasPrimary && cards.length > 0 && !cards.some(x => x.dataset.isPrimary === "true")) {
+                        ensureSinglePrimary(cards[0]);
+                    } else {
+                        syncPayload();
+                    }
+                });
+            }
+
+            if (primaryBtn) {
+                primaryBtn.addEventListener("click", () => {
+                    ensureSinglePrimary(card);
+                });
+            }
+
+            card.addEventListener("dragstart", (e) => {
+                card.classList.add("is-dragging");
+
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", card.dataset.gameId || "");
+                    e.dataTransfer.setDragImage(transparentDragImage, 0, 0);
+                }
+            });
+
+            card.addEventListener("dragend", () => {
+                card.classList.remove("is-dragging");
+                syncPayload();
+            });
+        }
+
+        function createCard(game, makePrimary) {
+            const img = coverUrl(game);
+            const year = yearFromUnix(game.firstReleaseDate ?? game.first_release_date);
+
+            const div = document.createElement("div");
+            div.className = `gf-favorite-card-editor${makePrimary ? " is-primary" : ""}`;
+            div.dataset.gameId = String(game.id);
+            div.dataset.isPrimary = makePrimary ? "true" : "false";
+            div.setAttribute("draggable", "true");
+
+            div.innerHTML = `
+                <div class="gf-favorite-card-editor__media">
+                    ${img
+                        ? `<img src="${img}" alt="${escapeHtml(game.name ?? "")}" />`
+                        : `<div class="gf-favorite-card-editor__fallback"></div>`}
+
+                    <div class="gf-favorite-card-editor__actions">
+                        <button type="button" class="gf-favorite-card-editor__btn gf-favorite-primary-btn" title="Highlight as top favorite">
+                            <i class="fas fa-crown"></i>
+                        </button>
+
+                        <button type="button" class="gf-favorite-card-editor__btn gf-favorite-remove-btn" title="Remove game">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="gf-favorite-card-editor__badge">Top Favorite</div>
+                </div>
+
+                <div class="gf-favorite-card-editor__meta">
+                    <div class="gf-favorite-card-editor__title">${escapeHtml(game.name ?? "Unknown game")}</div>
+                    <div class="gf-favorite-card-editor__sub">
+                        <span>${year || `IGDB ID ${game.id}`}</span>
+                    </div>
+                </div>
+            `;
+
+            cardsWrap.appendChild(div);
+            attachCardEvents(div);
+            syncPayload();
+        }
+
+        function openPicker() {
+            picker.classList.remove("d-none");
+            pickerInput.value = "";
+            pickerResults.innerHTML = "";
+            pickerResults.classList.add("d-none");
+            setTimeout(() => pickerInput.focus(), 40);
+        }
+
+        function closePicker() {
+            picker.classList.add("d-none");
+            pickerInput.value = "";
+            pickerResults.innerHTML = "";
+            pickerResults.classList.add("d-none");
+        }
+
+        addBtn.addEventListener("click", () => {
+            if (getCards().length >= MAX_FAVORITES) return;
+            openPicker();
+        });
+
+        if (pickerClose) {
+            pickerClose.addEventListener("click", closePicker);
+        }
+
+        picker.addEventListener("click", (e) => {
+            if (e.target === picker) closePicker();
+        });
+
+        let abortController = null;
+
+        async function search(term) {
+            term = (term || "").trim();
+            if (term.length < 2) {
+                pickerResults.innerHTML = "";
+                pickerResults.classList.add("d-none");
+                return;
+            }
+
+            if (abortController) abortController.abort();
+            abortController = new AbortController();
+
+            try {
+                window.HeaderLoader?.start();
+
+                const res = await fetch(`/api/igdbsearch?term=${encodeURIComponent(term)}`, {
+                    signal: abortController.signal,
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const data = await res.json();
+
+                let results = [];
+                if (data && typeof data.responseText === "string") {
+                    results = JSON.parse(data.responseText);
+                } else if (Array.isArray(data)) {
+                    results = data;
+                } else if (data && Array.isArray(data.results)) {
+                    results = data.results;
+                }
+
+                const existingIds = new Set(getState().map(x => x.gameId));
+
+                results = results
+                    .filter(x => !existingIds.has(Number(x.id)))
+                    .slice(0, 12);
+
+                if (!results.length) {
+                    pickerResults.innerHTML = `<div class="gf-favorite-search__empty">No results found.</div>`;
+                    pickerResults.classList.remove("d-none");
+                    pickerResults.scrollTop = 0;
+                    return;
+                }
+
+                pickerResults.innerHTML = results.map(item => {
+                    const img = coverUrl(item);
+                    const year = yearFromUnix(item.firstReleaseDate ?? item.first_release_date);
+
+                    return `
+                        <button type="button" class="gf-favorite-search__item"
+                                data-id="${item.id}">
+                            <div class="gf-favorite-search__thumb">
+                                ${img ? `<img src="${img}" alt="${escapeHtml(item.name ?? "")}" />` : `<div class="gf-favorite-search__thumb-empty"></div>`}
+                            </div>
+                            <div class="gf-favorite-search__meta">
+                                <div class="gf-favorite-search__title">${escapeHtml(item.name ?? "Unknown game")}</div>
+                                <div class="gf-favorite-search__sub">${year || `ID ${item.id}`}</div>
+                            </div>
+                        </button>
+                    `;
+                }).join("");
+
+                pickerResults.classList.remove("d-none");
+                pickerResults.scrollTop = 0;
+
+                pickerResults.querySelectorAll(".gf-favorite-search__item").forEach((btn, index) => {
+                    btn.addEventListener("click", () => {
+                        const item = results[index];
+                        const makePrimary = getCards().length === 0;
+                        createCard(item, makePrimary);
+                        closePicker();
+                    });
+                });
+            } catch (err) {
+                if (err && err.name === "AbortError") return;
+
+                pickerResults.innerHTML = `<div class="gf-favorite-search__empty">Error loading results.</div>`;
+                pickerResults.classList.remove("d-none");
+                pickerResults.scrollTop = 0;
+            } finally {
+                window.HeaderLoader?.stop();
+            }
+        }
+
+        const searchDebounced = debounce(search, 220);
+
+        pickerInput.addEventListener("input", (e) => {
+            searchDebounced(e.target.value);
+        });
+
+        cardsWrap.addEventListener("dragover", (e) => {
+            e.preventDefault();
+
+            const dragging = cardsWrap.querySelector(".is-dragging");
+            if (!dragging) return;
+
+            const cards = [...cardsWrap.querySelectorAll(".gf-favorite-card-editor:not(.is-dragging)")];
+
+            const nextCard = cards.find(card => {
+                const rect = card.getBoundingClientRect();
+                return e.clientX < rect.left + rect.width / 2;
+            });
+
+            if (nextCard) {
+                cardsWrap.insertBefore(dragging, nextCard);
+            } else {
+                cardsWrap.appendChild(dragging);
+            }
+        });
+
+        getCards().forEach(attachCardEvents);
+        syncPayload();
+    })();
+</script>
