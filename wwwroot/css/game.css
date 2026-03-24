@@ -1,67 +1,97 @@
 ﻿/* ============================================================================
-   /games/{id} — game.css (Backloggd-like cover art strip)
-   - Conteúdo mais “baixo” dentro do BG (como o Backloggd)
-   - 3 cards de cima maiores/quase quadrados
-   - TTB em retângulo centrado (sem texto extra)
-   - Screenshots mais abaixo
-   - Sem overflow lateral
+   GAMEFILLED - GAME.CSS
+   Página de detalhe de jogo: /games/{id}
+
+   Objetivo deste ficheiro:
+   - Definir o layout principal da página de jogo
+   - Criar o hero/background no topo com imagem de cover art
+   - Posicionar o conteúdo por cima do background
+   - Estilizar a cover, título, metadados, cards estatísticos e screenshots
+   - Garantir comportamento responsivo
+   - Evitar overflow lateral / scroll horizontal indesejado
    ============================================================================ */
 
+
+/* ============================================================================
+   WRAPPER GLOBAL DA PÁGINA
+   - position: relative permite posicionar elementos absolutos lá dentro
+   - overflow-x: clip evita scroll lateral causado por blur, sombras ou rounding
+   ============================================================================ */
 .gf-game-page {
     position: relative;
-    overflow-x: clip; /* evita scroll lateral por 1-2px de blur/rounding */
+    overflow-x: clip;
 }
 
-/* ✅ BG só no topo */
+
+/* ============================================================================
+   HERO / COVER ART DE FUNDO
+   - Esta imagem fica apenas na zona superior da página
+   - É usada como background visual da página do jogo
+   ============================================================================ */
 #game-cover-art,
 .gf-cover-art {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 520px; /* <-- BG um bocadinho menos “comprido” */
+    height: 520px; /* Altura visual do hero */
     overflow: hidden;
-    z-index: 0;
+    z-index: 0; /* Fica atrás do conteúdo */
 }
 
-    /* imagem */
+    /* Imagem de fundo do hero */
     #game-cover-art img,
     .gf-cover-art img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        object-position: 50% 42%;
+        object-fit: cover; /* Faz a imagem preencher a área */
+        object-position: 50% 42%; /* Ajusta o enquadramento vertical */
         display: block;
-        /* “natural” */
-        filter: saturate(1.05) brightness(0.90);
+        filter: saturate(1.05) brightness(0.90); /* Realce visual ligeiro */
     }
 
-/* gradiente (tapa o corte e dá contraste ao topo) */
+
+/* ============================================================================
+   OVERLAY / GRADIENTE SOBRE A IMAGEM
+   - Dá contraste ao topo para navbar/texto
+   - Faz fade para o fundo do site
+   - Reduz o corte “seco” da imagem
+   ============================================================================ */
 #gradient {
     position: absolute;
     inset: 0;
     z-index: 1;
-    pointer-events: none;
+    pointer-events: none; /* Não interfere com cliques */
     background:
-    /* topo escuro p/ navbar */
-    linear-gradient(to bottom, rgba(10,12,16,0.92) 0%, rgba(10,12,16,0.68) 18%, rgba(10,12,16,0.30) 40%, rgba(10,12,16,0.14) 60%, rgba(10,12,16,0.05) 72%, rgba(10,12,16,0.00) 78% ),
-    /* vinheta */
-    radial-gradient(110% 120% at 50% 35%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.30) 58%, rgba(10,12,16,0.86) 100% ),
-    /* fade para o fundo do site */
-    linear-gradient(to bottom, rgba(14,16,21,0.00) 0%, rgba(14,16,21,0.74) 80%, rgba(14,16,21,1.00) 100% );
+    /* Escurece a parte superior para a navbar */
+    linear-gradient( to bottom, rgba(10,12,16,0.92) 0%, rgba(10,12,16,0.68) 18%, rgba(10,12,16,0.30) 40%, rgba(10,12,16,0.14) 60%, rgba(10,12,16,0.05) 72%, rgba(10,12,16,0.00) 78% ),
+    /* Vinheta central */
+    radial-gradient( 110% 120% at 50% 35%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.30) 58%, rgba(10,12,16,0.86) 100% ),
+    /* Fade para o fundo base do site */
+    linear-gradient( to bottom, rgba(14,16,21,0.00) 0%, rgba(14,16,21,0.74) 80%, rgba(14,16,21,1.00) 100% );
 }
 
-/* ✅ Conteúdo por cima do BG */
+
+/* ============================================================================
+   SHELL PRINCIPAL DO CONTEÚDO
+   - Fica por cima do hero
+   - Usa z-index superior ao background/overlay
+   - O padding-top empurra o conteúdo para baixo, para ficar como no Backloggd
+   ============================================================================ */
 .bl-shell {
     position: relative;
     z-index: 2;
     max-width: 1100px;
     margin: 0 auto;
-    /* IMPORTANTE: baixa o conteúdo (como o Backloggd) */
-    padding: 180px 0 0; /* <-- aumenta/diminui aqui se quiseres mais baixo/alto */
+    padding: 180px 0 0;
 }
 
-/* Layout */
+
+/* ============================================================================
+   TOPO DA PÁGINA
+   - Coluna esquerda: cover
+   - Coluna direita: informação principal do jogo
+   ============================================================================ */
 .bl-top {
     display: grid;
     grid-template-columns: 190px 1fr;
@@ -69,7 +99,10 @@
     align-items: start;
 }
 
-/* Cover */
+
+/* ============================================================================
+   COVER DO JOGO
+   ============================================================================ */
 .bl-cover img {
     width: 190px;
     border-radius: 12px;
@@ -77,6 +110,7 @@
     display: block;
 }
 
+/* Fallback caso não exista cover */
 .bl-cover-fallback {
     width: 190px;
     aspect-ratio: 2 / 3;
@@ -85,11 +119,19 @@
     border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Title row */
+
+/* ============================================================================
+   BLOCO PRINCIPAL DE TEXTO
+   ============================================================================ */
 .bl-main {
     padding-top: 10px;
 }
 
+
+/* ============================================================================
+   LINHA DO TÍTULO
+   - Espaço para título + algum elemento lateral futuro
+   ============================================================================ */
 .bl-title-row {
     display: flex;
     align-items: flex-start;
@@ -97,10 +139,12 @@
     gap: 16px;
 }
 
+/* Evita que o texto rebente o layout */
 .bl-title-wrap {
     min-width: 0;
 }
 
+/* Título principal do jogo */
 .bl-title {
     margin: 0;
     font-weight: 800;
@@ -108,6 +152,7 @@
     letter-spacing: 0.2px;
 }
 
+/* Texto secundário de autoria / estúdio / publisher */
 .bl-byline {
     margin-top: 6px;
     opacity: .75;
@@ -118,6 +163,7 @@
         opacity: 1;
     }
 
+/* Linha com data e pills associadas */
 .bl-release {
     display: inline-flex;
     gap: 8px;
@@ -127,6 +173,10 @@
     white-space: nowrap;
 }
 
+
+/* ============================================================================
+   PILLS REUTILIZÁVEIS
+   ============================================================================ */
 .pill {
     font-size: 12px;
     padding: 6px 10px;
@@ -136,11 +186,16 @@
     color: rgba(229,231,235,0.88);
 }
 
+/* Variante mais discreta */
 .pill-muted {
     background: rgba(0,0,0,0.22);
     color: rgba(229,231,235,0.75);
 }
 
+
+/* ============================================================================
+   RESUMO / DESCRIÇÃO DO JOGO
+   ============================================================================ */
 .bl-summary {
     margin: 10px 0 14px;
     color: rgba(229,231,235,0.86);
@@ -149,7 +204,11 @@
     max-width: 860px;
 }
 
-/* Rows */
+
+/* ============================================================================
+   ROWS DE METADADOS
+   Ex.: Platforms, Genres, Themes, etc.
+   ============================================================================ */
 .bl-rows {
     display: flex;
     flex-direction: column;
@@ -157,6 +216,7 @@
     margin-bottom: 14px;
 }
 
+/* Cada linha tem label à esquerda e conteúdo à direita */
 .bl-row {
     display: grid;
     grid-template-columns: 110px 1fr;
@@ -176,6 +236,7 @@
     gap: 8px;
 }
 
+/* Chip individual de dados */
 .bl-chip {
     font-size: 12px;
     padding: 6px 10px;
@@ -185,9 +246,12 @@
     color: rgba(229,231,235,0.82);
 }
 
-/* =========================
-   CARDS (3 em cima) — maiores/quase quadrados + texto centrado
-   ========================= */
+
+/* ============================================================================
+   CARDS ESTATÍSTICOS (3 NO TOPO)
+   - Maior altura para aspecto quase quadrado
+   - Texto centralizado
+   ============================================================================ */
 .bl-cards {
     display: grid;
     gap: 12px;
@@ -205,10 +269,10 @@
     padding: 16px 16px;
     backdrop-filter: blur(10px);
     transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
-    /* faz “mais quadrado” */
     min-height: 108px;
 }
 
+/* Variante para conteúdo centrado */
 .bl-card--center {
     text-align: center;
 }
@@ -232,15 +296,19 @@
     margin-top: 8px;
 }
 
+/* Feedback visual no hover */
 .bl-card:hover {
     border-color: rgba(0,176,32,0.30);
     background: rgba(255,255,255,0.065);
     box-shadow: 0 12px 30px rgba(0,0,0,0.22);
 }
 
-/* =========================
-   TTB (retângulo centrado)
-   ========================= */
+
+/* ============================================================================
+   TIME TO BEAT PANEL
+   - Bloco rectangular separado
+   - Valores centrados
+   ============================================================================ */
 .bl-ttb-panel {
     margin-top: 14px;
     border: 1px solid rgba(255,255,255,0.10);
@@ -250,6 +318,7 @@
     backdrop-filter: blur(10px);
 }
 
+/* Título do painel */
 .bl-ttb-panel__title {
     text-align: center;
     font-size: 12px;
@@ -260,7 +329,7 @@
     margin-bottom: 10px;
 }
 
-/* grid dos 3 valores */
+/* Grid dos 3 valores TTB */
 .bl-ttb {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -287,13 +356,15 @@
     color: rgba(229,231,235,0.65);
 }
 
-/* =========================
-   Screenshots (mais abaixo)
-   ========================= */
+
+/* ============================================================================
+   SCREENSHOTS / MEDIA
+   ============================================================================ */
 .bl-screens {
-    margin-top: 26px; /* <-- baixa os screenshots */
+    margin-top: 26px;
 }
 
+/* Título das secções */
 .bl-section-title {
     margin-top: 0;
     font-weight: 800;
@@ -301,6 +372,7 @@
     opacity: .9;
 }
 
+/* Grid das imagens */
 .bl-media {
     margin-top: 10px;
     display: grid;
@@ -317,9 +389,10 @@
     box-shadow: 0 12px 30px rgba(0,0,0,0.30);
 }
 
-/* =========================
-   Responsive
-   ========================= */
+
+/* ============================================================================
+   RESPONSIVE - TABLET
+   ============================================================================ */
 @media (max-width: 992px) {
     #game-cover-art,
     .gf-cover-art {
@@ -327,7 +400,7 @@
     }
 
     .bl-shell {
-        padding: 190px 18px 0; /* mantém “baixo” em tablets */
+        padding: 190px 18px 0;
         max-width: 980px;
     }
 
@@ -335,7 +408,8 @@
         grid-template-columns: 160px 1fr;
     }
 
-    .bl-cover img, .bl-cover-fallback {
+    .bl-cover img,
+    .bl-cover-fallback {
         width: 160px;
     }
 
@@ -352,6 +426,10 @@
     }
 }
 
+
+/* ============================================================================
+   RESPONSIVE - MOBILE
+   ============================================================================ */
 @media (max-width: 576px) {
     #game-cover-art,
     .gf-cover-art {
@@ -366,7 +444,8 @@
         grid-template-columns: 1fr;
     }
 
-    .bl-cover img, .bl-cover-fallback {
+    .bl-cover img,
+    .bl-cover-fallback {
         width: 180px;
     }
 
@@ -388,7 +467,11 @@
     }
 }
 
-/* FullBleed: encaixe com navbar transparente */
+
+/* ============================================================================
+   FULLBLEED
+   - Compensa navbar transparente quando a página usa layout fullbleed
+   ============================================================================ */
 body.fullbleed .gf-game-page {
     margin-top: -74px;
     padding-top: 74px;

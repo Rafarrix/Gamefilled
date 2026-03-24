@@ -7,6 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gamefilled.Pages.u
 {
+    /// <summary>
+    /// Página principal de perfil de utilizador.
+    ///
+    /// Responsabilidades:
+    /// - carregar utilizador do perfil
+    /// - calcular followers/following
+    /// - detetar se é o próprio perfil
+    /// - carregar favoritos, atividade, seguidores e following
+    /// - preparar estado dos tabs
+    /// </summary>
     public class ProfileModel : PageModel
     {
         private readonly AppDbContext _db;
@@ -42,23 +52,30 @@ namespace Gamefilled.Pages.u
             if (string.IsNullOrWhiteSpace(username))
                 return NotFound();
 
+            // Carrega o utilizador do perfil.
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username, ct);
             if (user == null)
                 return NotFound();
 
             ProfileUser = user;
 
+            // Normaliza o tab ativo.
             ActiveTab = NormalizeTab(tab);
 
+            // Deteta se o perfil aberto é o próprio.
             var currentUsername = HttpContext.Session.GetString("username");
             IsOwnProfile = currentUsername == username;
 
+            // Conta followers e following.
             FollowersCount = await _db.Follows.CountAsync(f => f.FollowingId == ProfileUser.Id, ct);
             FollowingCount = await _db.Follows.CountAsync(f => f.FollowerId == ProfileUser.Id, ct);
 
+            // Se existir utilizador autenticado e não for o próprio perfil,
+            // verifica se já segue este utilizador.
             if (!string.IsNullOrWhiteSpace(currentUsername) && !IsOwnProfile)
             {
                 var currentUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == currentUsername, ct);
+
                 if (currentUser != null)
                 {
                     IsFollowing = await _db.Follows.AnyAsync(f =>
@@ -67,12 +84,15 @@ namespace Gamefilled.Pages.u
                 }
             }
 
+            // Informação adicional do perfil.
             MemberSinceText = ProfileUser.CreatedAt.ToString("MM/yyyy");
             BuildOnlineStatus(ProfileUser.LastSeenAt);
 
+            // Dados comuns à página principal do perfil.
             await LoadFavoriteGamesAsync(ct);
             await LoadActivityAsync(ct);
 
+            // Só carrega listas detalhadas se o tab pedir.
             if (ActiveTab == "followers")
                 await LoadFollowersAsync(ct);
 
@@ -81,6 +101,10 @@ namespace Gamefilled.Pages.u
 
             return Page();
         }
+
+        /* =====================================================================
+           FAVORITE GAMES
+           ===================================================================== */
 
         private async Task LoadFavoriteGamesAsync(CancellationToken ct)
         {
@@ -93,6 +117,7 @@ namespace Gamefilled.Pages.u
                 .Select(x => x.GameId)
                 .ToList();
 
+            // Usa o serviço IGDB já existente no projeto.
             var igdbGames = await _igdb.GetGamesByIdsAsync(gameIds, ct);
             var byId = igdbGames.ToDictionary(x => x.Id, x => x);
 
@@ -116,8 +141,13 @@ namespace Gamefilled.Pages.u
                 .ToList();
         }
 
+        /* =====================================================================
+           FOLLOWERS
+           ===================================================================== */
+
         private async Task LoadFollowersAsync(CancellationToken ct)
         {
+            // IDs que o utilizador segue, para saber quem é amigo mútuo.
             var profileFollowingIds = (await _db.Follows
                 .Where(f => f.FollowerId == ProfileUser.Id)
                 .Select(f => f.FollowingId)
@@ -144,8 +174,13 @@ namespace Gamefilled.Pages.u
                 .ToList();
         }
 
+        /* =====================================================================
+           FOLLOWING
+           ===================================================================== */
+
         private async Task LoadFollowingAsync(CancellationToken ct)
         {
+            // IDs que seguem o utilizador, para marcar amizade mútua.
             var profileFollowerIds = (await _db.Follows
                 .Where(f => f.FollowingId == ProfileUser.Id)
                 .Select(f => f.FollowerId)
@@ -172,6 +207,10 @@ namespace Gamefilled.Pages.u
                 .ToList();
         }
 
+        /* =====================================================================
+           ACTIVITY
+           ===================================================================== */
+
         private async Task LoadActivityAsync(CancellationToken ct)
         {
             var activities = await _db.UserActivities
@@ -191,6 +230,10 @@ namespace Gamefilled.Pages.u
                 })
                 .ToList();
         }
+
+        /* =====================================================================
+           HELPERS
+           ===================================================================== */
 
         private static string NormalizeTab(string? tab)
         {
@@ -238,6 +281,9 @@ namespace Gamefilled.Pages.u
         }
     }
 
+    /// <summary>
+    /// ViewModel para followers/following no perfil.
+    /// </summary>
     public class ProfileFollowUserViewModel
     {
         public string? Username { get; set; }
@@ -250,6 +296,9 @@ namespace Gamefilled.Pages.u
         public bool IsFriend { get; set; }
     }
 
+    /// <summary>
+    /// ViewModel para itens de atividade do perfil.
+    /// </summary>
     public class ProfileActivityItemViewModel
     {
         public string Type { get; set; } = "";

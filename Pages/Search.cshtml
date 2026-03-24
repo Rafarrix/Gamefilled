@@ -16,16 +16,16 @@
     }
     else if (string.IsNullOrWhiteSpace(Model.Query) || (Model.Query?.Trim().Length ?? 0) < 2)
     {
-        <div class="search-empty">Escreve algo para pesquisar.</div>
+        <div class="search-empty">Type something to search.</div>
     }
     else if (results.Count == 0)
     {
-        <div class="search-empty">Sem resultados.</div>
+        <div class="search-empty">No results found.</div>
     }
     else
     {
-        @* TOP RESULT *@
         var top = results[0];
+
         <a class="search-result top-result" href="/games/@top.Id">
             <div class="sr-cover">
                 @if (!string.IsNullOrWhiteSpace(top.CoverImageId))
@@ -49,24 +49,21 @@
                 </div>
 
                 <div class="sr-tags">
-                    <span class="sr-pill sr-pill-main">@top.CategoryLabel</span>
-
-                    @{
-                        // TOP: plataformas (até 5)
-                        var topMaxPlats = 5;
-                        var topPlats = top.Platforms ?? new List<string>();
-                        var topShowPlats = topPlats.Take(topMaxPlats).ToList();
-                        var topMorePlats = topPlats.Count - topShowPlats.Count;
+                    @if (!string.IsNullOrWhiteSpace(top.CategoryLabel))
+                    {
+                        <span class="sr-pill sr-pill-main">@top.CategoryLabel</span>
                     }
 
-                    @foreach (var p in topShowPlats)
+                    @foreach (var p in (top.Platforms ?? new List<string>()))
                     {
-                        <span class="sr-pill">@p</span>
-                    }
-
-                    @if (topMorePlats > 0)
-                    {
-                        <span class="sr-more">+@topMorePlats more</span>
+                        <span class="gf-platform-pill gf-platform-pill--sm @PlatformClass(p)"
+                              data-platform="@PlatformLabel(p)"
+                              title="@PlatformLabel(p)"
+                              aria-label="@PlatformLabel(p)">
+                            <span class="gf-platform-pill__icon">
+                                <i class="@PlatformIcon(p)" aria-hidden="true"></i>
+                            </span>
+                        </span>
                     }
                 </div>
             </div>
@@ -74,12 +71,11 @@
 
         <div class="sr-divider"></div>
 
-        @* RESTO *@
         @for (int i = 1; i < results.Count; i++)
         {
             var g = results[i];
 
-            <a class="search-result" href="/games/@top.Id">
+            <a class="search-result" href="/games/@g.Id">
                 <div class="sr-cover">
                     @if (!string.IsNullOrWhiteSpace(g.CoverImageId))
                     {
@@ -102,24 +98,21 @@
                     </div>
 
                     <div class="sr-tags">
-                        <span class="sr-pill">@g.CategoryLabel</span>
-
-                        @{
-                            // LISTA: plataformas (até 5)
-                            var rowMaxPlats = 5;
-                            var rowPlats = g.Platforms ?? new List<string>();
-                            var rowShowPlats = rowPlats.Take(rowMaxPlats).ToList();
-                            var rowMorePlats = rowPlats.Count - rowShowPlats.Count;
+                        @if (!string.IsNullOrWhiteSpace(g.CategoryLabel))
+                        {
+                            <span class="sr-pill">@g.CategoryLabel</span>
                         }
 
-                        @foreach (var p in rowShowPlats)
+                        @foreach (var p in (g.Platforms ?? new List<string>()))
                         {
-                            <span class="sr-pill">@p</span>
-                        }
-
-                        @if (rowMorePlats > 0)
-                        {
-                            <span class="sr-more">+@rowMorePlats more</span>
+                            <span class="gf-platform-pill gf-platform-pill--sm @PlatformClass(p)"
+                                  data-platform="@PlatformLabel(p)"
+                                  title="@PlatformLabel(p)"
+                                  aria-label="@PlatformLabel(p)">
+                                <span class="gf-platform-pill__icon">
+                                    <i class="@PlatformIcon(p)" aria-hidden="true"></i>
+                                </span>
+                            </span>
                         }
                     </div>
                 </div>
@@ -129,3 +122,125 @@
         }
     }
 </div>
+
+@functions {
+    static string PlatformClass(string? platformName)
+    {
+        var p = (platformName ?? "").Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(p))
+            return "gf-platform-pill--generic";
+
+        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp")
+            return "gf-platform-pill--playstation";
+
+        if (p.Contains("xbox"))
+            return "gf-platform-pill--xbox";
+
+        if (p.Contains("switch"))
+            return "gf-platform-pill--switch";
+
+        if (p.Contains("nintendo") || p.Contains("game boy") || p.Contains("gameboy") || p.Contains("ds") || p.Contains("3ds") || p.Contains("wii"))
+            return "gf-platform-pill--nintendo";
+
+        if (p.Contains("pc") || p.Contains("windows") || p.Contains("dos") || p.Contains("steam"))
+            return "gf-platform-pill--pc";
+
+        if (p.Contains("mac"))
+            return "gf-platform-pill--mac";
+
+        if (p.Contains("linux") || p.Contains("ubuntu"))
+            return "gf-platform-pill--linux";
+
+        if (p.Contains("android"))
+            return "gf-platform-pill--android";
+
+        if (p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad"))
+            return "gf-platform-pill--ios";
+
+        if (p.Contains("mobile"))
+            return "gf-platform-pill--mobile";
+
+        if (p.Contains("browser") || p.Contains("web"))
+            return "gf-platform-pill--browser";
+
+        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn") || p.Contains("game gear"))
+            return "gf-platform-pill--sega";
+
+        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga"))
+            return "gf-platform-pill--retro";
+
+        if (p.Contains("cloud"))
+            return "gf-platform-pill--cloud";
+
+        return "gf-platform-pill--generic";
+    }
+
+    static string PlatformIcon(string? platformName)
+    {
+        var p = (platformName ?? "").Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(p))
+            return "fas fa-gamepad";
+
+        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp")
+            return "fab fa-playstation";
+
+        if (p.Contains("xbox"))
+            return "fab fa-xbox";
+
+        if (p.Contains("steam"))
+            return "fab fa-steam";
+
+        if (p.Contains("windows") || p.Contains("pc") || p.Contains("dos"))
+            return "fab fa-windows";
+
+        if (p.Contains("mac") || p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad"))
+            return "fab fa-apple";
+
+        if (p.Contains("android"))
+            return "fab fa-android";
+
+        if (p.Contains("linux") || p.Contains("ubuntu"))
+            return "fab fa-linux";
+
+        if (p.Contains("browser") || p.Contains("web"))
+            return "fas fa-globe";
+
+        if (p.Contains("switch") || p.Contains("nintendo"))
+            return "fas fa-gamepad";
+
+        if (p.Contains("cloud"))
+            return "fas fa-cloud";
+
+        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn"))
+            return "fas fa-compact-disc";
+
+        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga"))
+            return "fas fa-joystick";
+
+        return "fas fa-gamepad";
+    }
+
+    static string PlatformLabel(string? platformName)
+    {
+        var p = (platformName ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(p)) return "Unknown";
+
+        return p switch
+        {
+            "PC (Microsoft Windows)" => "PC",
+            "Xbox Series X|S" => "Xbox Series X|S",
+            "Xbox One" => "Xbox One",
+            "Xbox 360" => "Xbox 360",
+            "PlayStation 5" => "PS5",
+            "PlayStation 4" => "PS4",
+            "PlayStation 3" => "PS3",
+            "PlayStation 2" => "PS2",
+            "PlayStation Vita" => "PS Vita",
+            "PlayStation Portable" => "PSP",
+            "Nintendo Switch" => "Switch",
+            _ => p
+        };
+    }
+}

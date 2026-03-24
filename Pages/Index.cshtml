@@ -16,6 +16,7 @@
         <div class="gf-home-shell">
             @if (!Model.IsLoggedIn)
             {
+                <!-- HERO para visitante -->
                 <div class="gf-home-hero__content">
                     <div class="gf-home-kicker">Track. Rate. Share.</div>
 
@@ -60,6 +61,7 @@
             }
             else
             {
+                <!-- HERO para utilizador autenticado -->
                 <div class="gf-home-hero__content gf-home-hero__content--logged">
                     <div class="gf-home-kicker">Welcome back</div>
 
@@ -109,6 +111,7 @@
     <div class="gf-home-main">
         <div class="container">
 
+            <!-- TRENDING -->
             <section class="gf-home-section">
                 <div class="gf-home-section__head">
                     <div>
@@ -161,6 +164,7 @@
                 }
             </section>
 
+            <!-- RECENT RELEASES -->
             <section class="gf-home-section">
                 <div class="gf-home-section__head">
                     <div>
@@ -213,6 +217,7 @@
                 }
             </section>
 
+            <!-- TOP RATED -->
             <section class="gf-home-section">
                 <div class="gf-home-section__head">
                     <div>

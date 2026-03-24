@@ -1,5 +1,8 @@
 namespace Gamefilled.Pages.games.lib
 {
+    /// <summary>
+    /// Página da biblioteca ordenada por tempo médio para completar.
+    /// </summary>
     public class AvgFinishTimeModel : _GamesLibBase
     {
         public AvgFinishTimeModel(IConfiguration cfg, ILogger<AvgFinishTimeModel> logger, IHttpClientFactory http)

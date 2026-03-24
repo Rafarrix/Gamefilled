@@ -1,7 +1,8 @@
 ﻿@model Gamefilled.Pages.games.lib._GamesLibBase
 
 @{
-    // Links dos filtros (fallback para evitar null warnings)
+    // URLs base de cada filtro de ordenação.
+    // O fallback evita null caso Url.Page falhe.
     string titleUrl = Url.Page("/games/lib/Title") ?? "/games/lib/title/";
     string trendingUrl = Url.Page("/games/lib/Trending") ?? "/games/lib/trending/";
     string releaseUrl = Url.Page("/games/lib/ReleaseDate") ?? "/games/lib/releasedate/";
@@ -10,18 +11,18 @@
     string avgPlayUrl = Url.Page("/games/lib/AvgPlayTime") ?? "/games/lib/avgplaytime/";
     string avgFinishUrl = Url.Page("/games/lib/AvgFinishTime") ?? "/games/lib/avgfinishtime/";
 
-    // path atual
+    // Caminho atual da página.
     string currentPath = Context?.Request?.Path.Value ?? popularUrl;
 
-    // dir atual
+    // Direção atual da ordenação.
     string dir = (Model.Dir ?? "desc").ToLowerInvariant();
 
-    // helpers
+    // Helpers locais para construir links.
     string PageLink(int p) => $"{currentPath}?pageNumber={p}&pageSize={Model.PageSize}&dir={dir}";
     string DirLink(string d) => $"{currentPath}?pageNumber=1&pageSize={Model.PageSize}&dir={d}";
     string SortLink(string url) => $"{url}?pageNumber=1&pageSize={Model.PageSize}&dir={dir}";
 
-    // para decidir o “meta” por baixo do cover
+    // Chave atual de sort para decidir o meta mostrado no card.
     string key = (Model.SortKey ?? "").ToLowerInvariant();
 }
 
@@ -36,13 +37,16 @@
         <div class="games-sortbar">
             <span class="games-sortbar-label">Sort by</span>
 
+            <!-- Setas para trocar direção asc/desc -->
             <a class="games-sortbar-arrow" href="@DirLink("asc")" title="Ascendente" aria-label="Ascendente">
                 <i class="fas fa-chevron-up"></i>
             </a>
+
             <a class="games-sortbar-arrow" href="@DirLink("desc")" title="Descendente" aria-label="Descendente">
                 <i class="fas fa-chevron-down"></i>
             </a>
 
+            <!-- Dropdown com lista de filtros -->
             <div class="dropdown games-sortbar-dd">
                 <a class="games-sortbar-selected dropdown-toggle"
                    href="#"
@@ -91,12 +95,9 @@
                         {
                             <div class="game-cover-fallback"></div>
                         }
-
-                        @* Se tinhas um título pequeno dentro do card, podes remover esse elemento.
-                           Agora usamos data-title + pseudo-elements para o overlay. *@
                     </div>
 
-                    @* Mantém a meta por baixo da capa (data / rating / horas) como estava no ficheiro original. *@
+                    @* Meta mostrado por baixo da capa, consoante o tipo de ordenação. *@
                     @if (key == "release-date")
                     {
                         <div class="game-meta">
@@ -132,6 +133,7 @@
                     int current = Model.PageNumber;
                     int total = Model.TotalPages;
 
+                    // Janela de paginação centrada na página atual.
                     int start = Math.Max(1, current - 2);
                     int end = Math.Min(total, current + 2);
 
@@ -142,6 +144,7 @@
                 @if (start > 1)
                 {
                     <a class="pg" href="@PageLink(1)">1</a>
+
                     @if (start > 2)
                     {
                         <span class="pg dots">…</span>
@@ -159,6 +162,7 @@
                     {
                         <span class="pg dots">…</span>
                     }
+
                     <a class="pg" href="@PageLink(total)">@total</a>
                 }
             </nav>

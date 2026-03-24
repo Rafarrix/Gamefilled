@@ -19,11 +19,13 @@ namespace Gamefilled.Pages
         public string? Query { get; set; }
 
         public string? Error { get; set; }
+
         public List<SearchGame> Results { get; set; } = new();
 
         public async Task OnGetAsync()
         {
             var term = (Query ?? "").Trim();
+
             if (term.Length < 2) return;
 
             try
@@ -42,16 +44,15 @@ namespace Gamefilled.Pages
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("Search -> /api/igdbsearch falhou {Status}. Body: {Body}", res.StatusCode, json);
-                    Error = "Falha a contactar IGDB. Tenta novamente.";
+                    _logger.LogWarning("Search -> /api/igdbsearch failed {Status}. Body: {Body}", res.StatusCode, json);
+                    Error = "Failed to contact IGDB. Please try again.";
                     return;
                 }
 
                 Results = ParseApiResponse(json);
 
-                // ordenação: jogo base primeiro + popularidade
                 Results = Results
-                    .OrderByDescending(g => g.Category == 0) // Main Game
+                    .OrderByDescending(g => g.Category == 0)
                     .ThenByDescending(g => g.Follows)
                     .ThenByDescending(g => g.TotalRatingCount)
                     .ThenBy(g => g.Name)
@@ -59,14 +60,11 @@ namespace Gamefilled.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro no /search");
-                Error = "Falha a contactar IGDB. Tenta novamente.";
+                _logger.LogError(ex, "Error in /search");
+                Error = "Failed to contact IGDB. Please try again.";
             }
         }
 
-        // =========================================================
-        // Parsing
-        // =========================================================
         private static List<SearchGame> ParseApiResponse(string json)
         {
             using var doc = JsonDocument.Parse(json);
@@ -90,7 +88,6 @@ namespace Gamefilled.Pages
 
             foreach (var el in arr.EnumerateArray())
             {
-                // 🔑 ID (OBRIGATÓRIO)
                 if (!el.TryGetProperty("id", out var idEl) || idEl.ValueKind != JsonValueKind.Number)
                     continue;
 
@@ -138,16 +135,16 @@ namespace Gamefilled.Pages
                             p.TryGetProperty("name", out var pn) &&
                             pn.ValueKind == JsonValueKind.String)
                         {
-                            var pnStr = pn.GetString();
-                            if (!string.IsNullOrWhiteSpace(pnStr))
-                                platforms.Add(pnStr!);
+                            var pnStr = pn.GetString()?.Trim();
+                            if (!string.IsNullOrWhiteSpace(pnStr) && !platforms.Contains(pnStr))
+                                platforms.Add(pnStr);
                         }
                     }
                 }
 
                 list.Add(new SearchGame
                 {
-                    Id = id,                // 🔑
+                    Id = id,
                     Name = name!,
                     Slug = slug ?? "",
                     Year = year,
@@ -171,28 +168,29 @@ namespace Gamefilled.Pages
                 1 => "DLC / Addon",
                 2 => "Expansion",
                 3 => "Bundle",
-                4 => "Standalone",
+                4 => "Standalone Expansion",
+                5 => "Mod",
                 6 => "Episode",
                 7 => "Season",
                 8 => "Remake",
                 9 => "Remaster",
+                10 => "Expanded Game",
                 11 => "Port",
-                _ => "Other"
+                12 => "Fork",
+                13 => "Pack",
+                _ => ""
             };
         }
 
-        // =========================================================
-        // VM
-        // =========================================================
         public class SearchGame
         {
-            public int Id { get; set; }      // 🔑 USADO NO LINK
+            public int Id { get; set; }
             public string Name { get; set; } = "";
             public string Slug { get; set; } = "";
             public int? Year { get; set; }
 
             public int? Category { get; set; }
-            public string CategoryLabel { get; set; } = "Other";
+            public string CategoryLabel { get; set; } = "";
 
             public int Follows { get; set; }
             public int TotalRatingCount { get; set; }

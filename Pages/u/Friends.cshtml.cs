@@ -5,6 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gamefilled.Pages.u
 {
+    /// <summary>
+    /// Página que mostra amizades mútuas de um utilizador.
+    /// Aqui "friends" significa:
+    /// - o utilizador segue alguém
+    /// - e essa pessoa segue-o de volta
+    /// </summary>
     public class FriendsModel : PageModel
     {
         private readonly AppDbContext _db;
@@ -14,7 +20,14 @@ namespace Gamefilled.Pages.u
             _db = db;
         }
 
+        /// <summary>
+        /// Utilizador dono da página.
+        /// </summary>
         public Models.User ProfileUser { get; set; } = default!;
+
+        /// <summary>
+        /// Lista de amigos preparados para a UI.
+        /// </summary>
         public List<FriendUserViewModel> Friends { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(string username, CancellationToken ct)
@@ -28,12 +41,15 @@ namespace Gamefilled.Pages.u
 
             ProfileUser = user;
 
+            // Relações em que o utilizador segue alguém.
             var outgoing = _db.Follows
                 .Where(f => f.FollowerId == user.Id);
 
+            // Relações em que seguem o utilizador.
             var incoming = _db.Follows
                 .Where(f => f.FollowingId == user.Id);
 
+            // Amigos = interseção entre outgoing e incoming.
             Friends = await (
                 from o in outgoing
                 join i in incoming on o.FollowingId equals i.FollowerId
@@ -52,6 +68,9 @@ namespace Gamefilled.Pages.u
             return Page();
         }
 
+        /// <summary>
+        /// ViewModel interno para a lista de amigos.
+        /// </summary>
         public class FriendUserViewModel
         {
             public string? Username { get; set; }

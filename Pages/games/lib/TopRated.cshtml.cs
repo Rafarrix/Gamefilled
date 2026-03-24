@@ -1,5 +1,8 @@
 namespace Gamefilled.Pages.games.lib
 {
+    /// <summary>
+    /// Página da biblioteca ordenada por rating.
+    /// </summary>
     public class TopRatedModel : _GamesLibBase
     {
         public TopRatedModel(IConfiguration cfg, ILogger<TopRatedModel> logger, IHttpClientFactory http)

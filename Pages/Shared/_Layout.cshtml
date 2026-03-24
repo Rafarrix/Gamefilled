@@ -1,8 +1,10 @@
 ﻿@using Microsoft.AspNetCore.Http
 @{
+    // Dados do utilizador vindos da sessão.
     string? displayName = null;
     string? username = null;
 
+    // Verifica primeiro se a sessão está disponível.
     var sessionFeature = Context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>();
     if (sessionFeature?.Session != null)
     {
@@ -10,6 +12,7 @@
         username = Context.Session.GetString("username");
     }
 
+    // Define se a página atual usa layout fullbleed.
     var isFullBleed = (ViewData["FullBleed"] as bool?) == true;
 }
 
@@ -19,6 +22,7 @@
     <title>Gamefilled</title>
     <link rel="icon" type="image/png" href="~/lib/imgs/favicon.png" />
 
+    <!-- Meta base -->
     <meta name="description" content="Your personal virtual backlog of video game collection">
     <meta itemprop="name" content="Gamefilled">
     <meta itemprop="description" content="Your personal virtual backlog of video game collection">
@@ -33,14 +37,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- CSS -->
+    <!-- CSS global -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 </head>
 
 <body class="d-flex flex-column min-vh-100 @(isFullBleed ? "fullbleed" : "")">
 
+    <!-- Elemento auxiliar visual -->
     <div class="d-none" id="main-gradient"></div>
 
+    <!-- HEADER -->
     <header class="site-header @(isFullBleed ? "site-header--overlay" : "")">
         <nav class="navbar navbar-expand-md navbar-dark @(isFullBleed ? "navbar--overlay" : "")" id="primary-nav">
             <div class="container">
@@ -53,7 +59,7 @@
                          height="50" />
                 </a>
 
-                <!-- MOBILE (linha compacta) -->
+                <!-- MOBILE: linha compacta -->
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item mr-sm-2 d-inline d-md-none">
                         <a class="nav-link d-inline mr-1 position-relative" id="nav-notification-bell" href="/notifications/">
@@ -74,7 +80,7 @@
                     </li>
                 </ul>
 
-                <!-- DESKTOP / COLLAPSE -->
+                <!-- DESKTOP / ÁREA COLAPSÁVEL -->
                 <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
 
                     <ul class="navbar-nav ml-auto align-items-md-center">
@@ -85,6 +91,7 @@
                             </a>
                         </li>
 
+                        @* Se não existir sessão de utilizador, mostra login/register *@
                         @if (string.IsNullOrEmpty(username))
                         {
                             <li class="nav-item d-none d-md-block mr-2">
@@ -96,6 +103,7 @@
                         }
                         else
                         {
+                            @* Se existir utilizador autenticado, mostra menu de perfil *@
                             <li class="nav-item dropdown d-none d-md-block" id="profile-li">
                                 <div class="d-flex align-items-center" id="profile-compact">
                                     <a class="nav-link pr-1" id="nav-username" href="/u/@(username)/">@displayName</a>
@@ -134,6 +142,7 @@
 
                                     <a class="dropdown-item py-1" href="/Settings">Settings</a>
 
+                                    <!-- Logout via POST -->
                                     <form method="post" asp-page="/users/Logout" class="m-0 p-0">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="dropdown-item pt-1 pb-2 w-100 text-left">
@@ -168,6 +177,7 @@
                                 <i class="fas fa-search"></i>
                             </button>
 
+                            <!-- Dropdown do autocomplete -->
                             <div class="igdb-dropdown d-none" id="igdb-dropdown" role="listbox" aria-label="Search results"></div>
                         </div>
                     </form>
@@ -176,16 +186,18 @@
             </div>
         </nav>
 
-        <!-- 🔄 Barra de loading -->
+        <!-- Barra visual de loading -->
         <div id="header-loader">
             <div class="header-loader-bar"></div>
         </div>
     </header>
 
+    <!-- CONTEÚDO PRINCIPAL -->
     <main role="main" class="@(isFullBleed ? "flex-grow-1 p-0" : "container flex-grow-1 pb-3")">
         @RenderBody()
     </main>
 
+    <!-- FOOTER -->
     <footer class="footer mt-auto">
         <div class="container py-2">
             <div class="row mx-0">
@@ -209,7 +221,7 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
