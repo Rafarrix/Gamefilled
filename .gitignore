@@ -361,4 +361,47 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/appsettings.json
+# =========================
+# GameFilled - ficheiros sensíveis
+# =========================
+
+# Configurações locais / segredos
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Production.json
+appsettings.Staging.json
+
+# Se o teu appsettings.json tiver API keys, passwords ou connection strings privadas,
+# mantém esta linha. Se for só configuração pública, podes remover esta linha.
+appsettings.json
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# User secrets do ASP.NET
+secrets.json
+
+# Bases de dados locais
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+*.ndf
+
+# Chaves, certificados e credenciais
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.publishsettings
+
+# Publicação/deploy
+publish/
+PublishScripts/
+*.pubxml
+*.azurePubxml
