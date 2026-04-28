@@ -59,14 +59,16 @@ namespace Gamefilled.Infrastructure
                 throw new InvalidOperationException("IGDB ClientId/ClientSecret em falta no appsettings.json.");
 
             // Endpoint OAuth do Twitch com client credentials.
-            var url =
-                $"https://id.twitch.tv/oauth2/token" +
-                $"?client_id={Uri.EscapeDataString(_options.ClientId)}" +
-                $"&client_secret={Uri.EscapeDataString(_options.ClientSecret)}" +
-                $"&grant_type=client_credentials";
+            var url = "https://id.twitch.tv/oauth2/token";
 
-            // O Twitch aceita POST sem body, com parâmetros na querystring.
-            using var resp = await _http.PostAsync(url, content: null, ct);
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["client_id"] = _options.ClientId,
+                ["client_secret"] = _options.ClientSecret,
+                ["grant_type"] = "client_credentials"
+            });
+
+            using var resp = await _http.PostAsync(url, content, ct);
 
             // Lança exceção automática em caso de erro HTTP.
             resp.EnsureSuccessStatusCode();
