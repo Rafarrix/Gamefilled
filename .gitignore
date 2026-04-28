@@ -425,3 +425,7 @@ Gamefilled.csproj.user
 *.pfx
 *.p12
 *.publishsettings
+
+# Scripts/dumps locais da base de dados
+Database/
+*.sql
