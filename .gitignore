@@ -405,3 +405,23 @@ publish/
 PublishScripts/
 *.pubxml
 *.azurePubxml
+
+# GameFilled - ficheiros locais/sensíveis
+appsettings.json
+appsettings.Development.json
+Gamefilled.csproj.user
+*.csproj.user
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+*.ndf
+*.pem
+*.key
+*.pfx
+*.p12
+*.publishsettings
