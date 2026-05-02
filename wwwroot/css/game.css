@@ -478,24 +478,18 @@ body.fullbleed .gf-game-page {
 }
 
 /* ============================================================================
-   GAMEFILLED - GAME DETAIL RESPONSIVE FINAL OVERRIDES
+   GAMEFILLED - GAME DETAIL RESPONSIVE FINAL OVERRIDES V2
    ---------------------------------------------------------------------------
-   Objetivo deste bloco:
-   - Melhorar a página /games/{id} em telemóvel
+   Objetivo:
+   - Manter o layout da página de detalhe
+   - Tornar tudo maior e mais confortável em mobile
    - Preservar desktop
-   - Corrigir hero demasiado alto
-   - Melhorar cover, título, metadados, cards, TTB e screenshots
-   - Evitar overflow lateral
+   - Evitar que pareça uma página desktop reduzida
    ============================================================================ */
 
 
 /* ============================================================================
    TABLET
-   ---------------------------------------------------------------------------
-   Layout intermédio:
-   - cover menor
-   - hero mais controlado
-   - conteúdo com padding lateral
    ============================================================================ */
 @media (max-width: 992px) {
 
@@ -505,41 +499,55 @@ body.fullbleed .gf-game-page {
 
     #game-cover-art,
     .gf-cover-art {
-        height: 500px;
+        height: 560px;
     }
 
         #game-cover-art img,
         .gf-cover-art img {
-            object-position: center 36%;
-            filter: saturate(1.02) brightness(0.72);
+            object-position: center 38%;
+            filter: saturate(1.02) brightness(0.76);
         }
 
     #gradient {
-        background: linear-gradient(to bottom, rgba(10,12,16,0.94) 0%, rgba(10,12,16,0.72) 22%, rgba(10,12,16,0.36) 48%, rgba(14,16,21,0.92) 92%, rgba(14,16,21,1) 100%), radial-gradient(110% 120% at 50% 34%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.34) 56%, rgba(10,12,16,0.88) 100%);
+        background: linear-gradient(to bottom, rgba(10,12,16,0.92) 0%, rgba(10,12,16,0.68) 20%, rgba(10,12,16,0.30) 48%, rgba(14,16,21,0.86) 88%, rgba(14,16,21,1) 100%), radial-gradient(110% 120% at 50% 34%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.32) 56%, rgba(10,12,16,0.86) 100%);
     }
 
     .bl-shell {
         max-width: 100%;
-        padding: 160px 18px 0;
+        padding: 180px 20px 0;
     }
 
     .bl-top {
-        grid-template-columns: 160px minmax(0, 1fr);
-        gap: 22px;
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 24px;
     }
 
     .bl-cover img,
     .bl-cover-fallback {
-        width: 160px;
+        width: 180px;
     }
 
     .bl-title {
-        font-size: 30px;
-        line-height: 1.12;
+        font-size: 34px;
+        line-height: 1.1;
+    }
+
+    .bl-byline {
+        font-size: 0.92rem;
     }
 
     .bl-summary {
         max-width: 100%;
+        font-size: 0.98rem;
+    }
+
+    .bl-row__label {
+        font-size: 0.78rem;
+    }
+
+    .bl-chip,
+    .pill {
+        font-size: 0.82rem;
     }
 
     .bl-media {
@@ -549,37 +557,34 @@ body.fullbleed .gf-game-page {
 
 
 /* ============================================================================
-   MOBILE GRANDE
+   MOBILE
    ---------------------------------------------------------------------------
-   Layout passa para uma coluna:
-   - cover em cima
-   - texto por baixo
-   - cards empilhados de forma limpa
+   Aqui a página passa a uma coluna, mas os elementos ficam maiores.
    ============================================================================ */
 @media (max-width: 768px) {
 
     #game-cover-art,
     .gf-cover-art {
-        height: 520px;
+        height: 590px;
     }
 
         #game-cover-art img,
         .gf-cover-art img {
             object-position: center top;
-            filter: saturate(1.02) brightness(0.56);
+            filter: saturate(1.02) brightness(0.58);
         }
 
     #gradient {
-        background: linear-gradient(to bottom, rgba(10,12,16,0.88) 0%, rgba(10,12,16,0.54) 32%, rgba(14,16,21,0.90) 78%, rgba(14,16,21,1) 100%), radial-gradient(120% 110% at 50% 30%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.30) 48%, rgba(10,12,16,0.92) 100%);
+        background: linear-gradient(to bottom, rgba(10,12,16,0.84) 0%, rgba(10,12,16,0.50) 32%, rgba(14,16,21,0.86) 78%, rgba(14,16,21,1) 100%), radial-gradient(120% 110% at 50% 30%, rgba(10,12,16,0.00) 0%, rgba(10,12,16,0.30) 48%, rgba(10,12,16,0.92) 100%);
     }
 
     .bl-shell {
-        padding: 132px 14px 0;
+        padding: 150px 16px 0;
     }
 
     .bl-top {
         grid-template-columns: 1fr;
-        gap: 18px;
+        gap: 22px;
     }
 
     .bl-cover {
@@ -589,10 +594,10 @@ body.fullbleed .gf-game-page {
 
         .bl-cover img,
         .bl-cover-fallback {
-            width: 176px;
-            max-width: 56vw;
-            border-radius: 14px;
-            box-shadow: 0 18px 48px rgba(0,0,0,0.54);
+            width: 215px;
+            max-width: 64vw;
+            border-radius: 16px;
+            box-shadow: 0 20px 52px rgba(0,0,0,0.58);
         }
 
     .bl-main {
@@ -602,54 +607,60 @@ body.fullbleed .gf-game-page {
     .bl-title-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 12px;
     }
 
     .bl-title {
-        font-size: clamp(1.8rem, 8vw, 2.35rem);
-        line-height: 1.08;
-        letter-spacing: -0.02em;
+        font-size: clamp(2.2rem, 9vw, 2.85rem);
+        line-height: 1.05;
+        letter-spacing: -0.025em;
         word-break: break-word;
     }
 
     .bl-byline {
-        font-size: 0.82rem;
-        line-height: 1.45;
+        font-size: 1rem;
+        line-height: 1.5;
     }
 
     .bl-release {
         white-space: normal;
-        gap: 6px;
+        gap: 8px;
     }
 
     .pill,
     .bl-chip {
-        font-size: 0.75rem;
-        padding: 5px 8px;
+        font-size: 0.9rem;
+        padding: 7px 11px;
     }
 
     .bl-summary {
-        margin-top: 12px;
-        font-size: 0.92rem;
-        line-height: 1.62;
+        margin-top: 14px;
+        font-size: 1.02rem;
+        line-height: 1.68;
+    }
+
+    .bl-rows {
+        gap: 13px;
+        margin-top: 16px;
     }
 
     .bl-row {
         grid-template-columns: 1fr;
-        gap: 6px;
+        gap: 7px;
         align-items: flex-start;
     }
 
     .bl-row__label {
-        font-size: 0.7rem;
+        font-size: 0.78rem;
     }
 
     .bl-row__value {
-        gap: 6px;
+        gap: 8px;
     }
 
     .bl-cards {
-        gap: 10px;
+        gap: 12px;
+        margin-top: 18px;
     }
 
     .bl-cards--3 {
@@ -657,89 +668,107 @@ body.fullbleed .gf-game-page {
     }
 
     .bl-card {
-        min-height: auto;
-        padding: 14px;
-        border-radius: 13px;
+        min-height: 116px;
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .bl-card__label {
+        font-size: 0.9rem;
     }
 
     .bl-card__value {
-        font-size: 24px;
+        font-size: 30px;
+    }
+
+    .bl-card__sub {
+        font-size: 0.9rem;
     }
 
     .bl-ttb-panel {
-        border-radius: 13px;
-        padding: 13px;
+        border-radius: 16px;
+        padding: 16px;
+        margin-top: 16px;
+    }
+
+    .bl-ttb-panel__title {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
     }
 
     .bl-ttb {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 12px;
     }
 
     .bl-ttb__item {
-        padding: 14px 10px;
-        border-radius: 12px;
+        padding: 17px 12px;
+        border-radius: 14px;
     }
 
     .bl-ttb__value {
-        font-size: 21px;
+        font-size: 26px;
+    }
+
+    .bl-ttb__label {
+        font-size: 0.92rem;
     }
 
     .bl-screens {
-        margin-top: 22px;
+        margin-top: 28px;
+    }
+
+    .bl-section-title {
+        font-size: 1rem;
     }
 
     .bl-media {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 9px;
+        gap: 10px;
     }
 
     .bl-media__img {
-        border-radius: 10px;
+        border-radius: 12px;
     }
 }
 
 
 /* ============================================================================
    MOBILE PEQUENO
-   ---------------------------------------------------------------------------
-   Afina proporções para ecrãs tipo iPhone SE / Android pequeno.
    ============================================================================ */
 @media (max-width: 420px) {
 
     #game-cover-art,
     .gf-cover-art {
-        height: 500px;
+        height: 560px;
     }
 
     .bl-shell {
-        padding: 118px 12px 0;
+        padding: 138px 14px 0;
     }
 
     .bl-cover img,
     .bl-cover-fallback {
-        width: 158px;
-        max-width: 58vw;
+        width: 200px;
+        max-width: 66vw;
     }
 
     .bl-title {
-        font-size: clamp(1.65rem, 9vw, 2rem);
+        font-size: clamp(2rem, 10vw, 2.45rem);
     }
 
     .bl-summary {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
-    .bl-card__label,
-    .bl-card__sub,
-    .bl-ttb-panel__title,
-    .bl-ttb__label {
-        font-size: 0.74rem;
+    .bl-card {
+        min-height: 108px;
+        padding: 16px;
     }
 
     .bl-card__value,
     .bl-ttb__value {
-        font-size: 20px;
+        font-size: 25px;
     }
 
     .bl-media {
@@ -751,21 +780,19 @@ body.fullbleed .gf-game-page {
 /* ============================================================================
    FULLBLEED EM MOBILE
    ---------------------------------------------------------------------------
-   Evita compensações agressivas quando a navbar/hero muda em mobile.
+   Mantém compatibilidade com o header transparente.
    ============================================================================ */
 @media (max-width: 768px) {
 
     body.fullbleed .gf-game-page {
-        margin-top: 0;
-        padding-top: 0;
+        margin-top: -74px;
+        padding-top: 74px;
     }
 }
 
 
 /* ============================================================================
    TOUCH DEVICES
-   ---------------------------------------------------------------------------
-   Remove efeitos hover pouco úteis em telemóvel.
    ============================================================================ */
 @media (hover: none) and (pointer: coarse) {
 
