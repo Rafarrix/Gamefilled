@@ -3223,3 +3223,1252 @@ body.fullbleed #primary-nav.navbar {
     --pf-text: rgba(229,231,235,0.88);
     --pf-icon-text: #f9fafb;
 }
+
+/* ============================================================================
+   GAMEFILLED - RESPONSIVE FINAL OVERRIDES
+   ---------------------------------------------------------------------------
+   Objetivo deste bloco:
+   - Corrigir a experiência em telemóvel e tablet
+   - Preservar totalmente o layout desktop já existente
+   - Evitar scroll horizontal acidental
+   - Melhorar espaçamentos, grelhas, navbar, perfil, favoritos, auth e forms
+   - Usar apenas media queries para não afetar o PC
+
+   Nota importante:
+   - Este bloco deve ficar no FINAL do site.css
+   - Assim consegue sobrepor regras anteriores apenas quando necessário
+   ============================================================================ */
+
+
+/* ============================================================================
+   BASE RESPONSIVA GLOBAL
+   ---------------------------------------------------------------------------
+   Estas regras apenas reforçam comportamento seguro em ecrãs pequenos.
+   Não alteram desktop.
+   ============================================================================ */
+@media (max-width: 992px) {
+
+    /* Evita qualquer elemento grande criar scroll lateral no mobile/tablet */
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Garante que media nunca rebenta a largura do ecrã */
+    img,
+    video,
+    canvas,
+    svg {
+        max-width: 100%;
+    }
+
+    /* Containers Bootstrap e wrappers internos mais confortáveis em tablet */
+    .container,
+    .container-fluid {
+        max-width: 100%;
+    }
+
+    /* Melhora o toque em botões e links interativos */
+    button,
+    .btn,
+    .dropdown-item,
+    .nav-link,
+    input,
+    select,
+    textarea {
+        touch-action: manipulation;
+    }
+}
+
+
+/* ============================================================================
+   NAVBAR / HEADER - TABLET E MOBILE
+   ---------------------------------------------------------------------------
+   Corrige:
+   - navbar demasiado parecida com desktop
+   - search apertado
+   - dropdowns grandes
+   - perfil na navbar a ocupar demasiado espaço
+   ============================================================================ */
+@media (max-width: 991.98px) {
+
+    .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 9999;
+    }
+
+    .navbar {
+        padding-top: 0.55rem;
+        padding-bottom: 0.55rem;
+        background: rgba(14,16,21,0.96);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #gamefilled-logo1 {
+        height: 36px;
+    }
+
+    /* Menu colapsado mais limpo */
+    .navbar-collapse {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 14px;
+        background: rgba(20,24,32,0.96);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 18px 42px rgba(0,0,0,0.32);
+    }
+
+    .navbar-nav {
+        gap: 0.15rem;
+    }
+
+    .nav-link {
+        padding: 0.7rem 0.75rem !important;
+        border-radius: 10px;
+        font-size: 0.98rem;
+    }
+
+        .nav-link:hover,
+        .nav-link:focus {
+            background: rgba(255,255,255,0.05);
+            text-decoration: none;
+        }
+
+    /* Search passa a ocupar a largura total dentro do menu mobile */
+    .search-wrap {
+        width: 100% !important;
+        margin-top: 0.65rem;
+        margin-bottom: 0.4rem;
+    }
+
+        .search-wrap .search-bar {
+            min-height: 44px;
+            border-radius: 12px;
+            background: rgba(31,41,55,0.96);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+    .search-icon-btn,
+    .search-icon-inside {
+        width: 40px;
+        height: 40px;
+        right: 4px;
+    }
+
+    /* Dropdowns no mobile devem parecer painéis e não menus flutuantes pequenos */
+    .dropdown-menu {
+        width: 100%;
+        margin-top: 0.35rem;
+        border-radius: 12px;
+        box-shadow: none;
+        background: rgba(27,30,37,0.98);
+    }
+
+    .dropdown-item {
+        padding: 0.75rem 0.9rem;
+        border-radius: 8px;
+    }
+
+    /* Compacta o perfil na navbar */
+    #profile-li {
+        width: 100%;
+    }
+
+        #profile-li #profile-compact {
+            width: 100%;
+            justify-content: flex-start;
+            gap: 0.45rem;
+        }
+
+        #profile-li #nav-username {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+    /* Loader acompanha melhor a altura real da navbar mobile */
+    #header-loader,
+    body.fullbleed #header-loader {
+        top: 58px;
+    }
+}
+
+
+/* ============================================================================
+   HOME / INDEX - TABLET
+   ---------------------------------------------------------------------------
+   Corrige hero demasiado alto e cards em 3 colunas no tablet.
+   ============================================================================ */
+@media (max-width: 992px) {
+
+    .gf-home-hero {
+        min-height: auto;
+    }
+
+    .gf-home-shell {
+        padding: 130px 18px 78px;
+    }
+
+    .gf-home-hero__content,
+    .gf-home-hero__content--logged {
+        max-width: 100%;
+    }
+
+    .gf-home-title,
+    .gf-home-title--logged {
+        max-width: 900px;
+        font-size: clamp(2.6rem, 9vw, 4.5rem);
+        line-height: 0.98;
+    }
+
+    .gf-home-subtitle {
+        max-width: 720px;
+        font-size: 1.02rem;
+        line-height: 1.65;
+    }
+
+    .gf-home-features {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 36px;
+    }
+
+    .gf-home-feature {
+        padding: 16px;
+    }
+
+    .gf-home-main {
+        margin-top: 0;
+    }
+
+    .gf-home-section {
+        margin-bottom: 42px;
+    }
+
+    .gf-home-section__title {
+        font-size: 1.85rem;
+    }
+
+    .gf-home-cta__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+
+/* ============================================================================
+   HOME / INDEX - MOBILE
+   ---------------------------------------------------------------------------
+   Torna a home mais “app-like” no telemóvel.
+   ============================================================================ */
+@media (max-width: 576px) {
+
+    .gf-home-hero {
+        min-height: auto;
+    }
+
+    .gf-home-hero__bg img {
+        object-position: center top;
+        transform: scale(1.08);
+        filter: saturate(0.95) brightness(0.34);
+    }
+
+    .gf-home-shell {
+        padding: 104px 14px 54px;
+    }
+
+    .gf-home-kicker {
+        font-size: 0.72rem;
+        padding: 6px 10px;
+        margin-bottom: 14px;
+    }
+
+    .gf-home-title,
+    .gf-home-title--logged {
+        font-size: clamp(2.35rem, 14vw, 3.25rem);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+    }
+
+    .gf-home-subtitle {
+        margin-top: 16px;
+        font-size: 0.96rem;
+        line-height: 1.6;
+    }
+
+    .gf-home-actions {
+        margin-top: 22px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .gf-home-btn {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    .gf-home-feature {
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .gf-home-feature__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+    }
+
+    .gf-home-section__head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .gf-home-section__title {
+        font-size: 1.5rem;
+    }
+
+    .gf-home-section__link {
+        font-size: 0.92rem;
+    }
+
+    .gf-home-cta__inner {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .gf-home-cta__title {
+        font-size: 1.45rem;
+    }
+
+    .gf-home-cta__actions {
+        width: 100%;
+        flex-direction: column;
+    }
+}
+
+
+/* ============================================================================
+   /GAMES - GRID E TOPBAR
+   ---------------------------------------------------------------------------
+   O grid já tinha responsivo, mas este bloco melhora proporções e topbar.
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .games-page {
+        padding-top: 14px;
+    }
+
+    .games-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .games-count {
+        font-size: 0.94rem;
+        padding-top: 0;
+    }
+
+    .games-sortbar {
+        width: 100%;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        overflow-x: auto;
+    }
+
+    .games-sortbar-dd .dropdown-menu {
+        left: 0;
+        right: auto;
+        min-width: 100%;
+    }
+
+    .games-grid {
+        gap: 12px;
+    }
+
+    .game-card {
+        border-radius: 13px;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.34);
+    }
+
+    .game-cover {
+        border-radius: 13px;
+    }
+
+    .game-card::before {
+        border-radius: 13px;
+    }
+
+    .game-card::after {
+        font-size: 0.86rem;
+        left: 8px;
+        right: 8px;
+    }
+
+    .games-pagination {
+        gap: 6px;
+    }
+
+        .games-pagination .pg {
+            min-width: 36px;
+            height: 36px;
+            border-radius: 10px;
+        }
+}
+
+@media (max-width: 420px) {
+
+    .games-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .game-card::after {
+        font-size: 0.82rem;
+    }
+}
+
+
+/* ============================================================================
+   SEARCH PAGE
+   ---------------------------------------------------------------------------
+   Corrige resultados de pesquisa no telemóvel.
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .search-page {
+        max-width: 100%;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .search-title {
+        font-size: 1.65rem;
+        line-height: 1.15;
+    }
+
+    .search-result {
+        gap: 12px;
+        padding: 12px 8px;
+        border-radius: 12px;
+    }
+
+    .sr-cover {
+        width: 64px;
+        height: 90px;
+        border-radius: 9px;
+    }
+
+    .sr-title-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .sr-title,
+    .top-result .sr-title {
+        font-size: 1.15rem;
+        line-height: 1.2;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .sr-year {
+        font-size: 0.85rem;
+    }
+
+    .sr-tags {
+        gap: 6px;
+        margin-top: 7px;
+    }
+
+    .sr-pill {
+        font-size: 0.76rem;
+        padding: 3px 7px;
+    }
+}
+
+@media (max-width: 420px) {
+
+    .search-result {
+        align-items: flex-start;
+    }
+
+    .sr-cover {
+        width: 56px;
+        height: 78px;
+    }
+
+    .sr-tags {
+        display: none;
+    }
+}
+
+
+/* ============================================================================
+   PROFILE - HERO / HEADER
+   ---------------------------------------------------------------------------
+   Corrige o perfil em telemóvel:
+   - Avatar grande demais
+   - Stats apertadas
+   - Botões desalinhados
+   - Hero demasiado alto
+   ============================================================================ */
+@media (max-width: 992px) {
+
+    .gf-profile-hero {
+        margin-top: 0;
+        padding-top: 0;
+        min-height: auto;
+    }
+
+    .gf-profile-hero__inner {
+        padding-top: 96px;
+        padding-bottom: 30px;
+    }
+
+    .gf-profile-summary {
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+    }
+
+    .gf-profile-avatar {
+        width: 112px;
+        height: 112px;
+        border-radius: 16px;
+    }
+
+    .gf-profile-name {
+        font-size: clamp(2rem, 7vw, 2.8rem);
+    }
+
+    .gf-profile-bio {
+        max-width: 100%;
+    }
+
+    .gf-profile-header-side {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    .gf-profile-side-action {
+        justify-content: flex-start;
+    }
+
+    .gf-profile-tabs__bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gf-profile-tabs__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .gf-profile-hero__bg {
+        transform: scale(1.02);
+        filter: saturate(0.9) brightness(0.46);
+    }
+
+    .gf-profile-hero__overlay {
+        background: linear-gradient(to bottom, rgba(8,10,14,0.38) 0%, rgba(14,16,21,0.88) 72%, rgba(14,16,21,1) 100%), linear-gradient(to right, rgba(14,16,21,0.68), rgba(14,16,21,0.22), rgba(14,16,21,0.68));
+    }
+
+    .gf-profile-summary {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .gf-profile-avatar-wrap {
+        align-self: start;
+    }
+
+    .gf-profile-avatar {
+        width: 104px;
+        height: 104px;
+    }
+
+    .gf-profile-name {
+        font-size: 2.15rem;
+        line-height: 1.04;
+        word-break: break-word;
+    }
+
+    .gf-profile-username {
+        font-size: 0.95rem;
+    }
+
+    .gf-profile-bio {
+        font-size: 0.95rem;
+        line-height: 1.55;
+    }
+
+    .gf-profile-actions {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .gf-profile-btn {
+        flex: 1 1 140px;
+        min-width: 0;
+    }
+
+    .gf-profile-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .gf-profile-stat {
+        min-height: 82px;
+        padding: 12px 8px;
+    }
+
+        .gf-profile-stat strong {
+            font-size: 1.45rem;
+        }
+
+        .gf-profile-stat span {
+            font-size: 0.72rem;
+        }
+
+    .gf-profile-banner-edit {
+        top: 76px;
+        right: 12px;
+    }
+
+        .gf-profile-banner-edit span {
+            padding: 7px 10px;
+            font-size: 0.84rem;
+        }
+}
+
+@media (max-width: 480px) {
+
+    .gf-profile-hero__inner {
+        padding-top: 86px;
+        padding-bottom: 24px;
+    }
+
+    .gf-profile-avatar {
+        width: 96px;
+        height: 96px;
+        border-radius: 15px;
+    }
+
+    .gf-profile-name {
+        font-size: 1.9rem;
+    }
+
+    .gf-profile-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gf-profile-actions {
+        flex-direction: column;
+    }
+
+    .gf-profile-btn {
+        width: 100%;
+    }
+}
+
+
+/* ============================================================================
+   PROFILE TABS
+   ---------------------------------------------------------------------------
+   No mobile as tabs devem deslizar horizontalmente em vez de partir linhas.
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .gf-profile-tabs {
+        position: sticky;
+        top: 58px;
+        z-index: 40;
+    }
+
+    .gf-profile-tabs__inner {
+        flex-wrap: nowrap;
+        gap: 18px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        padding-top: 12px;
+        padding-bottom: 10px;
+        scrollbar-width: none;
+    }
+
+        .gf-profile-tabs__inner::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gf-profile-tabs__inner a {
+            flex: 0 0 auto;
+            padding-bottom: 7px;
+            font-size: 0.94rem;
+        }
+
+    .gf-profile-content {
+        padding-top: 20px;
+    }
+
+    .gf-profile-panel {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .gf-profile-panel__head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .gf-profile-panel__head h2 {
+            font-size: 1.05rem;
+        }
+}
+
+
+/* ============================================================================
+   FAVORITE GAMES / EDITOR
+   ---------------------------------------------------------------------------
+   Corrige favoritos no mobile:
+   - cards demasiado grandes
+   - ações invisíveis em touch
+   - modal/picker com melhor adaptação
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .gf-profile-favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: stretch;
+        gap: 12px;
+    }
+
+    .gf-profile-favorite-card {
+        width: 100%;
+        border-radius: 13px;
+    }
+
+    .gf-favorites-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+        .gf-favorites-toolbar .btn,
+        .gf-favorites-toolbar__actions,
+        .gf-favorites-toolbar__actions .btn {
+            width: 100%;
+        }
+
+    .gf-favorites-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .gf-favorite-card-editor__actions {
+        opacity: 1;
+        transform: none;
+    }
+
+    .gf-favorite-card-editor__btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .gf-favorite-editor {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .gf-favorite-preview {
+        grid-template-columns: 76px 1fr;
+        min-height: 112px;
+        gap: 12px;
+    }
+
+    .gf-favorite-preview__img,
+    .gf-favorite-preview__empty {
+        width: 76px;
+    }
+
+    .gf-favorite-search__dropdown {
+        max-height: 320px;
+    }
+
+    .gf-favorite-picker {
+        align-items: flex-end;
+        padding: 10px;
+    }
+
+    .gf-favorite-picker__box {
+        max-width: 100%;
+        max-height: calc(100vh - 40px);
+        overflow: hidden;
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .gf-favorite-picker__results {
+        max-height: 52vh;
+    }
+}
+
+@media (max-width: 380px) {
+
+    .gf-favorites-cards,
+    .gf-profile-favorites-grid {
+        gap: 10px;
+    }
+
+    .gf-favorite-card-editor__title {
+        font-size: 0.88rem;
+    }
+
+    .gf-favorite-card-editor__sub {
+        font-size: 0.78rem;
+    }
+}
+
+
+/* ============================================================================
+   FOLLOWERS / FOLLOWING / FRIENDS
+   ---------------------------------------------------------------------------
+   Lista de utilizadores mais compacta em mobile.
+   ============================================================================ */
+@media (max-width: 576px) {
+
+    .gf-profile-userlist {
+        gap: 10px;
+    }
+
+    .gf-profile-userlist__item {
+        gap: 12px;
+        padding: 12px;
+        border-radius: 13px;
+    }
+
+    .gf-profile-userlist__avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+    }
+
+    .gf-profile-userlist__name {
+        font-size: 0.96rem;
+    }
+
+    .gf-profile-userlist__username {
+        font-size: 0.84rem;
+    }
+
+    .gf-profile-userlist__bio {
+        font-size: 0.88rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .gf-profile-userlist__friend-badge {
+        font-size: 0.68rem;
+        padding: 4px 7px;
+    }
+}
+
+
+/* ============================================================================
+   ACTIVITY
+   ---------------------------------------------------------------------------
+   No mobile, tempo/data devem cair por baixo do texto.
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .gf-activity-item {
+        flex-direction: column;
+        gap: 8px;
+        padding: 13px;
+        border-radius: 13px;
+    }
+
+    .gf-activity-item__text {
+        font-size: 0.94rem;
+    }
+
+    .gf-activity-item__time {
+        white-space: normal;
+        font-size: 0.82rem;
+    }
+}
+
+
+/* ============================================================================
+   SETTINGS
+   ---------------------------------------------------------------------------
+   Torna settings utilizável em mobile.
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .settings-wrap {
+        margin-top: 10px;
+    }
+
+    .settings-content {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .settings-nav {
+        margin-bottom: 14px;
+        border-radius: 14px;
+    }
+
+    .settings-nav-title {
+        padding: 12px 12px 8px;
+    }
+
+        .settings-nav-title h3 {
+            font-size: 1.15rem;
+        }
+
+    .settings-nav-list {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .settings-item {
+        padding: 11px;
+    }
+
+        .settings-item p {
+            margin-left: 0;
+            font-size: 0.8rem;
+        }
+
+    .settings-item-top {
+        gap: 8px;
+    }
+}
+
+
+/* ============================================================================
+   EDIT PROFILE
+   ---------------------------------------------------------------------------
+   Corrige preview e formulário em mobile.
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .gf-edit-profile-page {
+        max-width: 100%;
+    }
+
+    .gf-edit-profile-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+        .gf-edit-profile-head .btn {
+            width: 100%;
+        }
+
+    .gf-edit-profile-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .gf-edit-profile-banner-preview {
+        height: 170px;
+    }
+
+    .gf-edit-profile-avatar-preview-wrap {
+        left: 16px;
+        bottom: 14px;
+    }
+
+    .gf-edit-profile-avatar-preview {
+        width: 86px;
+        height: 86px;
+        border-radius: 15px;
+    }
+
+    .gf-edit-profile-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        .gf-edit-profile-actions .btn {
+            width: 100%;
+        }
+
+    .gf-edit-profile-bio {
+        min-height: 130px;
+    }
+}
+
+
+/* ============================================================================
+   AUTH - LOGIN / REGISTER
+   ---------------------------------------------------------------------------
+   O teu auth já estava bom, mas isto melhora mobile real:
+   - menos altura
+   - card menos pesado
+   - lado visual mais compacto
+   - inputs confortáveis para toque
+   ============================================================================ */
+@media (max-width: 992px) {
+
+    .gf-auth-page {
+        min-height: 100svh;
+        padding: 92px 14px 36px;
+        align-items: flex-start;
+    }
+
+    .gf-auth-card {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        border-radius: 22px;
+    }
+
+    .gf-auth-left {
+        min-height: auto;
+        padding: 34px 26px 28px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .gf-auth-title {
+        max-width: 560px;
+        font-size: clamp(2.4rem, 9vw, 4rem);
+        line-height: 0.96;
+    }
+
+    .gf-auth-subtitle {
+        margin-top: 18px;
+        max-width: 680px;
+    }
+
+    .gf-auth-brandmark {
+        left: auto;
+        right: -180px;
+        top: 55%;
+        width: 560px;
+        opacity: 0.08;
+    }
+
+    .gf-auth-right {
+        padding: 28px 22px 30px;
+    }
+
+    .gf-auth-form-wrap {
+        max-width: 100%;
+    }
+
+    .gf-auth-side-link {
+        display: none;
+    }
+
+    .gf-auth-mobile-link {
+        display: block;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    .gf-auth-page {
+        padding: 82px 10px 24px;
+    }
+
+    .gf-auth-card {
+        border-radius: 18px;
+    }
+
+    .gf-auth-left {
+        padding: 24px 16px 22px;
+    }
+
+    .gf-auth-right {
+        padding: 22px 16px 24px;
+    }
+
+    .gf-auth-brand {
+        font-size: 1.45rem;
+        margin-bottom: 18px;
+    }
+
+    .gf-auth-title {
+        font-size: clamp(2.05rem, 13vw, 2.75rem);
+        max-width: 320px;
+        letter-spacing: -0.06em;
+    }
+
+    .gf-auth-subtitle {
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+
+    .gf-auth-form-title {
+        font-size: 1.45rem;
+    }
+
+    .gf-auth-form-subtitle {
+        font-size: 0.88rem;
+    }
+
+    .gf-auth-field {
+        margin-bottom: 12px;
+    }
+
+    .gf-auth-input,
+    .gf-auth-submit {
+        height: 52px;
+        min-height: 52px;
+        border-radius: 13px;
+        font-size: 0.96rem;
+    }
+
+    .gf-auth-check {
+        font-size: 0.86rem;
+    }
+
+    .gf-auth-brandmark {
+        right: -260px;
+        width: 760px;
+        opacity: 0.10;
+    }
+}
+
+
+/* ============================================================================
+   PLATFORM PILLS
+   ---------------------------------------------------------------------------
+   Em touch não existe hover real.
+   Por isso:
+   - reduz ligeiramente os pills
+   - esconde tooltip em mobile
+   - mantém ícones limpos
+   ============================================================================ */
+@media (max-width: 768px) {
+
+    .gf-platform-pill {
+        width: 30px;
+        height: 30px;
+    }
+
+    .gf-platform-pill--sm {
+        width: 28px;
+        height: 28px;
+    }
+
+    .gf-platform-pill__icon {
+        width: 17px;
+        height: 17px;
+        font-size: 0.82rem;
+    }
+
+    .gf-platform-pill::after {
+        display: none;
+    }
+}
+
+
+/* ============================================================================
+   FORMS / BOTÕES GLOBAIS
+   ---------------------------------------------------------------------------
+   Melhora inputs gerais em mobile sem afetar desktop.
+   ============================================================================ */
+@media (max-width: 576px) {
+
+    .form-control,
+    .backloggd-field,
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-main {
+        min-height: 42px;
+    }
+
+    .footer {
+        text-align: center;
+        font-size: 0.86rem;
+        padding-top: 1.2rem;
+        padding-bottom: 1.2rem;
+    }
+
+        .footer .row {
+            gap: 0.5rem;
+        }
+
+        .footer a {
+            font-size: 0.86rem;
+        }
+}
+
+
+/* ============================================================================
+   TOUCH DEVICES
+   ---------------------------------------------------------------------------
+   Ajustes específicos para dispositivos sem rato.
+   ============================================================================ */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Remove micro-animações que podem parecer estranhas no toque */
+    .game-card:hover,
+    .gf-profile-favorite-card:hover,
+    .gf-profile-userlist__item:hover,
+    .settings-item:hover {
+        transform: none;
+    }
+
+    /* Ações dos favoritos ficam sempre visíveis porque não há hover */
+    .gf-favorite-card-editor__actions {
+        opacity: 1;
+        transform: none;
+    }
+
+    /* Tooltips por hover não fazem sentido em touch */
+    .gf-platform-pill::after {
+        display: none;
+    }
+}
+
+
+/* ============================================================================
+   ACESSIBILIDADE - REDUZIR MOVIMENTO
+   ---------------------------------------------------------------------------
+   Respeita utilizadores com animações reduzidas no sistema.
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
