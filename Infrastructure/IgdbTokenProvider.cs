@@ -4,23 +4,27 @@ using Microsoft.Extensions.Options;
 namespace Gamefilled.Infrastructure
 {
     /// <summary>
-    /// Responsável por obter e guardar em memória o token OAuth do Twitch,
+    /// Serviço responsável por obter e guardar em memória o token OAuth do Twitch,
     /// necessário para aceder à API IGDB.
     ///
-    /// Responsabilidades:
-    /// - Pedir token novo quando necessário
-    /// - Reutilizar token enquanto ainda for válido
-    /// - Aplicar pequena margem de segurança antes da expiração
+    /// O que este ficheiro faz:
+    /// - pede token novo quando necessário
+    /// - reutiliza o token enquanto for válido
+    /// - aplica margem de segurança antes da expiração
+    ///
+    /// Importância:
+    /// Evita pedir um token novo em todos os requests, tornando o sistema
+    /// mais eficiente e organizado.
     /// </summary>
     public class IgdbTokenProvider
     {
         /// <summary>
-        /// HttpClient usado para falar com o endpoint OAuth do Twitch.
+        /// HttpClient usado para chamar o endpoint OAuth do Twitch.
         /// </summary>
         private readonly HttpClient _http;
 
         /// <summary>
-        /// Configuração com ClientId e ClientSecret.
+        /// Configuração da IGDB (ClientId e ClientSecret).
         /// </summary>
         private readonly IgdbOptions _options;
 
@@ -30,13 +34,10 @@ namespace Gamefilled.Infrastructure
         private string? _token;
 
         /// <summary>
-        /// Data/hora UTC em que o token deixa de ser considerado válido.
+        /// Data/hora em que o token deixa de ser considerado válido.
         /// </summary>
         private DateTimeOffset _tokenExpiresAtUtc;
 
-        /// <summary>
-        /// Construtor com dependências injetadas.
-        /// </summary>
         public IgdbTokenProvider(HttpClient http, IOptions<IgdbOptions> options)
         {
             _http = http;
@@ -45,20 +46,20 @@ namespace Gamefilled.Infrastructure
 
         /// <summary>
         /// Devolve sempre um token válido.
-        /// Se o token atual ainda não expirou, reutiliza-o.
+        /// Se o token em memória ainda for válido, reutiliza-o.
         /// Caso contrário, pede um novo token ao Twitch.
         /// </summary>
         public async Task<string> GetAccessTokenAsync(CancellationToken ct = default)
         {
-            // Se já houver token e ainda for válido, reutiliza.
+            // Se já existir token e ainda for válido, reutiliza.
             if (!string.IsNullOrWhiteSpace(_token) && DateTimeOffset.UtcNow < _tokenExpiresAtUtc)
                 return _token!;
 
-            // Validação da configuração obrigatória.
+            // Validação da configuração.
             if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.ClientSecret))
                 throw new InvalidOperationException("IGDB ClientId/ClientSecret em falta no appsettings.json.");
 
-            // Endpoint OAuth do Twitch com client credentials.
+            // Endpoint OAuth do Twitch.
             var url = "https://id.twitch.tv/oauth2/token";
 
             using var content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -68,23 +69,23 @@ namespace Gamefilled.Infrastructure
                 ["grant_type"] = "client_credentials"
             });
 
+            // Pedido de token ao Twitch.
             using var resp = await _http.PostAsync(url, content, ct);
 
-            // Lança exceção automática em caso de erro HTTP.
+            // Lança exceção automática se houver erro HTTP.
             resp.EnsureSuccessStatusCode();
 
             // Lê a resposta JSON para o DTO correspondente.
             var data = await resp.Content.ReadFromJsonAsync<TwitchTokenResponse>(cancellationToken: ct);
 
-            // Garante que a resposta contém token válido.
+            // Garante que veio token válido.
             if (data == null || string.IsNullOrWhiteSpace(data.AccessToken))
                 throw new InvalidOperationException("Resposta de token inválida do Twitch.");
 
-            // Guarda o token em memória.
+            // Guarda token em memória.
             _token = data.AccessToken;
 
-            // Calcula a expiração com folga de 60 segundos.
-            // Isto evita falhar no exato momento limite da validade.
+            // Calcula expiração com folga de 60 segundos.
             _tokenExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(60, data.ExpiresIn - 60));
 
             return _token!;

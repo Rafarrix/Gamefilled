@@ -6,19 +6,21 @@ namespace Gamefilled.Data
     /// <summary>
     /// Contexto principal de acesso à base de dados da aplicação.
     ///
-    /// Responsabilidades deste DbContext:
-    /// - Expor as tabelas principais através de DbSet
-    /// - Configurar relações entre entidades
-    /// - Definir restrições e índices únicos
-    /// - Controlar comportamentos de delete nas foreign keys
+    /// O que este ficheiro faz:
+    /// - expõe as tabelas principais através de DbSet
+    /// - configura relações entre entidades
+    /// - define índices únicos
+    /// - controla regras de delete em foreign keys
+    ///
+    /// Importância:
+    /// É o centro da comunicação entre o código C# e a base de dados.
     /// </summary>
     public class AppDbContext : DbContext
     {
         /// <summary>
         /// Construtor do contexto.
-        /// Recebe as opções configuradas no Program.cs / DI container.
+        /// Recebe as opções configuradas no Program.cs.
         /// </summary>
-        /// <param name="options">Opções do Entity Framework para este contexto.</param>
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
@@ -27,52 +29,46 @@ namespace Gamefilled.Data
         /* =====================================================================
            DBSETS
            ---------------------------------------------------------------------
-           Cada DbSet representa uma tabela (ou coleção de entidades) na base
-           de dados e permite fazer queries/inserts/updates/deletes com EF Core.
+           Cada DbSet representa uma tabela da base de dados.
            ===================================================================== */
 
         /// <summary>
-        /// Tabela de utilizadores da aplicação.
+        /// Tabela de utilizadores.
         /// </summary>
         public DbSet<User> Users { get; set; }
 
         /// <summary>
         /// Tabela que representa relações de follow entre utilizadores.
-        /// Ex.: User A segue User B.
         /// </summary>
         public DbSet<Follow> Follows { get; set; }
 
         /// <summary>
-        /// Tabela dos jogos favoritos definidos por cada utilizador.
+        /// Tabela dos jogos favoritos dos utilizadores.
         /// </summary>
         public DbSet<UserFavoriteGame> UserFavoriteGames { get; set; }
 
         /// <summary>
-        /// Tabela de atividades dos utilizadores.
-        /// Ex.: seguir alguém, atualizar perfil, etc.
+        /// Tabela das atividades dos utilizadores.
         /// </summary>
         public DbSet<UserActivity> UserActivities { get; set; }
 
         /* =====================================================================
-           MODEL CONFIGURATION
+           CONFIGURAÇÃO DO MODELO
            ---------------------------------------------------------------------
-           Aqui configuramos detalhes que não ficam apenas pelas convenções
-           automáticas do EF Core:
-           - relações explícitas
-           - índices únicos
-           - regras de delete
+           Aqui definimos relações explícitas, índices e regras que vão além
+           das convenções automáticas do Entity Framework Core.
            ===================================================================== */
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Mantém qualquer configuração base do EF/Core.
+            // Mantém qualquer configuração base do EF Core.
             base.OnModelCreating(modelBuilder);
 
             /* -----------------------------------------------------------------
                FOLLOW
                -----------------------------------------------------------------
-               A entidade Follow representa uma relação entre dois utilizadores:
-               - Follower   -> quem segue
-               - Following  -> quem é seguido
+               Uma relação Follow liga dois utilizadores:
+               - Follower  -> quem segue
+               - Following -> quem é seguido
                ----------------------------------------------------------------- */
 
             modelBuilder.Entity<Follow>()
@@ -80,28 +76,25 @@ namespace Gamefilled.Data
                 .WithMany(u => u.Following)
                 .HasForeignKey(f => f.FollowerId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // Restrict evita loops/cascatas perigosas entre utilizadores
-            // numa relação autorreferenciada.
+            // Restrict evita deletes em cascata problemáticos numa relação autorreferenciada.
 
             modelBuilder.Entity<Follow>()
                 .HasOne(f => f.Following)
                 .WithMany(u => u.Followers)
                 .HasForeignKey(f => f.FollowingId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // Também usamos Restrict no lado do utilizador seguido
-            // para impedir deletes automáticos em cadeia.
+            // Também se usa Restrict no lado do utilizador seguido.
 
             modelBuilder.Entity<Follow>()
                 .HasIndex(f => new { f.FollowerId, f.FollowingId })
                 .IsUnique();
-            // Garante que o mesmo utilizador não pode seguir a mesma pessoa
-            // mais do que uma vez.
+            // Garante que não há follows duplicados entre os mesmos dois utilizadores.
 
             /* -----------------------------------------------------------------
                USER FAVORITE GAME
                -----------------------------------------------------------------
-               Esta entidade associa um utilizador a jogos favoritos e permite
-               guardar ordenação/posição dos favoritos.
+               Guarda os jogos favoritos de cada utilizador e a ordem em que
+               aparecem no perfil.
                ----------------------------------------------------------------- */
 
             modelBuilder.Entity<UserFavoriteGame>()
@@ -109,25 +102,23 @@ namespace Gamefilled.Data
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-            // Se o utilizador for apagado, os seus favoritos também são apagados.
+            // Se o utilizador for apagado, os seus favoritos também são removidos.
 
             modelBuilder.Entity<UserFavoriteGame>()
                 .HasIndex(x => new { x.UserId, x.SortOrder })
                 .IsUnique();
-            // Garante que um utilizador não tem duas entradas com a mesma posição
-            // na lista de favoritos.
+            // Garante que o utilizador não repete a mesma posição na lista.
 
             modelBuilder.Entity<UserFavoriteGame>()
                 .HasIndex(x => new { x.UserId, x.GameId })
                 .IsUnique();
-            // Garante que o mesmo jogo não pode ser adicionado duas vezes
-            // aos favoritos do mesmo utilizador.
+            // Garante que o mesmo jogo não é adicionado duas vezes aos favoritos.
 
             /* -----------------------------------------------------------------
                USER ACTIVITY
                -----------------------------------------------------------------
-               Regista eventos/ações relacionados com um utilizador.
-               Pode também apontar para outro utilizador envolvido na ação.
+               Guarda ações relacionadas com um utilizador.
+               Pode apontar também para outro utilizador alvo.
                ----------------------------------------------------------------- */
 
             modelBuilder.Entity<UserActivity>()
@@ -135,16 +126,14 @@ namespace Gamefilled.Data
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // O autor da atividade não pode provocar delete em cascata
-            // automático neste registo.
+            // O autor da atividade usa Restrict para evitar cascatas automáticas.
 
             modelBuilder.Entity<UserActivity>()
                 .HasOne(x => x.TargetUser)
                 .WithMany()
                 .HasForeignKey(x => x.TargetUserId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // O utilizador alvo da atividade também usa Restrict,
-            // evitando múltiplos caminhos de delete ou conflitos relacionais.
+            // O utilizador alvo também usa Restrict para evitar conflitos relacionais.
         }
     }
 }

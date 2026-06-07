@@ -4513,3 +4513,51 @@ body.fullbleed #primary-nav.navbar {
         transition-duration: 0.001ms !important;
     }
 }
+
+/* ============================================================================
+   FIX FINAL - HEADER TRANSPARENTE EM PÁGINAS FULLBLEED
+   ---------------------------------------------------------------------------
+   Este bloco deve ficar no fim absoluto do site.css.
+   Corrige overrides mobile que possam tornar a navbar sólida.
+   ============================================================================ */
+
+body.fullbleed .site-header {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+body.fullbleed #primary-nav,
+body.fullbleed #primary-nav.navbar,
+body.fullbleed .navbar,
+body.fullbleed .navbar.navbar-expand-sm,
+body.fullbleed .navbar.navbar-expand-md,
+body.fullbleed .navbar.navbar-expand-lg,
+body.fullbleed .navbar--overlay {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+}
+
+/* O menu aberto em mobile continua com fundo para ser legível */
+@media (max-width: 991.98px) {
+    body.fullbleed .navbar-collapse.show,
+    body.fullbleed .navbar-collapse.collapsing {
+        background: rgba(20,24,32,0.97) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        box-shadow: 0 18px 42px rgba(0,0,0,0.36) !important;
+        border-radius: 16px;
+        padding: 0.85rem;
+        margin-top: 0.75rem;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+}

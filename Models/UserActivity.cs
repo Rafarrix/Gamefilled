@@ -4,13 +4,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Gamefilled.Models
 {
     /// <summary>
-    /// Representa uma atividade registada de um utilizador.
+    /// Modelo que representa uma atividade registada no sistema.
     ///
-    /// Exemplos de atividade:
+    /// Exemplos:
     /// - seguir outro utilizador
     /// - alterar perfil
     /// - adicionar favorito
-    /// - ação relacionada com um jogo
+    /// - ações relacionadas com jogos
+    ///
+    /// Importância:
+    /// Permite construir o histórico de atividade mostrado no perfil.
     /// </summary>
     [Table("UserActivities")]
     public class UserActivity
@@ -21,21 +24,20 @@ namespace Gamefilled.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// ID do utilizador que executou a atividade.
+        /// ID do utilizador que realizou a ação.
         /// </summary>
         [Required]
         public int UserId { get; set; }
 
         /// <summary>
         /// Tipo da atividade.
-        /// Ex.: "follow", "favorite_added", "profile_updated", etc.
+        /// Ex.: "followed_user", "updated_favorites", etc.
         /// </summary>
         [Required]
         public string Type { get; set; } = "";
 
         /// <summary>
         /// ID opcional de outro utilizador relacionado com a atividade.
-        /// Ex.: numa atividade de follow, este pode ser o utilizador seguido.
         /// </summary>
         public int? TargetUserId { get; set; }
 
@@ -45,13 +47,12 @@ namespace Gamefilled.Models
         public int? GameId { get; set; }
 
         /// <summary>
-        /// Campo opcional para guardar metadados adicionais em JSON.
-        /// Útil para armazenar informação variável sem alterar a estrutura da tabela.
+        /// Campo opcional para metadados adicionais em JSON.
         /// </summary>
         public string? MetaJson { get; set; }
 
         /// <summary>
-        /// Data de criação da atividade em UTC.
+        /// Data de criação da atividade.
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -62,7 +63,7 @@ namespace Gamefilled.Models
         public User? User { get; set; }
 
         /// <summary>
-        /// Navegação para o utilizador alvo da atividade, quando aplicável.
+        /// Navegação para o utilizador alvo da atividade.
         /// </summary>
         [ForeignKey(nameof(TargetUserId))]
         public User? TargetUser { get; set; }

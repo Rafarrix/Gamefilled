@@ -4,13 +4,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Gamefilled.Models
 {
     /// <summary>
-    /// Representa um jogo favorito associado a um utilizador.
+    /// Modelo que representa um jogo favorito associado a um utilizador.
     ///
-    /// Esta entidade guarda:
-    /// - o utilizador dono do favorito
-    /// - o ID do jogo na IGDB
-    /// - a ordem de apresentação
-    /// - se é o favorito principal
+    /// O que guarda:
+    /// - dono do favorito
+    /// - ID do jogo na IGDB
+    /// - ordem de apresentação
+    /// - indicação de favorito principal
+    ///
+    /// Importância:
+    /// Permite mostrar os favoritos no perfil sem guardar localmente
+    /// todos os detalhes do jogo.
     /// </summary>
     [Table("UserFavoriteGames")]
     public class UserFavoriteGame
@@ -21,7 +25,7 @@ namespace Gamefilled.Models
         public int Id { get; set; }
 
         /// <summary>
-        /// ID do utilizador dono deste favorito.
+        /// ID do utilizador dono do favorito.
         /// </summary>
         [Required]
         public int UserId { get; set; }
@@ -39,7 +43,7 @@ namespace Gamefilled.Models
         public int SortOrder { get; set; }
 
         /// <summary>
-        /// Indica se este é o jogo favorito principal do utilizador.
+        /// Indica se este é o favorito principal.
         /// </summary>
         public bool IsPrimary { get; set; }
 
@@ -49,7 +53,7 @@ namespace Gamefilled.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
-        /// Navegação para o utilizador dono do favorito.
+        /// Navegação para o utilizador dono deste favorito.
         /// </summary>
         [ForeignKey(nameof(UserId))]
         public User? User { get; set; }

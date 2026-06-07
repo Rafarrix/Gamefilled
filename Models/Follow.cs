@@ -4,22 +4,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Gamefilled.Models
 {
     /// <summary>
-    /// Representa uma relação de follow entre dois utilizadores.
+    /// Modelo que representa uma relação de follow entre dois utilizadores.
     ///
     /// Exemplo:
     /// - FollowerId  = utilizador que segue
     /// - FollowingId = utilizador que é seguido
+    ///
+    /// Importância:
+    /// Esta entidade permite implementar followers, following e amigos.
     /// </summary>
     [Table("Follows")]
     public class Follow
     {
         /// <summary>
-        /// Chave primária da tabela Follows.
+        /// Chave primária do registo.
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// ID do utilizador que segue outro utilizador.
+        /// ID do utilizador que segue.
         /// </summary>
         [Required]
         public int FollowerId { get; set; }
@@ -31,21 +34,18 @@ namespace Gamefilled.Models
         public int FollowingId { get; set; }
 
         /// <summary>
-        /// Data de criação da relação de follow.
-        /// É inicializada em UTC no momento da criação do objeto.
+        /// Data em que a relação foi criada.
         /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Navegação para o utilizador que segue.
-        /// Ligada à FK FollowerId.
         /// </summary>
         [ForeignKey(nameof(FollowerId))]
         public User? Follower { get; set; }
 
         /// <summary>
         /// Navegação para o utilizador seguido.
-        /// Ligada à FK FollowingId.
         /// </summary>
         [ForeignKey(nameof(FollowingId))]
         public User? Following { get; set; }
