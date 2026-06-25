@@ -17,10 +17,7 @@ namespace Gamefilled.Pages.api
     /// - executa a query de detalhe do jogo
     /// - devolve a resposta em JSON ao resto do sistema
     ///
-    /// Importância:
-    /// Este endpoint evita que a página visual comunique diretamente com a IGDB.
-    /// Assim, a lógica da API fica centralizada no back-end.
-    /// </summary>
+   
     [IgnoreAntiforgeryToken]
     public class IgdbGameModel : PageModel
     {

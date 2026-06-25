@@ -4561,3 +4561,121 @@ body.fullbleed .navbar--overlay {
         -webkit-backdrop-filter: blur(12px);
     }
 }
+
+/* Proteção geral contra elementos que excedem o ecrã */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+video {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Telemóveis e tablets pequenos */
+@media (max-width: 768px) {
+
+    main,
+    .container,
+    .page-container {
+        width: 100%;
+        max-width: none;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    /* Navegação */
+    .navbar,
+    .nav-container,
+    .navbar-container {
+        flex-wrap: wrap;
+        height: auto;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .nav-links,
+    .navbar-links {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        order: 3;
+    }
+
+    .search-container,
+    .navbar-search,
+    .search-wrapper {
+        width: 100%;
+        order: 4;
+    }
+
+        .search-container input,
+        .navbar-search input,
+        .search-wrapper input {
+            width: 100%;
+        }
+
+    /* Secção principal */
+    .hero,
+    .hero-section {
+        min-height: auto;
+        padding: 56px 16px 32px;
+    }
+
+        .hero h1,
+        .hero-title {
+            font-size: clamp(2.5rem, 12vw, 4.5rem);
+            line-height: 1;
+        }
+
+        .hero p,
+        .hero-description {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+    .hero-actions,
+    .hero-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* Cartões de jogos */
+    .games-grid,
+    .game-grid,
+    .cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .game-card {
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .games-grid,
+    .game-grid,
+    .cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .game-card-title {
+        font-size: 0.85rem;
+    }
+}

@@ -15,9 +15,7 @@ namespace Gamefilled.Pages.api
     /// - chama o endpoint game_time_to_beats da IGDB
     /// - devolve a resposta em JSON
     ///
-    /// Importância:
-    /// Permite separar a lógica dos tempos médios da lógica principal do detalhe de jogo.
-    /// </summary>
+
     [IgnoreAntiforgeryToken]
     public class IgdbTtbModel : PageModel
     {

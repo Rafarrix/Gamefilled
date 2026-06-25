@@ -17,12 +17,7 @@ namespace Gamefilled.Pages.users
     /// - regista atividade quando existe novo follow
     /// - guarda tudo na base de dados
     ///
-    /// Importância:
-    /// Este ficheiro é ótimo para mostrar no vídeo porque demonstra:
-    /// - uso real da base de dados
-    /// - escrita de dados
-    /// - lógica de negócio
-    /// </summary>
+
     public class FollowModel : PageModel
     {
         /// <summary>
