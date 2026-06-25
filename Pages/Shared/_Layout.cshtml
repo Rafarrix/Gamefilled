@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http
 @{
     // Dados do utilizador vindos da sessão.
     string? displayName = null;
@@ -29,7 +29,7 @@
     <meta name="description" content="Your personal virtual backlog of video game collection">
     <meta itemprop="name" content="Gamefilled">
     <meta itemprop="description" content="Your personal virtual backlog of video game collection">
-    <meta itemprop="image" content="~/imgs/Gamefilled_Logo_0removebg.png">
+    <meta itemprop="image" content="@Url.Content("~/lib/imgs/Gamefilled_Logo_0removebg.png")">
 
     <!-- Icons + Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -51,7 +51,7 @@
 
     <!-- HEADER -->
     <header class="site-header @(isFullBleed ? "site-header--overlay" : "")">
-        <nav class="navbar navbar-expand-md navbar-dark @(isFullBleed ? "navbar--overlay" : "")" id="primary-nav">
+        <nav class="navbar navbar-expand-lg navbar-dark @(isFullBleed ? "navbar--overlay" : "")" id="primary-nav">
             <div class="container">
 
                 <!-- LOGO -->
@@ -62,32 +62,21 @@
                          height="50" />
                 </a>
 
-                <!-- MOBILE: linha compacta -->
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item mr-sm-2 d-inline d-md-none">
-                        <a class="nav-link d-inline mr-1 position-relative" id="nav-notification-bell" href="/notifications/">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-indicator"></span>
-                        </a>
-
-                        <a class="nav-link d-inline mr-2" href="/games">Games</a>
-
-                        <button class="navbar-toggler collapsed" type="button"
-                                data-toggle="collapse"
-                                data-target="#navbarSupportedContent"
-                                aria-controls="navbarSupportedContent"
-                                aria-expanded="false"
-                                aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                    </li>
-                </ul>
+                <!-- Botão de navegação para telemóvel/tablet -->
+                <button class="navbar-toggler collapsed ml-auto" type="button"
+                        data-toggle="collapse"
+                        data-target="#navbarSupportedContent"
+                        aria-controls="navbarSupportedContent"
+                        aria-expanded="false"
+                        aria-label="Abrir navegação">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
                 <!-- DESKTOP / ÁREA COLAPSÁVEL -->
-                <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
+                <div class="collapse navbar-collapse mt-2 mt-lg-0" id="navbarSupportedContent">
 
-                    <ul class="navbar-nav ml-auto align-items-md-center">
-                        <li class="nav-item d-none d-md-block">
+                    <ul class="navbar-nav ml-auto align-items-lg-center">
+                        <li class="nav-item">
                             <a class="nav-link position-relative" id="nav-notification-bell" href="/notifications/">
                                 <i class="fas fa-bell"></i>
                                 <span class="notification-indicator"></span>
@@ -97,17 +86,17 @@
                         @* Se não existir sessão de utilizador, mostra login/register *@
                         @if (string.IsNullOrEmpty(username))
                         {
-                            <li class="nav-item d-none d-md-block mr-2">
+                            <li class="nav-item mr-2">
                                 <a class="nav-link" href="/users/Register">Register</a>
                             </li>
-                            <li class="nav-item d-none d-md-block mr-2">
+                            <li class="nav-item mr-2">
                                 <a class="nav-link" href="/users/Login">Login</a>
                             </li>
                         }
                         else
                         {
                             @* Se existir utilizador autenticado, mostra menu de perfil *@
-                            <li class="nav-item dropdown d-none d-md-block" id="profile-li">
+                            <li class="nav-item dropdown" id="profile-li">
                                 <div class="d-flex align-items-center" id="profile-compact">
                                     <a class="nav-link pr-1" id="nav-username" href="/u/@(username)/">@displayName</a>
 
@@ -156,13 +145,13 @@
                             </li>
                         }
 
-                        <li class="nav-item d-none d-md-block mr-2">
+                        <li class="nav-item mr-2">
                             <a class="nav-link" href="/games">Games</a>
                         </li>
                     </ul>
 
                     <!-- SEARCH -->
-                    <form class="form-inline mx-3 mx-md-0 my-2 my-md-0"
+                    <form class="form-inline mx-3 mx-lg-0 my-2 my-lg-0"
                           data-turbo="false"
                           action="/search"
                           method="get">

@@ -1,4 +1,4 @@
-﻿/* ============================================================================
+/* ============================================================================
    GAMEFILLED - SITE.CSS
    Ficheiro global de estilos do website
 
@@ -4679,3 +4679,156 @@ video {
         font-size: 0.85rem;
     }
 }
+
+/* ============================================================================
+   CORREÇÃO RESPONSIVA FINAL — NAVBAR E PÁGINA INICIAL
+   Colocar este bloco no fim absoluto do site.css.
+   ============================================================================ */
+
+@media (max-width: 991.98px) {
+    /* A navbar passa a colapsar até ao breakpoint lg. */
+    .navbar {
+        padding: 0.65rem 1rem;
+    }
+
+    .navbar > .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        flex-wrap: wrap;
+    }
+
+    #gamefilled-logo1 {
+        height: 40px;
+        width: auto;
+    }
+
+    .navbar-toggler {
+        margin-left: auto;
+        border-color: rgba(255,255,255,0.16);
+        border-radius: 10px;
+        padding: 0.4rem 0.55rem;
+    }
+
+    .navbar-toggler:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0,176,32,0.25);
+    }
+
+    .navbar-collapse {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .navbar-nav {
+        width: 100%;
+        align-items: stretch !important;
+    }
+
+    .navbar-nav .nav-item {
+        width: 100%;
+    }
+
+    .navbar-nav .nav-link {
+        width: 100%;
+        padding: 0.75rem 0.85rem !important;
+    }
+
+    #profile-li,
+    #profile-li #profile-compact {
+        width: 100%;
+    }
+
+    .navbar .form-inline {
+        width: 100%;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .search-wrap {
+        width: 100% !important;
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .search-wrap .search-bar {
+        width: 100%;
+        min-height: 46px;
+    }
+
+    /* Conteúdo principal da home. */
+    .gf-home-shell {
+        max-width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .gf-home-hero__content,
+    .gf-home-hero__content--logged {
+        max-width: 100%;
+    }
+
+    .gf-home-main .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .gf-home-features {
+        grid-template-columns: 1fr;
+    }
+
+    /* O dispositivo da captura reporta uma viewport superior a 768 px.
+       Por isso, o grid móvel é aplicado até ao breakpoint lg. */
+    .games-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px;
+    }
+
+    .game-card {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .game-card::after {
+        font-size: 0.95rem;
+        -webkit-line-clamp: 3;
+    }
+
+    .game-meta {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .gf-home-shell {
+        padding-top: 105px;
+        padding-bottom: 64px;
+    }
+
+    .gf-home-title,
+    .gf-home-title--logged {
+        font-size: clamp(2.55rem, 14vw, 3.35rem);
+    }
+
+    .gf-home-subtitle {
+        font-size: 1rem;
+        line-height: 1.55;
+    }
+
+    .gf-home-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gf-home-btn {
+        width: 100%;
+    }
+
+    .games-grid {
+        gap: 10px;
+    }
+}
+
