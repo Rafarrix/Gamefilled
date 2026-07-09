@@ -1,8 +1,9 @@
-﻿@model Gamefilled.Pages.games.lib._GamesLibBase
+@using System.Globalization
+@model Gamefilled.Pages.games.lib._GamesLibBase
 
 @{
-    // URLs base de cada filtro de ordenação.
-    // O fallback evita null caso Url.Page falhe.
+    var filteredModel = Model as Gamefilled.Pages.games.lib._FilteredGamesLibBase;
+
     string titleUrl = Url.Page("/games/lib/Title") ?? "/games/lib/title/";
     string trendingUrl = Url.Page("/games/lib/Trending") ?? "/games/lib/trending/";
     string releaseUrl = Url.Page("/games/lib/ReleaseDate") ?? "/games/lib/releasedate/";
@@ -11,24 +12,180 @@
     string avgPlayUrl = Url.Page("/games/lib/AvgPlayTime") ?? "/games/lib/avgplaytime/";
     string avgFinishUrl = Url.Page("/games/lib/AvgFinishTime") ?? "/games/lib/avgfinishtime/";
 
-    // Caminho atual da página.
     string currentPath = Context?.Request?.Path.Value ?? popularUrl;
-
-    // Direção atual da ordenação.
     string dir = (Model.Dir ?? "desc").ToLowerInvariant();
-
-    // Helpers locais para construir links.
-    string PageLink(int p) => $"{currentPath}?pageNumber={p}&pageSize={Model.PageSize}&dir={dir}";
-    string DirLink(string d) => $"{currentPath}?pageNumber=1&pageSize={Model.PageSize}&dir={d}";
-    string SortLink(string url) => $"{url}?pageNumber=1&pageSize={Model.PageSize}&dir={dir}";
-
-    // Chave atual de sort para decidir o meta mostrado no card.
     string key = (Model.SortKey ?? "").ToLowerInvariant();
+
+    string BuildLink(string path, int pageNumber, string direction, bool includeFilters = true)
+    {
+        var parts = new List<string>
+        {
+            $"pageNumber={pageNumber}",
+            $"pageSize={Model.PageSize}",
+            $"dir={Uri.EscapeDataString(direction)}"
+        };
+
+        if (includeFilters && filteredModel != null)
+        {
+            void AddValue(string name, string? value)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    parts.Add($"{name}={Uri.EscapeDataString(value)}");
+            }
+
+            AddValue("Search", filteredModel.Search);
+            AddValue("PlatformId", filteredModel.PlatformId?.ToString(CultureInfo.InvariantCulture));
+            AddValue("GenreId", filteredModel.GenreId?.ToString(CultureInfo.InvariantCulture));
+            AddValue("ReleaseYear", filteredModel.ReleaseYear?.ToString(CultureInfo.InvariantCulture));
+            AddValue("MinimumRating", filteredModel.MinimumRating?.ToString(CultureInfo.InvariantCulture));
+            AddValue("ReleaseStatus", filteredModel.ReleaseStatus);
+        }
+
+        return $"{path}?{string.Join("&", parts)}";
+    }
+
+    string PageLink(int page) => BuildLink(currentPath, page, dir);
+    string DirLink(string direction) => BuildLink(currentPath, 1, direction);
+    string SortLink(string url) => BuildLink(url, 1, dir);
+    string ClearFiltersLink() => BuildLink(currentPath, 1, dir, includeFilters: false);
 }
 
 <div class="games-page">
+    @if (filteredModel != null)
+    {
+        <form method="get" action="@currentPath" class="games-filter-panel mb-4">
+            <input type="hidden" name="PageNumber" value="1" />
+            <input type="hidden" name="PageSize" value="@Model.PageSize" />
+            <input type="hidden" name="Dir" value="@dir" />
 
-    <!-- TOPBAR -->
+            <div class="form-row">
+                <div class="form-group col-12 col-lg-4">
+                    <label for="games-filter-search">Pesquisar</label>
+                    <input id="games-filter-search"
+                           class="form-control"
+                           type="search"
+                           name="Search"
+                           value="@filteredModel.Search"
+                           placeholder="Nome do jogo..."
+                           autocomplete="off" />
+                </div>
+
+                <div class="form-group col-12 col-sm-6 col-lg-4">
+                    <label for="games-filter-platform">Plataforma</label>
+                    <select id="games-filter-platform" class="form-control" name="PlatformId">
+                        <option value="">Todas as plataformas</option>
+                        @foreach (var platform in filteredModel.Platforms)
+                        {
+                            if (filteredModel.PlatformId == platform.Id)
+                            {
+                                <option value="@platform.Id" selected>@platform.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@platform.Id">@platform.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-12 col-sm-6 col-lg-4">
+                    <label for="games-filter-genre">Género</label>
+                    <select id="games-filter-genre" class="form-control" name="GenreId">
+                        <option value="">Todos os géneros</option>
+                        @foreach (var genre in filteredModel.Genres)
+                        {
+                            if (filteredModel.GenreId == genre.Id)
+                            {
+                                <option value="@genre.Id" selected>@genre.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@genre.Id">@genre.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-6 col-lg-3">
+                    <label for="games-filter-year">Ano</label>
+                    <input id="games-filter-year"
+                           class="form-control"
+                           type="number"
+                           name="ReleaseYear"
+                           value="@filteredModel.ReleaseYear"
+                           min="1950"
+                           max="2200"
+                           placeholder="Ex.: 2026" />
+                </div>
+
+                <div class="form-group col-6 col-lg-3">
+                    <label for="games-filter-rating">Rating mínimo</label>
+                    <input id="games-filter-rating"
+                           class="form-control"
+                           type="number"
+                           name="MinimumRating"
+                           value="@(filteredModel.MinimumRating?.ToString(CultureInfo.InvariantCulture))"
+                           min="0"
+                           max="100"
+                           step="5"
+                           placeholder="0–100" />
+                </div>
+
+                <div class="form-group col-12 col-sm-6 col-lg-3">
+                    <label for="games-filter-release">Lançamento</label>
+                    <select id="games-filter-release" class="form-control" name="ReleaseStatus">
+                        @if (string.IsNullOrWhiteSpace(filteredModel.ReleaseStatus))
+                        {
+                            <option value="" selected>Todos</option>
+                        }
+                        else
+                        {
+                            <option value="">Todos</option>
+                        }
+
+                        @if (filteredModel.ReleaseStatus == "released")
+                        {
+                            <option value="released" selected>Já lançados</option>
+                        }
+                        else
+                        {
+                            <option value="released">Já lançados</option>
+                        }
+
+                        @if (filteredModel.ReleaseStatus == "upcoming")
+                        {
+                            <option value="upcoming" selected>Próximos lançamentos</option>
+                        }
+                        else
+                        {
+                            <option value="upcoming">Próximos lançamentos</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-12 col-sm-6 col-lg-3 d-flex align-items-end">
+                    <div class="games-filter-actions w-100 d-flex">
+                        <button class="btn btn-main flex-grow-1" type="submit">
+                            Aplicar filtros
+                        </button>
+
+                        @if (filteredModel.HasActiveFilters)
+                        {
+                            <a class="btn btn-outline-light ml-2"
+                               href="@ClearFiltersLink()"
+                               title="Limpar filtros"
+                               aria-label="Limpar filtros">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </form>
+    }
+
     <div class="games-topbar mb-3">
         <div class="games-count">
             @(Model.TotalCount > 0 ? Model.TotalCount.ToString("N0") : "0") Games
@@ -37,7 +194,6 @@
         <div class="games-sortbar">
             <span class="games-sortbar-label">Sort by</span>
 
-            <!-- Setas para trocar direção asc/desc -->
             <a class="games-sortbar-arrow" href="@DirLink("asc")" title="Ascendente" aria-label="Ascendente">
                 <i class="fas fa-chevron-up"></i>
             </a>
@@ -46,7 +202,6 @@
                 <i class="fas fa-chevron-down"></i>
             </a>
 
-            <!-- Dropdown com lista de filtros -->
             <div class="dropdown games-sortbar-dd">
                 <a class="games-sortbar-selected dropdown-toggle"
                    href="#"
@@ -63,33 +218,40 @@
                     <a class="dropdown-item" href="@SortLink(releaseUrl)">Release Date</a>
                     <a class="dropdown-item" href="@SortLink(popularUrl)">Popularity</a>
                     <a class="dropdown-item" href="@SortLink(topUrl)">Top Rated</a>
-                    <a class="dropdown-item" href="@SortLink(avgPlayUrl)">Avg. Play Time</a>
-                    <a class="dropdown-item" href="@SortLink(avgFinishUrl)">Avg. Finish Time</a>
+                    <a class="dropdown-item" href="@BuildLink(avgPlayUrl, 1, dir, includeFilters: false)">Avg. Play Time</a>
+                    <a class="dropdown-item" href="@BuildLink(avgFinishUrl, 1, dir, includeFilters: false)">Avg. Finish Time</a>
                 </div>
             </div>
         </div>
     </div>
 
+    @if (!string.IsNullOrWhiteSpace(filteredModel?.LoadError))
+    {
+        <div class="alert alert-warning" role="alert">
+            @filteredModel.LoadError
+        </div>
+    }
+
     @if (Model.Games == null || Model.Games.Count == 0)
     {
         <div class="text-muted">
-            Nenhum resultado.
+            Nenhum resultado encontrado com os filtros selecionados.
         </div>
     }
     else
     {
         <div class="games-grid">
-            @foreach (var g in Model.Games)
+            @foreach (var game in Model.Games)
             {
                 <a class="game-card"
-                   href="/games/@g.Id"
-                   title="@g.Name"
-                   data-title="@g.Name">
+                   href="/games/@game.Id"
+                   title="@game.Name"
+                   data-title="@game.Name">
 
                     <div class="game-cover">
-                        @if (!string.IsNullOrWhiteSpace(g.CoverUrl))
+                        @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
                         {
-                            <img src="@g.CoverUrl" alt="@g.Name" loading="lazy" />
+                            <img src="@game.CoverUrl" alt="@game.Name" loading="lazy" />
                         }
                         else
                         {
@@ -97,29 +259,28 @@
                         }
                     </div>
 
-                    @* Meta mostrado por baixo da capa, consoante o tipo de ordenação. *@
                     @if (key == "release-date")
                     {
                         <div class="game-meta">
-                            @(g.ReleaseDateText ?? (g.Year?.ToString() ?? ""))
+                            @(game.ReleaseDateText ?? (game.Year?.ToString() ?? ""))
                         </div>
                     }
                     else if (key == "top-rated")
                     {
                         <div class="game-meta">
-                            @(g.RatingText ?? "")
+                            @(game.RatingText ?? "")
                         </div>
                     }
                     else if (key == "avg-play")
                     {
                         <div class="game-meta">
-                            @(g.AvgPlayHoursText ?? "")
+                            @(game.AvgPlayHoursText ?? "")
                         </div>
                     }
                     else if (key == "avg-finish")
                     {
                         <div class="game-meta">
-                            @(g.AvgFinishHoursText ?? "")
+                            @(game.AvgFinishHoursText ?? "")
                         </div>
                     }
                 </a>
@@ -128,12 +289,10 @@
 
         @if (Model.TotalPages > 1)
         {
-            <nav class="games-pagination mt-4">
+            <nav class="games-pagination mt-4" aria-label="Paginação de jogos">
                 @{
                     int current = Model.PageNumber;
                     int total = Model.TotalPages;
-
-                    // Janela de paginação centrada na página atual.
                     int start = Math.Max(1, current - 2);
                     int end = Math.Min(total, current + 2);
 
@@ -151,9 +310,9 @@
                     }
                 }
 
-                @for (int p = start; p <= end; p++)
+                @for (int page = start; page <= end; page++)
                 {
-                    <a class="pg @(p == current ? "active" : "")" href="@PageLink(p)">@p</a>
+                    <a class="pg @(page == current ? "active" : "")" href="@PageLink(page)">@page</a>
                 }
 
                 @if (end < total)
