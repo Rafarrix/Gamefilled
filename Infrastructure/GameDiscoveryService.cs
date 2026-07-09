@@ -14,6 +14,9 @@ public sealed class GameDiscoveryService : IGameDiscoveryService
     private const string PlatformsCacheKey = "igdb:metadata:platforms:v1";
     private const string GenresCacheKey = "igdb:metadata:genres:v1";
 
+    // A documentação oficial da IGDB identifica Visits como popularity_type = 1.
+    private const int IgdbVisitsPopularityTypeId = 1;
+
     private static readonly TimeSpan MetadataCacheDuration = TimeSpan.FromHours(12);
 
     private readonly IgdbApiClient _apiClient;
@@ -34,30 +37,27 @@ public sealed class GameDiscoveryService : IGameDiscoveryService
         GameDiscoveryRequest request,
         CancellationToken cancellationToken = default)
     {
-        var query = GameDiscoveryQueryBuilder.Build(request);
+        var normalized = request.Normalize();
 
-        var rows = await _apiClient.QueryAsync<List<IgdbDiscoveryGameDto>>(
-            "games",
-            query.DataQuery,
-            cancellationToken);
-
-        var totalCount = await TryGetCountAsync(query, rows.Count, cancellationToken);
-        var totalPages = totalCount <= 0
-            ? 0
-            : (int)Math.Ceiling(totalCount / (double)query.Request.PageSize);
-
-        return new GameDiscoveryResult
+        if (normalized.Sort == GameDiscoverySort.Trending)
         {
-            Games = rows
-                .Where(IsUsableGame)
-                .Select(MapGame)
-                .ToList(),
-            TotalCount = totalCount,
-            TotalPages = totalPages,
-            PageNumber = query.Request.PageNumber,
-            PageSize = query.Request.PageSize,
-            DiagnosticQuery = query.DataQuery
-        };
+            try
+            {
+                var trendingResult = await SearchTrendingAsync(normalized, cancellationToken);
+
+                if (trendingResult.Games.Count > 0)
+                    return trendingResult;
+            }
+            catch (Exception exception) when (
+                exception is HttpRequestException or InvalidOperationException)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "IGDB PopScore trending failed. Falling back to the games endpoint.");
+            }
+        }
+
+        return await SearchStandardAsync(normalized, cancellationToken);
     }
 
     public async Task<IReadOnlyList<GameFilterOption>> GetPlatformsAsync(
@@ -100,6 +100,103 @@ public sealed class GameDiscoveryService : IGameDiscoveryService
         return cached ?? [];
     }
 
+    private async Task<GameDiscoveryResult> SearchStandardAsync(
+        GameDiscoveryRequest request,
+        CancellationToken cancellationToken)
+    {
+        var query = GameDiscoveryQueryBuilder.Build(request);
+
+        var rows = await _apiClient.QueryAsync<List<IgdbDiscoveryGameDto>>(
+            "games",
+            query.DataQuery,
+            cancellationToken);
+
+        var totalCount = await TryGetCountAsync(query, rows.Count, cancellationToken);
+        var totalPages = totalCount <= 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)query.Request.PageSize);
+
+        return new GameDiscoveryResult
+        {
+            Games = rows
+                .Where(IsUsableGame)
+                .Select(MapGame)
+                .ToList(),
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            PageNumber = query.Request.PageNumber,
+            PageSize = query.Request.PageSize,
+            DiagnosticQuery = query.DataQuery
+        };
+    }
+
+    private async Task<GameDiscoveryResult> SearchTrendingAsync(
+        GameDiscoveryRequest request,
+        CancellationToken cancellationToken)
+    {
+        var primitivesQuery =
+            "fields game_id,value,popularity_type;" +
+            $"where popularity_type = {IgdbVisitsPopularityTypeId};" +
+            "sort value desc;" +
+            "limit 500;";
+
+        var primitives = await _apiClient.QueryAsync<List<IgdbPopularityPrimitiveDto>>(
+            "popularity_primitives",
+            primitivesQuery,
+            cancellationToken);
+
+        var orderedIds = primitives
+            .Where(item => item.GameId > 0)
+            .OrderByDescending(item => item.Value)
+            .Select(item => item.GameId)
+            .Distinct()
+            .Take(500)
+            .ToArray();
+
+        if (orderedIds.Length == 0)
+            return EmptyResult(request, "PopScore returned no game ids.");
+
+        var query = GameDiscoveryQueryBuilder.BuildForGameIds(request, orderedIds);
+
+        if (string.IsNullOrWhiteSpace(query.DataQuery))
+            return EmptyResult(request, "PopScore produced an empty game query.");
+
+        var rows = await _apiClient.QueryAsync<List<IgdbDiscoveryGameDto>>(
+            "games",
+            query.DataQuery,
+            cancellationToken);
+
+        var byId = rows
+            .Where(IsUsableGame)
+            .Select(MapGame)
+            .ToDictionary(game => game.Id);
+
+        var orderedGames = orderedIds
+            .Where(byId.ContainsKey)
+            .Select(id => byId[id])
+            .ToList();
+
+        var pageGames = orderedGames
+            .Skip(query.Offset)
+            .Take(query.Request.PageSize)
+            .ToList();
+
+        var totalCount = orderedGames.Count;
+        var totalPages = totalCount <= 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)query.Request.PageSize);
+
+        return new GameDiscoveryResult
+        {
+            Games = pageGames,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            PageNumber = query.Request.PageNumber,
+            PageSize = query.Request.PageSize,
+            DiagnosticQuery = $"{primitivesQuery}\n--- games ---\n{query.DataQuery}"
+        };
+    }
+
     private async Task<int> TryGetCountAsync(
         GameDiscoveryQuery query,
         int returnedCount,
@@ -115,8 +212,6 @@ public sealed class GameDiscoveryService : IGameDiscoveryService
         catch (Exception exception) when (
             exception is HttpRequestException or InvalidOperationException)
         {
-            // O endpoint /count pode não aceitar todas as combinações de search.
-            // A página continua funcional com uma estimativa conservadora.
             _logger.LogWarning(
                 exception,
                 "Unable to count IGDB discovery results. Falling back to an estimate.");
@@ -124,6 +219,19 @@ public sealed class GameDiscoveryService : IGameDiscoveryService
             return query.Offset + returnedCount;
         }
     }
+
+    private static GameDiscoveryResult EmptyResult(
+        GameDiscoveryRequest request,
+        string diagnostic) =>
+        new()
+        {
+            Games = [],
+            TotalCount = 0,
+            TotalPages = 0,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            DiagnosticQuery = diagnostic
+        };
 
     private static IReadOnlyList<GameFilterOption> BuildOptions(
         IEnumerable<IgdbNamedEntityDto> rows) =>
@@ -152,6 +260,18 @@ public sealed class GameDiscoveryService : IGameDiscoveryService
             Genres = BuildOptions(game.Genres ?? []),
             Platforms = BuildOptions(game.Platforms ?? [])
         };
+
+    private sealed class IgdbPopularityPrimitiveDto
+    {
+        [JsonPropertyName("game_id")]
+        public long GameId { get; init; }
+
+        [JsonPropertyName("value")]
+        public decimal Value { get; init; }
+
+        [JsonPropertyName("popularity_type")]
+        public int PopularityType { get; init; }
+    }
 
     private sealed class IgdbDiscoveryGameDto
     {
