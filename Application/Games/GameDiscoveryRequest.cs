@@ -55,8 +55,8 @@ public sealed class GameDiscoveryRequest
             Sort = normalizedSort,
             Direction = normalizedDirection,
             Search = normalizedSearch,
-            PlatformId = PlatformId > 0 ? PlatformId : null,
-            GenreId = GenreId > 0 ? GenreId : null,
+            PlatformId = PlatformId is > 0 ? PlatformId : null,
+            GenreId = GenreId is > 0 ? GenreId : null,
             ReleaseYear = normalizedYear,
             MinimumRating = normalizedRating,
             IsReleased = IsReleased
