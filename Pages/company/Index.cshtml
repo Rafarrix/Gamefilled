@@ -128,10 +128,10 @@
                         }
                     }
 
-                    @for (int page = start; page <= end; page++)
+                    @for (int p = start; p <= end; p++)
                     {
-                        <a class="pg @(page == current ? "active" : string.Empty)"
-                           href="@PageLink(page)">@page</a>
+                        <a class="pg @(p == current ? "active" : string.Empty)"
+                           href="@PageLink(p)">@p</a>
                     }
 
                     @if (end < total)
