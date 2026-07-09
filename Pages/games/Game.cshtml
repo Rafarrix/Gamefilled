@@ -23,6 +23,11 @@
     var primaryDeveloper = companies.FirstOrDefault(item => item.Developer)?.Company;
     var trailer = Model.Game?.Videos?
         .FirstOrDefault(video => !string.IsNullOrWhiteSpace(video.VideoId));
+    var screenshots = (Model.Game?.Screenshots ?? new List<Gamefilled.Infrastructure.IgdbImageDto>())
+        .Where(screenshot => !string.IsNullOrWhiteSpace(screenshot.ImageId))
+        .Take(8)
+        .ToList();
+    var hasMedia = trailer != null || screenshots.Count > 0;
 }
 
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
@@ -90,9 +95,13 @@
                             <div class="bl-row__value">
                                 @foreach (var genre in Model.Game.Genres.Take(8))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(genre.Name))
+                                    if (genre.Id > 0 && !string.IsNullOrWhiteSpace(genre.Name))
                                     {
-                                        <span class="bl-chip">@genre.Name</span>
+                                        <a class="bl-chip gf-game-filter-chip"
+                                           href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&GenreId=@genre.Id"
+                                           title="Ver jogos de @genre.Name">
+                                            @genre.Name
+                                        </a>
                                     }
                                 }
                             </div>
@@ -106,16 +115,17 @@
                             <div class="bl-row__value">
                                 @foreach (var platform in Model.Game.Platforms.Take(12))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(platform.Name))
+                                    if (platform.Id > 0 && !string.IsNullOrWhiteSpace(platform.Name))
                                     {
-                                        <span class="gf-platform-pill @PlatformClass(platform.Name)"
-                                              data-platform="@PlatformLabel(platform.Name)"
-                                              title="@PlatformLabel(platform.Name)"
-                                              aria-label="@PlatformLabel(platform.Name)">
+                                        <a class="gf-platform-pill gf-game-platform-link @PlatformClass(platform.Name)"
+                                           href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&PlatformId=@platform.Id"
+                                           data-platform="@PlatformLabel(platform.Name)"
+                                           title="Ver jogos para @PlatformLabel(platform.Name)"
+                                           aria-label="Ver jogos para @PlatformLabel(platform.Name)">
                                             <span class="gf-platform-pill__icon">
                                                 <i class="@PlatformIcon(platform.Name)" aria-hidden="true"></i>
                                             </span>
-                                        </span>
+                                        </a>
                                     }
                                 }
                             </div>
@@ -208,41 +218,124 @@
                     </div>
                 }
 
-                @if (trailer != null)
+                @if (hasMedia)
                 {
-                    <section class="gf-game-trailer">
-                        <div class="bl-section-title">@(string.IsNullOrWhiteSpace(trailer.Name) ? "Trailer" : trailer.Name)</div>
-                        <div class="gf-game-trailer__frame">
-                            <iframe src="https://www.youtube-nocookie.com/embed/@trailer.VideoId"
-                                    title="@Model.Game?.Name trailer"
-                                    loading="lazy"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowfullscreen></iframe>
+                    <section class="gf-media-room" data-media-room>
+                        <div class="gf-media-room__head">
+                            <div>
+                                <h2>Media Room</h2>
+                                <p>Trailers e screenshots numa galeria navegável.</p>
+                            </div>
                         </div>
-                    </section>
-                }
 
-                @if (Model.Game?.Screenshots?.Any() == true)
-                {
-                    <section class="bl-screens">
-                        <div class="bl-section-title">Screenshots</div>
-
-                        <div class="bl-media">
-                            @foreach (var screenshot in Model.Game.Screenshots.Take(6))
+                        <div class="gf-media-grid">
+                            @if (trailer != null)
                             {
-                                var screenshotUrl = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{screenshot.ImageId}.jpg";
-                                <img class="bl-media__img"
-                                     src="@screenshotUrl"
-                                     alt="@Model.Game.Name screenshot"
-                                     loading="lazy" />
+                                var trailerTitle = string.IsNullOrWhiteSpace(trailer.Name)
+                                    ? $"{Model.Game?.Name} trailer"
+                                    : trailer.Name;
+                                var trailerEmbedUrl = $"https://www.youtube-nocookie.com/embed/{trailer.VideoId}?autoplay=1&rel=0";
+                                var trailerThumbnailUrl = $"https://i.ytimg.com/vi/{trailer.VideoId}/hqdefault.jpg";
+
+                                <button type="button"
+                                        class="gf-media-item"
+                                        data-media-item
+                                        data-media-type="video"
+                                        data-media-src="@trailerEmbedUrl"
+                                        data-media-title="@trailerTitle"
+                                        aria-label="Abrir @trailerTitle">
+                                    <img src="@trailerThumbnailUrl"
+                                         alt="@trailerTitle"
+                                         loading="lazy" />
+                                    <span class="gf-media-item__badge">
+                                        <i class="fas fa-film" aria-hidden="true"></i>
+                                        Trailer
+                                    </span>
+                                    <span class="gf-media-item__play" aria-hidden="true">
+                                        <i class="fas fa-play"></i>
+                                    </span>
+                                    <span class="gf-media-item__title">@trailerTitle</span>
+                                </button>
+                            }
+
+                            @for (var index = 0; index < screenshots.Count; index++)
+                            {
+                                var screenshot = screenshots[index];
+                                var thumbnailUrl = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{screenshot.ImageId}.jpg";
+                                var fullUrl = $"https://images.igdb.com/igdb/image/upload/t_1080p/{screenshot.ImageId}.jpg";
+                                var screenshotTitle = $"{Model.Game?.Name} screenshot {index + 1}";
+
+                                <button type="button"
+                                        class="gf-media-item"
+                                        data-media-item
+                                        data-media-type="image"
+                                        data-media-src="@fullUrl"
+                                        data-media-title="@screenshotTitle"
+                                        aria-label="Abrir screenshot @(index + 1)">
+                                    <img src="@thumbnailUrl"
+                                         alt="@screenshotTitle"
+                                         loading="lazy" />
+                                    <span class="gf-media-item__badge">
+                                        <i class="fas fa-image" aria-hidden="true"></i>
+                                        Screenshot
+                                    </span>
+                                    <span class="gf-media-item__title">Screenshot @(index + 1)</span>
+                                </button>
                             }
                         </div>
                     </section>
+
+                    <div class="gf-media-lightbox"
+                         data-media-lightbox
+                         role="dialog"
+                         aria-modal="true"
+                         aria-label="Media viewer"
+                         aria-hidden="true"
+                         hidden>
+                        <button type="button"
+                                class="gf-media-lightbox__backdrop"
+                                data-media-close
+                                aria-label="Fechar galeria"></button>
+
+                        <div class="gf-media-lightbox__dialog">
+                            <div class="gf-media-lightbox__toolbar">
+                                <div class="gf-media-lightbox__meta">
+                                    <span class="gf-media-lightbox__title" data-media-title></span>
+                                    <span class="gf-media-lightbox__counter" data-media-counter></span>
+                                </div>
+
+                                <button type="button"
+                                        class="gf-media-lightbox__close"
+                                        data-media-close
+                                        aria-label="Fechar galeria">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                </button>
+                            </div>
+
+                            <div class="gf-media-lightbox__stage" data-media-stage></div>
+
+                            <button type="button"
+                                    class="gf-media-lightbox__nav gf-media-lightbox__nav--previous"
+                                    data-media-previous
+                                    aria-label="Media anterior">
+                                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="gf-media-lightbox__nav gf-media-lightbox__nav--next"
+                                    data-media-next
+                                    aria-label="Media seguinte">
+                                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
                 }
             </div>
         </div>
     </div>
 </div>
+
+<script src="~/js/game-media-room.js" asp-append-version="true" defer></script>
 
 @functions {
     static string UnixToDate(long unix)
