@@ -16,6 +16,17 @@
     string dir = (Model.Dir ?? "desc").ToLowerInvariant();
     string key = (Model.SortKey ?? "").ToLowerInvariant();
 
+    int activeFilterCount = 0;
+    if (filteredModel != null)
+    {
+        if (!string.IsNullOrWhiteSpace(filteredModel.Search)) activeFilterCount++;
+        if (filteredModel.PlatformId.HasValue) activeFilterCount++;
+        if (filteredModel.GenreId.HasValue) activeFilterCount++;
+        if (filteredModel.ReleaseYear.HasValue) activeFilterCount++;
+        if (filteredModel.MinimumRating.HasValue) activeFilterCount++;
+        if (!string.IsNullOrWhiteSpace(filteredModel.ReleaseStatus)) activeFilterCount++;
+    }
+
     string BuildLink(string path, int pageNumber, string direction, bool includeFilters = true)
     {
         var parts = new List<string>
@@ -50,65 +61,108 @@
     string ClearFiltersLink() => BuildLink(currentPath, 1, dir, includeFilters: false);
 }
 
-<div class="games-page">
-    @if (filteredModel != null)
-    {
-        <form method="get" action="@currentPath" class="games-filter-panel mb-4">
+<link rel="stylesheet" href="~/css/games-library-v2.css" asp-append-version="true" />
+
+@if (filteredModel != null)
+{
+    <button type="button"
+            class="gf-library-filter-tab"
+            data-game-filter-open
+            aria-controls="game-filter-drawer"
+            aria-expanded="false"
+            title="Abrir filtros">
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        <span class="gf-library-filter-tab__label">Filters</span>
+        @if (activeFilterCount > 0)
+        {
+            <span class="gf-library-filter-tab__count" aria-label="@activeFilterCount filtros ativos">
+                @activeFilterCount
+            </span>
+        }
+    </button>
+
+    <div class="gf-filter-drawer-overlay"
+         data-game-filter-overlay
+         aria-hidden="true"></div>
+
+    <aside id="game-filter-drawer"
+           class="gf-filter-drawer"
+           data-game-filter-drawer
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="game-filter-title"
+           aria-hidden="true">
+        <div class="gf-filter-drawer__header">
+            <div>
+                <div class="gf-filter-drawer__eyebrow">Game discovery</div>
+                <h2 id="game-filter-title" class="gf-filter-drawer__title">Find your next game</h2>
+                <p class="gf-filter-drawer__subtitle">
+                    Combina pesquisa, plataforma, género, ano e classificação.
+                </p>
+            </div>
+
+            <button type="button"
+                    class="gf-filter-drawer__close"
+                    data-game-filter-close
+                    aria-label="Fechar filtros">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <form method="get" action="@currentPath" class="gf-filter-drawer__body">
             <input type="hidden" name="PageNumber" value="1" />
             <input type="hidden" name="PageSize" value="@Model.PageSize" />
             <input type="hidden" name="Dir" value="@dir" />
 
-            <div class="form-row">
-                <div class="form-group col-12 col-lg-4">
-                    <label for="games-filter-search">Pesquisar</label>
-                    <input id="games-filter-search"
-                           class="form-control"
-                           type="search"
-                           name="Search"
-                           value="@filteredModel.Search"
-                           placeholder="Nome do jogo..."
-                           autocomplete="off" />
-                </div>
-
-                <div class="form-group col-12 col-sm-6 col-lg-4">
-                    <label for="games-filter-platform">Plataforma</label>
-                    <select id="games-filter-platform" class="form-control" name="PlatformId">
-                        <option value="">Todas as plataformas</option>
-                        @foreach (var platform in filteredModel.Platforms)
-                        {
-                            if (filteredModel.PlatformId == platform.Id)
-                            {
-                                <option value="@platform.Id" selected>@platform.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@platform.Id">@platform.Name</option>
-                            }
-                        }
-                    </select>
-                </div>
-
-                <div class="form-group col-12 col-sm-6 col-lg-4">
-                    <label for="games-filter-genre">Género</label>
-                    <select id="games-filter-genre" class="form-control" name="GenreId">
-                        <option value="">Todos os géneros</option>
-                        @foreach (var genre in filteredModel.Genres)
-                        {
-                            if (filteredModel.GenreId == genre.Id)
-                            {
-                                <option value="@genre.Id" selected>@genre.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@genre.Id">@genre.Name</option>
-                            }
-                        }
-                    </select>
-                </div>
+            <div class="form-group">
+                <label for="games-filter-search">Pesquisar jogo</label>
+                <input id="games-filter-search"
+                       class="form-control"
+                       type="search"
+                       name="Search"
+                       value="@filteredModel.Search"
+                       placeholder="Ex.: Cyberpunk 2077"
+                       autocomplete="off" />
             </div>
 
-            <div class="form-row">
-                <div class="form-group col-6 col-lg-3">
+            <div class="form-group">
+                <label for="games-filter-platform">Plataforma</label>
+                <select id="games-filter-platform" class="form-control" name="PlatformId">
+                    <option value="">Todas as plataformas</option>
+                    @foreach (var platform in filteredModel.Platforms)
+                    {
+                        if (filteredModel.PlatformId == platform.Id)
+                        {
+                            <option value="@platform.Id" selected>@platform.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@platform.Id">@platform.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="games-filter-genre">Género</label>
+                <select id="games-filter-genre" class="form-control" name="GenreId">
+                    <option value="">Todos os géneros</option>
+                    @foreach (var genre in filteredModel.Genres)
+                    {
+                        if (filteredModel.GenreId == genre.Id)
+                        {
+                            <option value="@genre.Id" selected>@genre.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@genre.Id">@genre.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="gf-filter-drawer__split">
+                <div class="form-group">
                     <label for="games-filter-year">Ano</label>
                     <input id="games-filter-year"
                            class="form-control"
@@ -117,10 +171,10 @@
                            value="@filteredModel.ReleaseYear"
                            min="1950"
                            max="2200"
-                           placeholder="Ex.: 2026" />
+                           placeholder="2026" />
                 </div>
 
-                <div class="form-group col-6 col-lg-3">
+                <div class="form-group">
                     <label for="games-filter-rating">Rating mínimo</label>
                     <input id="games-filter-rating"
                            class="form-control"
@@ -130,65 +184,74 @@
                            min="0"
                            max="100"
                            step="5"
-                           placeholder="0–100" />
-                </div>
-
-                <div class="form-group col-12 col-sm-6 col-lg-3">
-                    <label for="games-filter-release">Lançamento</label>
-                    <select id="games-filter-release" class="form-control" name="ReleaseStatus">
-                        @if (string.IsNullOrWhiteSpace(filteredModel.ReleaseStatus))
-                        {
-                            <option value="" selected>Todos</option>
-                        }
-                        else
-                        {
-                            <option value="">Todos</option>
-                        }
-
-                        @if (filteredModel.ReleaseStatus == "released")
-                        {
-                            <option value="released" selected>Já lançados</option>
-                        }
-                        else
-                        {
-                            <option value="released">Já lançados</option>
-                        }
-
-                        @if (filteredModel.ReleaseStatus == "upcoming")
-                        {
-                            <option value="upcoming" selected>Próximos lançamentos</option>
-                        }
-                        else
-                        {
-                            <option value="upcoming">Próximos lançamentos</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="form-group col-12 col-sm-6 col-lg-3 d-flex align-items-end">
-                    <div class="games-filter-actions w-100 d-flex">
-                        <button class="btn btn-main flex-grow-1" type="submit">
-                            Aplicar filtros
-                        </button>
-
-                        @if (filteredModel.HasActiveFilters)
-                        {
-                            <a class="btn btn-outline-light ml-2"
-                               href="@ClearFiltersLink()"
-                               title="Limpar filtros"
-                               aria-label="Limpar filtros">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        }
-                    </div>
+                           placeholder="75" />
                 </div>
             </div>
-        </form>
-    }
 
+            <div class="form-group">
+                <label for="games-filter-release">Estado de lançamento</label>
+                <select id="games-filter-release" class="form-control" name="ReleaseStatus">
+                    @if (string.IsNullOrWhiteSpace(filteredModel.ReleaseStatus))
+                    {
+                        <option value="" selected>Todos</option>
+                    }
+                    else
+                    {
+                        <option value="">Todos</option>
+                    }
+
+                    @if (filteredModel.ReleaseStatus == "released")
+                    {
+                        <option value="released" selected>Já lançados</option>
+                    }
+                    else
+                    {
+                        <option value="released">Já lançados</option>
+                    }
+
+                    @if (filteredModel.ReleaseStatus == "upcoming")
+                    {
+                        <option value="upcoming" selected>Próximos lançamentos</option>
+                    }
+                    else
+                    {
+                        <option value="upcoming">Próximos lançamentos</option>
+                    }
+                </select>
+            </div>
+
+            <div class="gf-filter-drawer__footer">
+                <button class="btn btn-main gf-filter-drawer__apply" type="submit">
+                    <i class="fas fa-sliders-h mr-2" aria-hidden="true"></i>
+                    Aplicar filtros
+                </button>
+
+                @if (filteredModel.HasActiveFilters)
+                {
+                    <a class="btn btn-outline-light gf-filter-drawer__clear"
+                       href="@ClearFiltersLink()"
+                       title="Limpar filtros"
+                       aria-label="Limpar filtros">
+                        <i class="fas fa-undo" aria-hidden="true"></i>
+                    </a>
+                }
+            </div>
+        </form>
+    </aside>
+}
+
+<div class="games-page">
     <div class="games-topbar mb-3">
         <div class="games-count">
             @(Model.TotalCount > 0 ? Model.TotalCount.ToString("N0") : "0") Games
+
+            @if (activeFilterCount > 0)
+            {
+                <span class="gf-library-active-filter-note">
+                    <i class="fas fa-filter" aria-hidden="true"></i>
+                    @activeFilterCount active
+                </span>
+            }
         </div>
 
         <div class="games-sortbar">
@@ -247,7 +310,6 @@
                    href="/games/@game.Id"
                    title="@game.Name"
                    data-title="@game.Name">
-
                     <div class="game-cover">
                         @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
                         {
@@ -328,3 +390,5 @@
         }
     }
 </div>
+
+<script src="~/js/games-library-v2.js" asp-append-version="true" defer></script>
