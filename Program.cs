@@ -1,4 +1,5 @@
-﻿using Gamefilled.Data;
+using Gamefilled.Application.Games;
+using Gamefilled.Data;
 using Gamefilled.Infrastructure;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
@@ -7,9 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 /* ============================================================================
    RAZOR PAGES
-   ----------------------------------------------------------------------------
-   Regista Razor Pages e aplica proteção automática à pasta /Settings
-   através do filtro RequireLoginFilter.
    ============================================================================ */
 builder.Services.AddRazorPages(options =>
 {
@@ -21,40 +19,47 @@ builder.Services.AddRazorPages(options =>
 
 /* ============================================================================
    ENTITY FRAMEWORK CORE + SQL SERVER
-   ----------------------------------------------------------------------------
-   Regista o AppDbContext para acesso à base de dados SQL Server.
-   A connection string é lida de appsettings.json.
    ============================================================================ */
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 /* ============================================================================
    IGDB / TWITCH
-   ----------------------------------------------------------------------------
-   Regista:
-   - opções da IGDB (ClientId / ClientSecret)
-   - provider de token Twitch
-   - cliente HTTP principal da IGDB
    ============================================================================ */
-
-// Liga a secção "IGDB" do appsettings à classe IgdbOptions
 builder.Services.Configure<IgdbOptions>(builder.Configuration.GetSection("IGDB"));
 
-// HttpClient para obter token OAuth do Twitch
-builder.Services.AddHttpClient<IgdbTokenProvider>();
+// Cliente usado apenas para obter o token OAuth da Twitch.
+builder.Services.AddHttpClient("TwitchAuth", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
-// HttpClient tipado para a API IGDB
+// Singleton para o token ser reutilizado entre pedidos e serviços.
+builder.Services.AddSingleton<IgdbTokenProvider>();
+
+// Cliente de domínio já usado pelas páginas atuais.
 builder.Services.AddHttpClient<IgdbClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.igdb.com/v4/");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 
+// Cliente de baixo nível usado pelo novo motor de descoberta V2.
+builder.Services.AddHttpClient<IgdbApiClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.igdb.com/v4/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.AddScoped<IGameDiscoveryService, GameDiscoveryService>();
+
 /* ============================================================================
-   SESSÃO
-   ----------------------------------------------------------------------------
-   Usa memória distribuída local e cookies de sessão.
+   CACHE + SESSÃO
    ============================================================================ */
+// Cache de metadados IGDB, como plataformas e géneros.
+builder.Services.AddMemoryCache();
+
+// Cache distribuído local usado pela sessão.
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
@@ -64,26 +69,15 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
 
 builder.Services.AddSession(options =>
 {
-    // Cookie da sessão não é acessível por JavaScript
     options.Cookie.HttpOnly = true;
-
-    // Necessário para a app funcionar mesmo sem consentimento explícito
     options.Cookie.IsEssential = true;
-
-    // Proteção CSRF / navegação normal
     options.Cookie.SameSite = SameSiteMode.Lax;
-
-    // Só obriga HTTPS quando o pedido já for HTTPS
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
-    // Duração máxima de inatividade da sessão
     options.IdleTimeout = TimeSpan.FromHours(1);
 });
 
 /* ============================================================================
    FILTROS CUSTOM
-   ----------------------------------------------------------------------------
-   Regista o filtro RequireLoginFilter no DI container.
    ============================================================================ */
 builder.Services.AddScoped<RequireLoginFilter>();
 
@@ -92,30 +86,17 @@ var app = builder.Build();
 /* ============================================================================
    PIPELINE HTTP
    ============================================================================ */
-
-// Tratamento de erros em produção
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
-// Força HTTPS
 app.UseHttpsRedirection();
-
-// Permite servir ficheiros estáticos (css, js, imgs, lib, etc.)
 app.UseStaticFiles();
-
-// Routing base
 app.UseRouting();
-
-// Política de cookies
 app.UseCookiePolicy();
-
-// Sessão (tem de vir antes de usar páginas que dependem da sessão)
 app.UseSession();
-
-// Mapeia Razor Pages
 app.MapRazorPages();
 
 app.Run();
