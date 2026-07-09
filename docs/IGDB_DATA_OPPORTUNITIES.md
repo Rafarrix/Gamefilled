@@ -4,7 +4,7 @@ Este documento organiza dados que a IGDB disponibiliza e ideias para os transfor
 
 ## Princípio de produto
 
-Não mostrar todos os campos numa única página. A informação deve ser organizada em secções progressivas, carregadas apenas quando necessária, para manter a página clara e respeitar os limites da API.
+Não mostrar todos os campos numa única página. A informação deve ser organizada em secções progressivas e carregada apenas quando necessária, para manter a página clara, reduzir pedidos e respeitar os limites da API.
 
 ## Página de jogo
 
@@ -30,7 +30,7 @@ Não mostrar todos os campos numa única página. A informação deve ser organi
 - Remakes e remasters.
 - Standalone expansions.
 
-Ideia Gamefilled: criar uma secção visual chamada **Game Universe**, mostrando a relação entre jogo principal, expansões, DLCs, versões e remasters.
+**Ideia Gamefilled:** criar uma secção visual chamada **Game Universe**, mostrando a relação entre jogo principal, expansões, DLCs, versões e remasters.
 
 ### Lançamentos
 
@@ -39,7 +39,7 @@ Ideia Gamefilled: criar uma secção visual chamada **Game Universe**, mostrando
 - Estado do lançamento.
 - Data humana e timestamp.
 
-Ideia Gamefilled: uma timeline de lançamentos por plataforma e região.
+**Ideia Gamefilled:** uma timeline de lançamentos por plataforma e região.
 
 ### Informação técnica
 
@@ -49,7 +49,7 @@ Ideia Gamefilled: uma timeline de lançamentos por plataforma e região.
 - Language supports.
 - Websites e external games.
 
-Ideia Gamefilled: uma área **Technical & Availability**, com motor, idiomas, multiplayer e links de lojas/plataformas.
+**Ideia Gamefilled:** uma área **Technical & Availability**, com motor, idiomas, multiplayer e links de lojas/plataformas.
 
 ### Classificação etária
 
@@ -57,7 +57,7 @@ Ideia Gamefilled: uma área **Technical & Availability**, com motor, idiomas, mu
 - Rating category.
 - Content descriptions.
 
-Ideia Gamefilled: apresentar avisos de conteúdo de forma simples, evitando uma lista técnica difícil de interpretar.
+**Ideia Gamefilled:** apresentar avisos de conteúdo de forma simples, evitando uma lista técnica difícil de interpretar.
 
 ## Página de empresa
 
@@ -73,7 +73,7 @@ Ideia Gamefilled: apresentar avisos de conteúdo de forma simples, evitando uma 
 - Jogos publicados.
 - Trabalhos de porting e apoio.
 
-Ideia Gamefilled: uma página editorial com história da empresa, catálogo cronológico e separação entre developer, publisher e support studio.
+**Ideia Gamefilled:** uma página editorial com história da empresa, catálogo cronológico e separação entre developer, publisher e support studio.
 
 ## Descoberta e tendências
 
@@ -89,18 +89,18 @@ Possíveis listas:
 - Rising games.
 - Upcoming with most hype.
 
-Ideia Gamefilled: substituir uma única página Trending por um **Trending Hub**, com várias métricas explicadas ao utilizador.
+**Ideia Gamefilled:** substituir uma única página Trending por um **Trending Hub**, com várias métricas explicadas ao utilizador.
 
 ## Funcionalidades próprias do Gamefilled
 
-- **Game Universe**: árvore de DLCs, expansões, remakes e versões.
-- **Where to Play**: plataformas, lojas e links oficiais.
-- **Release Timeline**: histórico por plataforma e região.
-- **Company Network**: empresas-mãe, subsidiárias e colaborações.
-- **Discovery Mixer**: combinação de género, plataforma, período, duração e rating.
-- **Media Room**: trailers, artworks e screenshots num layout editorial.
-- **Technical Profile**: engine, perspetiva, modos, multiplayer e idiomas.
-- **Content Guide**: classificações etárias e descrições de conteúdo.
+- **Game Universe:** árvore de DLCs, expansões, remakes e versões.
+- **Where to Play:** plataformas, lojas e links oficiais.
+- **Release Timeline:** histórico por plataforma e região.
+- **Company Network:** empresas-mãe, subsidiárias e colaborações.
+- **Discovery Mixer:** combinação de género, plataforma, período, duração e rating.
+- **Media Room:** trailers, artworks e screenshots num layout editorial.
+- **Technical Profile:** engine, perspetiva, modos, multiplayer e idiomas.
+- **Content Guide:** classificações etárias e descrições de conteúdo.
 
 ## Performance e arquitetura
 
