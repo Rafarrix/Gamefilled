@@ -40,11 +40,11 @@ public sealed class GameDiscoveryRequest
             ? null
             : Search.Trim();
 
-        var normalizedYear = ReleaseYear is >= 1950 and <= 2200
+        int? normalizedYear = ReleaseYear is >= 1950 and <= 2200
             ? ReleaseYear
             : null;
 
-        var normalizedRating = MinimumRating.HasValue
+        double? normalizedRating = MinimumRating.HasValue
             ? Math.Clamp(MinimumRating.Value, 0d, 100d)
             : null;
 
