@@ -1,3 +1,4 @@
+using Gamefilled.Application.Companies;
 using Gamefilled.Application.Games;
 using Gamefilled.Data;
 using Gamefilled.Infrastructure;
@@ -28,23 +29,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
    ============================================================================ */
 builder.Services.Configure<IgdbOptions>(builder.Configuration.GetSection("IGDB"));
 
-// Cliente usado apenas para obter o token OAuth da Twitch.
 builder.Services.AddHttpClient("TwitchAuth", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 
-// Singleton para o token ser reutilizado entre pedidos e serviços.
 builder.Services.AddSingleton<IgdbTokenProvider>();
 
-// Cliente de domínio já usado pelas páginas atuais.
 builder.Services.AddHttpClient<IgdbClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.igdb.com/v4/");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 
-// Cliente de baixo nível usado pelo novo motor de descoberta V2.
 builder.Services.AddHttpClient<IgdbApiClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.igdb.com/v4/");
@@ -52,14 +49,12 @@ builder.Services.AddHttpClient<IgdbApiClient>(client =>
 });
 
 builder.Services.AddScoped<IGameDiscoveryService, GameDiscoveryService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
 
 /* ============================================================================
    CACHE + SESSÃO
    ============================================================================ */
-// Cache de metadados IGDB, como plataformas e géneros.
 builder.Services.AddMemoryCache();
-
-// Cache distribuído local usado pela sessão.
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
