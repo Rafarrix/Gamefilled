@@ -27,14 +27,20 @@ public sealed class CompanyService : ICompanyService
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
 
         var offset = (pageNumber - 1) * pageSize;
-        var searchLine = search is { Length: >= 2 }
-            ? $"search \"{EscapeSearch(search)}\";"
-            : string.Empty;
-        var whereLine = "where name != null & slug != null;";
+        var conditions = new List<string>
+        {
+            "name != null",
+            "slug != null"
+        };
 
+        // O comando APICalypse `search` não é suportado no endpoint companies.
+        // Para empresas usamos um filtro infix case-insensitive no campo name.
+        if (search is { Length: >= 2 })
+            conditions.Add($"name ~ *\"{EscapeFilterString(search)}\"*");
+
+        var whereLine = $"where {string.Join(" & ", conditions)};";
         var query = $"""
             fields id,name,slug,description,start_date,logo.image_id;
-            {searchLine}
             {whereLine}
             sort name asc;
             limit {pageSize};
@@ -46,9 +52,8 @@ public sealed class CompanyService : ICompanyService
             query,
             cancellationToken);
 
-        var countQuery = $"{searchLine}{whereLine}";
         var totalCount = await TryCountCompaniesAsync(
-            countQuery,
+            whereLine,
             offset + rows.Count,
             cancellationToken);
         var totalPages = totalCount <= 0
@@ -241,7 +246,7 @@ public sealed class CompanyService : ICompanyService
             string.IsNullOrWhiteSpace(parent.Slug) ? parent.Id.ToString() : parent.Slug.Trim());
     }
 
-    private static string EscapeSearch(string value) =>
+    private static string EscapeFilterString(string value) =>
         value
             .Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("\"", "\\\"", StringComparison.Ordinal)
