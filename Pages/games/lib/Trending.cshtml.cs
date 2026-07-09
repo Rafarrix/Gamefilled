@@ -1,16 +1,22 @@
+using Gamefilled.Application.Games;
+
 namespace Gamefilled.Pages.games.lib
 {
     /// <summary>
-    /// Página da biblioteca ordenada por tendência/popularidade recente.
+    /// PÃ¡gina da biblioteca ordenada por tendÃªncia/popularidade recente.
     /// </summary>
-    public class TrendingModel : _GamesLibBase
+    public class TrendingModel : _FilteredGamesLibBase
     {
-        public TrendingModel(IConfiguration cfg, ILogger<TrendingModel> logger, IHttpClientFactory http)
-            : base(cfg, logger, http) { }
+        public TrendingModel(
+            IConfiguration cfg,
+            ILogger<TrendingModel> logger,
+            IHttpClientFactory http,
+            IGameDiscoveryService discoveryService)
+            : base(cfg, logger, http, discoveryService) { }
 
         protected override void Configure()
         {
-            SortKey = "trending";
+            SortKey = GameDiscoverySort.Trending;
             PageTitle = "Trending";
         }
     }
