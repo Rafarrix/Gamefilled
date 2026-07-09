@@ -12,7 +12,7 @@
     string avgPlayUrl = Url.Page("/games/lib/AvgPlayTime") ?? "/games/lib/avgplaytime/";
     string avgFinishUrl = Url.Page("/games/lib/AvgFinishTime") ?? "/games/lib/avgfinishtime/";
 
-    string currentPath = Context?.Request?.Path.Value ?? popularUrl;
+    string currentPath = Model.HttpContext.Request.Path.Value ?? popularUrl;
     string dir = (Model.Dir ?? "desc").ToLowerInvariant();
     string key = (Model.SortKey ?? "").ToLowerInvariant();
 
@@ -44,7 +44,7 @@
         return $"{path}?{string.Join("&", parts)}";
     }
 
-    string PageLink(int page) => BuildLink(currentPath, page, dir);
+    string PageLink(int pageNumber) => BuildLink(currentPath, pageNumber, dir);
     string DirLink(string direction) => BuildLink(currentPath, 1, direction);
     string SortLink(string url) => BuildLink(url, 1, dir);
     string ClearFiltersLink() => BuildLink(currentPath, 1, dir, includeFilters: false);
@@ -218,8 +218,8 @@
                     <a class="dropdown-item" href="@SortLink(releaseUrl)">Release Date</a>
                     <a class="dropdown-item" href="@SortLink(popularUrl)">Popularity</a>
                     <a class="dropdown-item" href="@SortLink(topUrl)">Top Rated</a>
-                    <a class="dropdown-item" href="@BuildLink(avgPlayUrl, 1, dir, includeFilters: false)">Avg. Play Time</a>
-                    <a class="dropdown-item" href="@BuildLink(avgFinishUrl, 1, dir, includeFilters: false)">Avg. Finish Time</a>
+                    <a class="dropdown-item" href="@(BuildLink(avgPlayUrl, 1, dir, includeFilters: false))">Avg. Play Time</a>
+                    <a class="dropdown-item" href="@(BuildLink(avgFinishUrl, 1, dir, includeFilters: false))">Avg. Finish Time</a>
                 </div>
             </div>
         </div>
@@ -310,9 +310,9 @@
                     }
                 }
 
-                @for (int page = start; page <= end; page++)
+                @for (int p = start; p <= end; p++)
                 {
-                    <a class="pg @(page == current ? "active" : "")" href="@PageLink(page)">@page</a>
+                    <a class="pg @(p == current ? "active" : "")" href="@PageLink(p)">@p</a>
                 }
 
                 @if (end < total)
