@@ -1,0 +1,174 @@
+@page "/company"
+@model Gamefilled.Pages.company.IndexModel
+@{
+    ViewData["Title"] = "Companies";
+
+    string PageLink(int pageNumber)
+    {
+        var searchPart = string.IsNullOrWhiteSpace(Model.Search)
+            ? string.Empty
+            : $"&Search={Uri.EscapeDataString(Model.Search)}";
+
+        return $"/company?PageNumber={pageNumber}{searchPart}";
+    }
+}
+
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+
+<div class="gf-company-page gf-company-directory-page">
+    <div class="gf-company-shell">
+        <header class="gf-company-directory-hero">
+            <div class="gf-company-eyebrow">Industry directory</div>
+            <h1>Companies behind the games</h1>
+            <p>
+                Pesquisa developers, publishers, porting studios e equipas de suporte presentes na IGDB.
+            </p>
+
+            <form method="get" action="/company" class="gf-company-search">
+                <label class="sr-only" for="company-search-input">Pesquisar empresas</label>
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input id="company-search-input"
+                       type="search"
+                       name="Search"
+                       value="@Model.Search"
+                       placeholder="Ex.: Rockstar Games, Nintendo, CD Projekt..."
+                       autocomplete="off" />
+                <button type="submit">Pesquisar</button>
+            </form>
+        </header>
+
+        <div class="gf-company-directory-meta">
+            <div>
+                <strong>@Model.Result.TotalCount.ToString("N0")</strong>
+                @(string.IsNullOrWhiteSpace(Model.Search) ? "companies" : "results")
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Search))
+            {
+                <a href="/company">Limpar pesquisa</a>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.LoadError))
+        {
+            <div class="alert alert-warning" role="alert">@Model.LoadError</div>
+        }
+        else if (Model.Result.Companies.Count == 0)
+        {
+            <div class="gf-company-empty">
+                Nenhuma empresa encontrada. Experimenta uma pesquisa mais curta ou outro nome.
+            </div>
+        }
+        else
+        {
+            <div class="gf-company-directory-grid">
+                @foreach (var company in Model.Result.Companies)
+                {
+                    <a class="gf-company-directory-card"
+                       href="/company/@company.Id/@company.Slug"
+                       title="Abrir @company.Name">
+                        <div class="gf-company-directory-card__logo">
+                            @if (!string.IsNullOrWhiteSpace(company.LogoUrl))
+                            {
+                                <img src="@company.LogoUrl" alt="@company.Name logo" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span>@Initials(company.Name)</span>
+                            }
+                        </div>
+
+                        <div class="gf-company-directory-card__content">
+                            <h2>@company.Name</h2>
+
+                            @if (!string.IsNullOrWhiteSpace(company.FoundedText))
+                            {
+                                <div class="gf-company-directory-card__year">
+                                    Founded @company.FoundedText
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(company.Description))
+                            {
+                                <p>@Excerpt(company.Description, 155)</p>
+                            }
+                            else
+                            {
+                                <p class="gf-company-directory-card__empty-description">
+                                    Sem descrição editorial disponível na IGDB.
+                                </p>
+                            }
+                        </div>
+
+                        <i class="fas fa-arrow-right gf-company-directory-card__arrow" aria-hidden="true"></i>
+                    </a>
+                }
+            </div>
+
+            @if (Model.Result.TotalPages > 1)
+            {
+                <nav class="games-pagination gf-company-directory-pagination" aria-label="Paginação de empresas">
+                    @{
+                        int current = Model.Result.PageNumber;
+                        int total = Model.Result.TotalPages;
+                        int start = Math.Max(1, current - 2);
+                        int end = Math.Min(total, current + 2);
+
+                        while (end - start < 4 && start > 1) start--;
+                        while (end - start < 4 && end < total) end++;
+                    }
+
+                    @if (start > 1)
+                    {
+                        <a class="pg" href="@PageLink(1)">1</a>
+                        @if (start > 2)
+                        {
+                            <span class="pg dots">…</span>
+                        }
+                    }
+
+                    @for (int page = start; page <= end; page++)
+                    {
+                        <a class="pg @(page == current ? "active" : string.Empty)"
+                           href="@PageLink(page)">@page</a>
+                    }
+
+                    @if (end < total)
+                    {
+                        @if (end < total - 1)
+                        {
+                            <span class="pg dots">…</span>
+                        }
+                        <a class="pg" href="@PageLink(total)">@total</a>
+                    }
+                </nav>
+            }
+        }
+    </div>
+</div>
+
+@functions {
+    static string Initials(string value)
+    {
+        var words = value
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .ToArray();
+
+        return words.Length == 0
+            ? "?"
+            : string.Concat(words.Select(word => char.ToUpperInvariant(word[0])));
+    }
+
+    static string Excerpt(string value, int maximumLength)
+    {
+        var normalized = value
+            .Replace("\r", " ", StringComparison.Ordinal)
+            .Replace("\n", " ", StringComparison.Ordinal)
+            .Trim();
+
+        return normalized.Length <= maximumLength
+            ? normalized
+            : normalized[..maximumLength].TrimEnd() + "…";
+    }
+}
