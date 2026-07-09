@@ -6,10 +6,77 @@ namespace Gamefilled.Infrastructure;
 public sealed class CompanyService : ICompanyService
 {
     private readonly IgdbApiClient _apiClient;
+    private readonly ILogger<CompanyService> _logger;
 
-    public CompanyService(IgdbApiClient apiClient)
+    public CompanyService(
+        IgdbApiClient apiClient,
+        ILogger<CompanyService> logger)
     {
         _apiClient = apiClient;
+        _logger = logger;
+    }
+
+    public async Task<CompanyDirectoryResult> SearchAsync(
+        string? search,
+        int pageNumber = 1,
+        int pageSize = 36,
+        CancellationToken cancellationToken = default)
+    {
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Clamp(pageSize, 12, 60);
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+
+        var offset = (pageNumber - 1) * pageSize;
+        var searchLine = search is { Length: >= 2 }
+            ? $"search \"{EscapeSearch(search)}\";"
+            : string.Empty;
+        var whereLine = "where name != null & slug != null;";
+
+        var query = $"""
+            fields id,name,slug,description,start_date,logo.image_id;
+            {searchLine}
+            {whereLine}
+            sort name asc;
+            limit {pageSize};
+            offset {offset};
+            """;
+
+        var rows = await _apiClient.QueryAsync<List<IgdbCompanyDirectoryDto>>(
+            "companies",
+            query,
+            cancellationToken);
+
+        var countQuery = $"{searchLine}{whereLine}";
+        var totalCount = await TryCountCompaniesAsync(
+            countQuery,
+            offset + rows.Count,
+            cancellationToken);
+        var totalPages = totalCount <= 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return new CompanyDirectoryResult
+        {
+            Companies = rows
+                .Where(row => row.Id > 0 && !string.IsNullOrWhiteSpace(row.Name))
+                .Select(row => new CompanyDirectoryCard
+                {
+                    Id = row.Id,
+                    Name = row.Name!.Trim(),
+                    Slug = string.IsNullOrWhiteSpace(row.Slug)
+                        ? row.Id.ToString()
+                        : row.Slug.Trim(),
+                    Description = row.Description?.Trim(),
+                    LogoImageId = row.Logo?.ImageId,
+                    StartDate = row.StartDate
+                })
+                .ToList(),
+            Search = search,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        };
     }
 
     public async Task<CompanyDetails?> GetDetailsAsync(
@@ -92,6 +159,25 @@ public sealed class CompanyService : ICompanyService
         };
     }
 
+    private async Task<int> TryCountCompaniesAsync(
+        string query,
+        int fallback,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _apiClient.CountAsync("companies", query, cancellationToken);
+        }
+        catch (Exception exception) when (
+            exception is HttpRequestException or InvalidOperationException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Unable to count IGDB company directory results.");
+            return fallback;
+        }
+    }
+
     private async Task<IReadOnlyList<CompanyGameCard>> LoadGamesAsync(
         IReadOnlyDictionary<long, CompanyGameRoles> rolesByGame,
         CancellationToken cancellationToken)
@@ -155,11 +241,39 @@ public sealed class CompanyService : ICompanyService
             string.IsNullOrWhiteSpace(parent.Slug) ? parent.Id.ToString() : parent.Slug.Trim());
     }
 
+    private static string EscapeSearch(string value) =>
+        value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\r", " ", StringComparison.Ordinal)
+            .Replace("\n", " ", StringComparison.Ordinal);
+
     private sealed record CompanyGameRoles(
         bool Developer,
         bool Publisher,
         bool Porting,
         bool Supporting);
+
+    private sealed class IgdbCompanyDirectoryDto
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; init; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; init; }
+
+        [JsonPropertyName("slug")]
+        public string? Slug { get; init; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; init; }
+
+        [JsonPropertyName("start_date")]
+        public long? StartDate { get; init; }
+
+        [JsonPropertyName("logo")]
+        public IgdbCompanyLogoDto? Logo { get; init; }
+    }
 
     private sealed class IgdbCompanyDetailsDto
     {
