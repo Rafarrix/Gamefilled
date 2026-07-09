@@ -58,10 +58,12 @@
                         </span>
                     }
 
-                    @if (company.CountryCode.HasValue)
+                    @if (company.Country != null)
                     {
-                        <span class="gf-company-fact">
-                            Country code <strong>@company.CountryCode</strong>
+                        <span class="gf-company-fact gf-company-country"
+                              title="ISO @company.Country.Alpha2 · @company.Country.NumericCode">
+                            <span class="gf-company-country__flag" aria-hidden="true">@company.Country.Flag</span>
+                            <strong>@company.Country.Name</strong>
                         </span>
                     }
 
