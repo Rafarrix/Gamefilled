@@ -48,6 +48,7 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Cache platforms and genres.
 - [x] Add an accessible off-canvas filter drawer.
 - [x] Use IGDB PopScore Visits for Trending with a safe fallback.
+- [x] Link game genres and platforms directly to filtered discovery pages.
 - [ ] Migrate average play-time and finish-time sorting into the V2 service.
 - [ ] Add automated query-builder tests.
 
@@ -56,9 +57,9 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Add canonical `/company/{id}/{slug}` pages.
 - [x] Link companies from game pages.
 - [x] Distinguish developer, publisher, porting and supporting roles.
-- [x] Show description, logo, founding date, status, size, parent and official websites.
+- [x] Show description, logo, founding date, localized country, status, size, parent and official websites.
 - [x] Build a chronological associated-games catalogue.
-- [ ] Add company search and directory pages.
+- [x] Add searchable and paginated company directory pages.
 - [ ] Add subsidiaries and a visual company network.
 
 ## Phase 3 — Game details and media
@@ -66,12 +67,14 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Use the shared IGDB client for game details.
 - [x] Add clickable involved companies.
 - [x] Add trailers when the IGDB supplies a valid YouTube ID.
+- [x] Add a unified Media Room with trailer and screenshot lightbox navigation.
 - [x] Preserve artworks, screenshots, ratings, follows, hypes and time-to-beat.
-- [ ] Add similar games, franchises and collections.
-- [ ] Add DLCs, expansions, ports, remakes and remasters.
-- [ ] Add release timelines by platform and region.
+- [ ] Build **Game Universe** for similar games, franchises and collections.
+- [ ] Add DLCs, expansions, ports, remakes and remasters to Game Universe.
+- [ ] Build **Release Timeline** by platform and region.
+- [ ] Build **Where to Play** with official platform/store links.
 - [ ] Add engines, multiplayer modes, perspectives and language support.
-- [ ] Add official store/platform links and age-rating information.
+- [ ] Add age-rating and content information.
 
 ## Phase 4 — Distinct Gamefilled design system
 
@@ -80,6 +83,7 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [ ] Prefer editorial, asymmetrical and data-storytelling layouts.
 - [ ] Create reusable cards, drawers, media blocks and metadata components.
 - [ ] Redesign the homepage, game page and user profile around the new system.
+- [x] Modernize the header navigation and user dropdown direction.
 - [ ] Complete keyboard, contrast and reduced-motion reviews.
 
 ## Phase 5 — Authentication and security
@@ -91,7 +95,20 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [ ] Review authorization, CSRF, XSS, cookies, headers and uploads.
 - [ ] Complete an OWASP-oriented pre-production review.
 
-## Phase 6 — Database, tests and operations
+## Phase 6 — Steam and personalized social layer
+
+This phase stays planned but should begin only after authentication, database migrations and the core game pages are stable.
+
+- [ ] Add optional Steam account linking through the official Steam identity flow.
+- [ ] Import owned games, playtime, achievements and recently played data where the user's privacy settings permit it.
+- [ ] Match Steam app IDs with IGDB external-game records.
+- [ ] Store synchronization status and timestamps without storing Steam credentials.
+- [ ] Build personalized library insights, recommendations and profile statistics.
+- [ ] Add privacy controls for imported game activity.
+- [ ] Expand the social feed with opt-in Steam activity and user-generated Gamefilled activity.
+- [ ] Add friend comparison, shared games and recommendation signals.
+
+## Phase 7 — Database, tests and operations
 
 - [ ] Add EF Core migrations.
 - [ ] Add unit tests for query normalization and generation.
@@ -99,7 +116,7 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [ ] Add route smoke tests.
 - [ ] Add structured logging and health checks.
 
-## Phase 7 — Docker and production
+## Phase 8 — Docker and production
 
 - [ ] Add a multi-stage Dockerfile.
 - [ ] Add a development Docker Compose environment.
