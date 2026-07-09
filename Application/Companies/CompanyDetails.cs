@@ -18,9 +18,8 @@ public sealed class CompanyDetails
     public IReadOnlyList<CompanyGameCard> Games { get; init; } = [];
 
     public string? LogoUrl => CompanyImageUrl.Build(LogoImageId);
-
     public string? FoundedText => CompanyDateFormatter.Format(StartDate);
-
+    public CompanyCountry? Country => CompanyCountryCatalog.Find(CountryCode);
     public int DevelopedCount => Games.Count(game => game.IsDeveloper);
     public int PublishedCount => Games.Count(game => game.IsPublisher);
 }
