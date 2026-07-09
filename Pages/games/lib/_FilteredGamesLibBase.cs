@@ -1,14 +1,15 @@
 using Gamefilled.Application.Games;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Gamefilled.Pages.games.lib;
 
 /// <summary>
 /// Base V2 para páginas de biblioteca que usam o motor central de descoberta.
-/// Mantém compatibilidade com a view e com a classe base antiga enquanto a
-/// migração é feita de forma gradual.
+/// Durante a migração gradual, funciona como Page Filter e interrompe o handler
+/// antigo herdado de _GamesLibBase depois de carregar os dados pelo serviço V2.
 /// </summary>
-public abstract class _FilteredGamesLibBase : _GamesLibBase
+public abstract class _FilteredGamesLibBase : _GamesLibBase, IAsyncPageFilter
 {
     private readonly IGameDiscoveryService _discoveryService;
 
@@ -52,11 +53,21 @@ public abstract class _FilteredGamesLibBase : _GamesLibBase
         MinimumRating.HasValue ||
         !string.IsNullOrWhiteSpace(ReleaseStatus);
 
-    /// <summary>
-    /// Esconde o handler antigo da classe base para estas páginas já migrarem
-    /// para o serviço V2. Os sorts de tempo continuam temporariamente na base antiga.
-    /// </summary>
-    public new async Task OnGetAsync()
+    public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) =>
+        Task.CompletedTask;
+
+    public async Task OnPageHandlerExecutionAsync(
+        PageHandlerExecutingContext context,
+        PageHandlerExecutionDelegate next)
+    {
+        await LoadV2Async();
+
+        // Interrompe o OnGetAsync antigo herdado. Assim existe apenas um handler
+        // selecionável e evitamos também executar duas chamadas diferentes à IGDB.
+        context.Result = Page();
+    }
+
+    private async Task LoadV2Async()
     {
         Configure();
 
@@ -74,7 +85,6 @@ public abstract class _FilteredGamesLibBase : _GamesLibBase
             IsReleased = ParseReleaseStatus(ReleaseStatus)
         }.Normalize();
 
-        // Reflete os valores normalizados no modelo e, consequentemente, nos links.
         PageNumber = request.PageNumber;
         PageSize = request.PageSize;
         Dir = request.Direction;
@@ -121,7 +131,6 @@ public abstract class _FilteredGamesLibBase : _GamesLibBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // O utilizador abandonou ou recarregou a página; não é um erro da aplicação.
             throw;
         }
         catch (Exception exception)
