@@ -1,3 +1,6 @@
+@import url("global-audit-v2.css");
+@import url("profile-family-v2.css");
+
 body > main {
     min-width: 0;
 }
