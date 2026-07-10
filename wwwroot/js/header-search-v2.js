@@ -25,9 +25,6 @@
                 const parsed = splitLabel(titleNode?.textContent);
 
                 item.innerHTML = `
-                    <span class="igdb-cover-fallback" aria-hidden="true">
-                        <i class="fas fa-gamepad"></i>
-                    </span>
                     <span class="igdb-meta">
                         <span class="igdb-title">${escapeHtml(parsed.title || "Untitled")}</span>
                         ${parsed.year ? `<span class="igdb-year">${escapeHtml(parsed.year)}</span>` : ""}
@@ -68,12 +65,18 @@
             .replace(/'/g, "&#039;");
     }
 
-    dropdown.addEventListener("mousemove", event => {
+    dropdown.addEventListener("pointermove", event => {
         const rect = dropdown.getBoundingClientRect();
-        const x = rect.width > 0
-            ? ((event.clientX - rect.left) / rect.width) * 100
-            : 50;
-        dropdown.style.setProperty("--gf-search-menu-x", `${Math.max(0, Math.min(100, x))}%`);
+        const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+        const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+
+        dropdown.style.setProperty("--gf-search-menu-x", `${x}px`);
+        dropdown.style.setProperty("--gf-search-menu-y", `${y}px`);
+    });
+
+    dropdown.addEventListener("pointerleave", () => {
+        dropdown.style.setProperty("--gf-search-menu-x", "50%");
+        dropdown.style.setProperty("--gf-search-menu-y", "0%");
     });
 
     new MutationObserver(formatDropdown).observe(dropdown, {
