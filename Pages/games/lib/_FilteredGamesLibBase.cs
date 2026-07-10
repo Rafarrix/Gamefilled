@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace Gamefilled.Pages.games.lib;
 
 /// <summary>
-/// Base V2 para páginas de biblioteca que usam o motor central de descoberta.
-/// Durante a migração gradual, funciona como Page Filter e interrompe o handler
-/// antigo herdado de _GamesLibBase depois de carregar os dados pelo serviço V2.
+/// V2 base for library pages using the centralized discovery engine.
+/// During the gradual migration it works as a page filter and stops the
+/// inherited legacy handler after loading data through the V2 service.
 /// </summary>
 public abstract class _FilteredGamesLibBase : _GamesLibBase, IAsyncPageFilter
 {
@@ -62,8 +62,8 @@ public abstract class _FilteredGamesLibBase : _GamesLibBase, IAsyncPageFilter
     {
         await LoadV2Async();
 
-        // Interrompe o OnGetAsync antigo herdado. Assim existe apenas um handler
-        // selecionável e evitamos também executar duas chamadas diferentes à IGDB.
+        // Stops the inherited legacy handler so the page performs only one
+        // discovery request and exposes a single effective page-handler path.
         context.Result = Page();
     }
 
@@ -139,7 +139,7 @@ public abstract class _FilteredGamesLibBase : _GamesLibBase, IAsyncPageFilter
             Games = [];
             TotalCount = 0;
             TotalPages = 0;
-            LoadError = "Não foi possível carregar os jogos. Tenta novamente dentro de momentos.";
+            LoadError = "The games could not be loaded. Please try again in a moment.";
         }
 
         Platforms = await platformsTask;
