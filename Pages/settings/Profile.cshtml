@@ -18,17 +18,14 @@
     <div class="gf-settings-shell">
         <header class="gf-settings-heading">
             <div>
-                <span class="gf-eyebrow">Public identity</span>
+                <span class="gf-eyebrow">Profile</span>
                 <h1>Edit profile</h1>
-                <p>Control how your name, bio, avatar and banner appear across Gamefilled.</p>
+                <p>Update your public name, bio, avatar and banner.</p>
             </div>
 
             @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
             {
-                <a class="gf-btn gf-btn--secondary" href="/u/@Model.CurrentUsername">
-                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                    View profile
-                </a>
+                <a class="gf-btn gf-btn--secondary" href="/u/@Model.CurrentUsername"><i class="fas fa-arrow-left" aria-hidden="true"></i>View profile</a>
             }
         </header>
 
@@ -46,22 +43,15 @@
                             </section>
 
                             <section class="gf-panel">
-                                <div class="gf-panel__header">
-                                    <div>
-                                        <h2>Profile information</h2>
-                                        <p>Your display name and bio are visible to other players.</p>
-                                    </div>
-                                </div>
-
+                                <div class="gf-panel__header"><div><h2>Profile information</h2></div></div>
                                 <div class="gf-panel__body">
                                     <div class="gf-field">
                                         <label class="gf-label" asp-for="DisplayName">Display name</label>
-                                        <input class="gf-input" asp-for="DisplayName" maxlength="100" placeholder="How should people see your name?" />
+                                        <input class="gf-input" asp-for="DisplayName" maxlength="100" placeholder="Display name" />
                                     </div>
-
                                     <div class="gf-field">
                                         <label class="gf-label" asp-for="Bio">Bio</label>
-                                        <textarea class="gf-textarea" asp-for="Bio" rows="6" placeholder="Tell the community what you play and what you enjoy."></textarea>
+                                        <textarea class="gf-textarea" asp-for="Bio" rows="6" placeholder="Tell people what you play."></textarea>
                                         <span class="gf-help">Maximum 200 words.</span>
                                         <span asp-validation-for="Bio" class="text-danger d-block"></span>
                                     </div>
@@ -69,24 +59,17 @@
                             </section>
 
                             <section class="gf-panel">
-                                <div class="gf-panel__header">
-                                    <div>
-                                        <h2>Profile media</h2>
-                                        <p>Use direct image URLs while uploads are still being prepared.</p>
-                                    </div>
-                                </div>
-
+                                <div class="gf-panel__header"><div><h2>Profile media</h2></div></div>
                                 <div class="gf-panel__body">
                                     <div class="gf-field">
                                         <label class="gf-label" asp-for="AvatarUrl">Avatar URL</label>
                                         <input class="gf-input" asp-for="AvatarUrl" type="url" placeholder="https://example.com/avatar.jpg" />
                                         <span class="gf-help">Square images work best.</span>
                                     </div>
-
                                     <div class="gf-field">
                                         <label class="gf-label" asp-for="BannerUrl">Banner URL</label>
                                         <input class="gf-input" asp-for="BannerUrl" type="url" placeholder="https://example.com/banner.jpg" />
-                                        <span class="gf-help">Use a wide landscape image for the best result.</span>
+                                        <span class="gf-help">Use a wide landscape image.</span>
                                     </div>
                                 </div>
                             </section>
@@ -94,26 +77,11 @@
 
                         <aside class="gf-settings-stack">
                             <section class="gf-panel">
-                                <div class="gf-panel__header">
-                                    <div>
-                                        <h2>Profile tips</h2>
-                                        <p>Small details make your profile easier to recognize.</p>
-                                    </div>
-                                </div>
-
+                                <div class="gf-panel__header"><div><h2>Preview tips</h2></div></div>
                                 <div class="gf-panel__body gf-settings-tips">
-                                    <div class="gf-settings-tip">
-                                        <i class="fas fa-image" aria-hidden="true"></i>
-                                        <span>Choose an avatar that remains clear at small sizes.</span>
-                                    </div>
-                                    <div class="gf-settings-tip">
-                                        <i class="fas fa-panorama" aria-hidden="true"></i>
-                                        <span>Keep important banner details near the center.</span>
-                                    </div>
-                                    <div class="gf-settings-tip">
-                                        <i class="fas fa-align-left" aria-hidden="true"></i>
-                                        <span>A short bio works better than a long block of text.</span>
-                                    </div>
+                                    <div class="gf-settings-tip"><i class="fas fa-image" aria-hidden="true"></i><span>Use a clear square avatar.</span></div>
+                                    <div class="gf-settings-tip"><i class="fas fa-panorama" aria-hidden="true"></i><span>Keep banner details near the center.</span></div>
+                                    <div class="gf-settings-tip"><i class="fas fa-align-left" aria-hidden="true"></i><span>Keep the bio concise.</span></div>
                                 </div>
                             </section>
 
@@ -122,10 +90,7 @@
                                 {
                                     <a class="gf-btn gf-btn--secondary" href="/u/@Model.CurrentUsername">Cancel</a>
                                 }
-                                <button type="submit" class="gf-btn gf-btn--primary">
-                                    <i class="fas fa-check" aria-hidden="true"></i>
-                                    Save profile
-                                </button>
+                                <button type="submit" class="gf-btn gf-btn--primary"><i class="fas fa-check" aria-hidden="true"></i>Save profile</button>
                             </div>
                         </aside>
                     </div>
