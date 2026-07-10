@@ -4,14 +4,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const username = decodeURIComponent(match[1]);
     const base = `/u/${encodeURIComponent(username)}`;
+    const routes = {
+        followers: 'followers',
+        following: 'following',
+        activity: 'activity',
+        reviews: 'reviews'
+    };
 
-    document.querySelectorAll('a[href*="?tab=followers"]').forEach(link => {
-        link.setAttribute('href', `${base}/followers`);
-        link.classList.add('gf-profile-direct-link');
-    });
+    document.querySelectorAll('a[href*="?tab="]').forEach(link => {
+        let url;
 
-    document.querySelectorAll('a[href*="?tab=following"]').forEach(link => {
-        link.setAttribute('href', `${base}/following`);
+        try {
+            url = new URL(link.href, window.location.origin);
+        } catch {
+            return;
+        }
+
+        const tab = url.searchParams.get('tab')?.toLowerCase();
+        const route = tab ? routes[tab] : null;
+        if (!route) return;
+
+        link.setAttribute('href', `${base}/${route}`);
         link.classList.add('gf-profile-direct-link');
     });
 });
