@@ -1,4 +1,5 @@
 @page "/company/{id:int}/{slug?}"
+@using Gamefilled.Application.Companies
 @model Gamefilled.Pages.company.DetailsModel
 @{
     ViewData["Title"] = Model.Company?.Name ?? "Company";
@@ -32,7 +33,7 @@
                 else
                 {
                     <div class="gf-company-description">
-                        A IGDB ainda não disponibiliza uma descrição editorial para esta empresa.
+                        IGDB does not currently provide an editorial description for this company.
                     </div>
                 }
 
@@ -63,7 +64,7 @@
                         <span class="gf-company-fact gf-company-country"
                               title="ISO @company.Country.Alpha2 · @company.Country.NumericCode">
                             <span class="gf-company-country__flag" aria-hidden="true">@company.Country.Flag</span>
-                            <strong>@company.Country.Name</strong>
+                            <strong>@company.Country.EnglishName()</strong>
                         </span>
                     }
 
@@ -118,14 +119,14 @@
             <div class="gf-company-section-head">
                 <div>
                     <h2>Games catalogue</h2>
-                    <p>Jogos onde a empresa aparece como developer, publisher, porting ou supporting studio.</p>
+                    <p>Games where the company appears as a developer, publisher, porting or supporting studio.</p>
                 </div>
             </div>
 
             @if (company.Games.Count == 0)
             {
                 <div class="gf-company-empty">
-                    Não foram encontrados jogos associados a esta empresa na IGDB.
+                    No games associated with this company were found on IGDB.
                 </div>
             }
             else
