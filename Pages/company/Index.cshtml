@@ -22,19 +22,19 @@
             <div class="gf-company-eyebrow">Industry directory</div>
             <h1>Companies behind the games</h1>
             <p>
-                Pesquisa developers, publishers, porting studios e equipas de suporte presentes na IGDB.
+                Search developers, publishers, porting studios and support teams available through IGDB.
             </p>
 
             <form method="get" action="/company" class="gf-company-search">
-                <label class="sr-only" for="company-search-input">Pesquisar empresas</label>
+                <label class="sr-only" for="company-search-input">Search companies</label>
                 <i class="fas fa-search" aria-hidden="true"></i>
                 <input id="company-search-input"
                        type="search"
                        name="Search"
                        value="@Model.Search"
-                       placeholder="Ex.: Rockstar Games, Nintendo, CD Projekt..."
+                       placeholder="e.g. Rockstar Games, Nintendo, CD Projekt..."
                        autocomplete="off" />
-                <button type="submit">Pesquisar</button>
+                <button type="submit">Search</button>
             </form>
         </header>
 
@@ -46,7 +46,7 @@
 
             @if (!string.IsNullOrWhiteSpace(Model.Search))
             {
-                <a href="/company">Limpar pesquisa</a>
+                <a href="/company">Clear search</a>
             }
         </div>
 
@@ -57,7 +57,7 @@
         else if (Model.Result.Companies.Count == 0)
         {
             <div class="gf-company-empty">
-                Nenhuma empresa encontrada. Experimenta uma pesquisa mais curta ou outro nome.
+                No companies were found. Try a shorter search or a different name.
             </div>
         }
         else
@@ -67,7 +67,7 @@
                 {
                     <a class="gf-company-directory-card"
                        href="/company/@company.Id/@company.Slug"
-                       title="Abrir @company.Name">
+                       title="Open @company.Name">
                         <div class="gf-company-directory-card__logo">
                             @if (!string.IsNullOrWhiteSpace(company.LogoUrl))
                             {
@@ -96,7 +96,7 @@
                             else
                             {
                                 <p class="gf-company-directory-card__empty-description">
-                                    Sem descrição editorial disponível na IGDB.
+                                    No editorial description is currently available on IGDB.
                                 </p>
                             }
                         </div>
@@ -108,7 +108,7 @@
 
             @if (Model.Result.TotalPages > 1)
             {
-                <nav class="games-pagination gf-company-directory-pagination" aria-label="Paginação de empresas">
+                <nav class="games-pagination gf-company-directory-pagination" aria-label="Company pagination">
                     @{
                         int current = Model.Result.PageNumber;
                         int total = Model.Result.TotalPages;
