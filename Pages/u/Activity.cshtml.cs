@@ -1,82 +1,142 @@
+using System.Text.Json;
 using Gamefilled.Data;
+using Gamefilled.Infrastructure;
 using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace Gamefilled.Pages.u
+namespace Gamefilled.Pages.u;
+
+public sealed class ActivityModel : PageModel
 {
-    /// <summary>
-    /// Página de atividade pública de um utilizador.
-    /// </summary>
-    public class ActivityModel : PageModel
+    private readonly AppDbContext _db;
+    private readonly IgdbClient _igdb;
+
+    public ActivityModel(AppDbContext db, IgdbClient igdb)
     {
-        /// <summary>
-        /// Contexto da base de dados.
-        /// </summary>
-        private readonly AppDbContext _db;
+        _db = db;
+        _igdb = igdb;
+    }
 
-        public ActivityModel(AppDbContext db)
-        {
-            _db = db;
-        }
+    public User ProfileUser { get; private set; } = default!;
+    public List<ActivityItemViewModel> ActivityItems { get; private set; } = [];
+    public bool IsOwnProfile { get; private set; }
 
-        /// <summary>
-        /// Utilizador dono do perfil.
-        /// </summary>
-        public User ProfileUser { get; set; } = default!;
+    public async Task<IActionResult> OnGetAsync(string username, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            return NotFound();
 
-        /// <summary>
-        /// Lista de itens de atividade preparados para a UI.
-        /// </summary>
-        public List<ActivityItemViewModel> ActivityItems { get; set; } = new();
+        var user = await _db.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Username == username, cancellationToken);
 
-        /// <summary>
-        /// Carrega a página de atividade do utilizador.
-        /// </summary>
-        public async Task<IActionResult> OnGetAsync(string username, CancellationToken ct)
-        {
-            if (string.IsNullOrWhiteSpace(username))
-                return NotFound();
+        if (user is null)
+            return NotFound();
 
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username, ct);
-            if (user == null)
-                return NotFound();
+        ProfileUser = user;
 
-            ProfileUser = user;
+        var currentUsername = HttpContext.Session.GetString("username");
+        IsOwnProfile = !string.IsNullOrWhiteSpace(currentUsername) &&
+            string.Equals(currentUsername, user.Username, StringComparison.OrdinalIgnoreCase);
 
-            // Vai buscar até 50 atividades mais recentes.
-            var activities = await _db.UserActivities
-                .Where(x => x.UserId == user.Id)
-                .Include(x => x.TargetUser)
-                .OrderByDescending(x => x.CreatedAt)
-                .Take(50)
-                .ToListAsync(ct);
+        var activities = await _db.UserActivities
+            .AsNoTracking()
+            .Where(item => item.UserId == user.Id)
+            .Include(item => item.TargetUser)
+            .OrderByDescending(item => item.CreatedAt)
+            .Take(50)
+            .ToListAsync(cancellationToken);
 
-            // Converte para ViewModel simples.
-            ActivityItems = activities
-                .Select(x => new ActivityItemViewModel
+        var gameIds = activities
+            .Where(item => item.GameId.HasValue)
+            .Select(item => item.GameId!.Value)
+            .Distinct()
+            .ToArray();
+
+        var games = await _igdb.GetGamesByIdsAsync(gameIds, cancellationToken);
+        var gamesById = games.ToDictionary(item => item.Id, item => item);
+
+        ActivityItems = activities
+            .Select(item =>
+            {
+                IgdbGameDto? game = null;
+                if (item.GameId.HasValue)
+                    gamesById.TryGetValue(item.GameId.Value, out game);
+
+                return new ActivityItemViewModel
                 {
-                    Type = x.Type,
-                    CreatedAt = x.CreatedAt,
-                    TargetUsername = x.TargetUser?.Username,
-                    TargetDisplayName = x.TargetUser?.DisplayName
-                })
-                .ToList();
+                    Type = item.Type,
+                    CreatedAt = item.CreatedAt,
+                    TargetUsername = item.TargetUser?.Username,
+                    TargetDisplayName = item.TargetUser?.DisplayName,
+                    GameId = item.GameId,
+                    GameName = game?.Name,
+                    GameCoverUrl = BuildCoverUrl(game?.Cover?.ImageId),
+                    Status = ReadMetaString(item.MetaJson, "status"),
+                    Rating = ReadMetaInt(item.MetaJson, "rating")
+                };
+            })
+            .ToList();
 
-            return Page();
-        }
+        return Page();
+    }
 
-        /// <summary>
-        /// ViewModel interno para representar um item de atividade.
-        /// </summary>
-        public class ActivityItemViewModel
+    private static string? BuildCoverUrl(string? imageId) =>
+        string.IsNullOrWhiteSpace(imageId)
+            ? null
+            : $"https://images.igdb.com/igdb/image/upload/t_cover_small/{imageId}.jpg";
+
+    private static string? ReadMetaString(string? json, string property)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        try
         {
-            public string Type { get; set; } = "";
-            public DateTime CreatedAt { get; set; }
-
-            public string? TargetUsername { get; set; }
-            public string? TargetDisplayName { get; set; }
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.TryGetProperty(property, out var value) &&
+                   value.ValueKind == JsonValueKind.String
+                ? value.GetString()
+                : null;
         }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static int? ReadMetaInt(string? json, string property)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.TryGetProperty(property, out var value) &&
+                   value.ValueKind == JsonValueKind.Number &&
+                   value.TryGetInt32(out var result)
+                ? result
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    public sealed class ActivityItemViewModel
+    {
+        public string Type { get; init; } = string.Empty;
+        public DateTime CreatedAt { get; init; }
+        public string? TargetUsername { get; init; }
+        public string? TargetDisplayName { get; init; }
+        public int? GameId { get; init; }
+        public string? GameName { get; init; }
+        public string? GameCoverUrl { get; init; }
+        public string? Status { get; init; }
+        public int? Rating { get; init; }
     }
 }
