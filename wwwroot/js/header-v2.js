@@ -9,6 +9,7 @@
         const $profile = $(profile);
         const $menu = $profile.find('.gf-profile-menu');
         const $toggle = $profile.find('.dropdown-toggle');
+        const menuElement = $menu.get(0);
         let closeTimer = null;
 
         // Remove o comportamento hover antigo definido em site.js.
@@ -44,6 +45,22 @@
         $profile.on('mouseleave.headerV2 focusout.headerV2', closeMenu);
         $menu.on('mouseenter.headerV2', openMenu);
         $menu.on('mouseleave.headerV2', closeMenu);
+
+        if (menuElement) {
+            menuElement.addEventListener('pointermove', event => {
+                const bounds = menuElement.getBoundingClientRect();
+                const x = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
+                const y = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
+
+                menuElement.style.setProperty('--gf-menu-x', `${x}px`);
+                menuElement.style.setProperty('--gf-menu-y', `${y}px`);
+            });
+
+            menuElement.addEventListener('pointerleave', () => {
+                menuElement.style.setProperty('--gf-menu-x', '50%');
+                menuElement.style.setProperty('--gf-menu-y', '0%');
+            });
+        }
 
         $(window).on('resize.headerV2', () => {
             window.clearTimeout(closeTimer);
