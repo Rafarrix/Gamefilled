@@ -1,28 +1,53 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.AccountModel
 @{
-    ViewData["Title"] = "Account";
+    ViewData["Title"] = "Account & security";
     ViewData["ActiveSettings"] = "Account";
 }
 
-<div class="container settings-wrap">
-    <div class="row">
-        <div class="col-lg-3 d-none d-lg-block">
-            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
-        </div>
-
-        <div class="col-lg-9">
-            <div class="settings-content">
-                <div class="settings-content-header">
-                    <h2 class="mb-0">Account</h2>
-                </div>
-
-                <p class="subtitle-text">Aqui vamos pôr: Change Password (BCrypt), Change Email, Logout sessions, etc.</p>
-
-                <div class="alert alert-info mt-3">
-                    Ainda não implementado.
-                </div>
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div>
+                <span class="gf-eyebrow">Account protection</span>
+                <h1>Account & security</h1>
+                <p>This area will bring together password, email and active session controls.</p>
             </div>
+        </header>
+
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+
+            <main class="gf-settings-content">
+                <section class="gf-panel">
+                    <div class="gf-panel__header">
+                        <div>
+                            <h2>Security roadmap</h2>
+                            <p>These controls will be enabled during the dedicated production security sprint.</p>
+                        </div>
+                        <span class="gf-chip"><i class="fas fa-clock" aria-hidden="true"></i> Planned</span>
+                    </div>
+
+                    <div class="gf-panel__body gf-settings-tips">
+                        <div class="gf-settings-tip">
+                            <i class="fas fa-key" aria-hidden="true"></i>
+                            <span>Change password with current-password verification and strong validation.</span>
+                        </div>
+                        <div class="gf-settings-tip">
+                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                            <span>Change email through a verified confirmation flow.</span>
+                        </div>
+                        <div class="gf-settings-tip">
+                            <i class="fas fa-laptop" aria-hidden="true"></i>
+                            <span>Review and revoke active sessions across devices.</span>
+                        </div>
+                        <div class="gf-settings-tip">
+                            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                            <span>Add recovery, rate limiting and optional multi-factor authentication.</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 </div>
