@@ -37,4 +37,22 @@ BEGIN
     CREATE INDEX [IX_UserGameEntries_UserId_UpdatedAt]
         ON [dbo].[UserGameEntries] ([UserId], [UpdatedAt] DESC);
 END
+ELSE
+BEGIN
+    ALTER TABLE [dbo].[UserGameEntries]
+        ALTER COLUMN [ReviewText] NVARCHAR(MAX) NULL;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE [name] = N'CK_UserGameEntries_ReviewTextLength'
+          AND [parent_object_id] = OBJECT_ID(N'dbo.UserGameEntries')
+    )
+    BEGIN
+        ALTER TABLE [dbo].[UserGameEntries]
+            ADD CONSTRAINT [CK_UserGameEntries_ReviewTextLength]
+            CHECK ([ReviewText] IS NULL OR LEN([ReviewText]) <= 5000);
+    END
+END
 GO
