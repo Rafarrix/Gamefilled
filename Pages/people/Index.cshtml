@@ -4,7 +4,7 @@
     ViewData["Title"] = "People";
     ViewData["FullBleed"] = true;
 
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var returnUrl = $"{HttpContext.Request.Path}{HttpContext.Request.QueryString}";
     var shownFrom = Model.TotalUsers == 0 ? 0 : ((Model.PageNumber - 1) * 18) + 1;
     var shownTo = Math.Min(Model.PageNumber * 18, Model.TotalUsers);
 
@@ -219,11 +219,11 @@
                         <span class="is-disabled"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
                     }
 
-                    @for (var page = Math.Max(1, Model.PageNumber - 2); page <= Math.Min(Model.TotalPages, Model.PageNumber + 2); page++)
+                    @for (var pageIndex = Math.Max(1, Model.PageNumber - 2); pageIndex <= Math.Min(Model.TotalPages, Model.PageNumber + 2); pageIndex++)
                     {
-                        <a class="@(page == Model.PageNumber ? "is-active" : string.Empty)"
-                           href="@Model.PageUrl(page)"
-                           aria-current="@(page == Model.PageNumber ? "page" : null)">@page</a>
+                        <a class="@(pageIndex == Model.PageNumber ? "is-active" : string.Empty)"
+                           href="@Model.PageUrl(pageIndex)"
+                           aria-current="@(pageIndex == Model.PageNumber ? "page" : null)">@pageIndex</a>
                     }
 
                     @if (Model.PageNumber < Model.TotalPages)
