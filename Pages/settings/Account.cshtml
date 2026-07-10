@@ -20,18 +20,9 @@
             <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
 
             <main class="gf-settings-content">
-                @if (!string.IsNullOrWhiteSpace(Model.Success))
-                {
-                    <div class="gf-alert gf-alert--success" role="status">@Model.Success</div>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.Error))
-                {
-                    <div class="gf-alert gf-alert--danger" role="alert">@Model.Error</div>
-                }
-
                 <div class="gf-settings-account-meta" aria-label="Account summary">
                     <div><span>Username</span><strong>@@@Model.Username</strong></div>
-                    <div><span>Email</span><strong>@Model.CurrentEmail</strong></div>
+                    <div><span>Email</span><strong>@Model.Email</strong></div>
                     <div><span>Member since</span><strong>@Model.CreatedAt.ToString("MMM yyyy")</strong></div>
                 </div>
 
@@ -41,10 +32,19 @@
                             <div><h2>Change email</h2><p>Confirm the change with your password.</p></div>
                         </div>
                         <div class="gf-panel__body">
+                            @if (!string.IsNullOrWhiteSpace(Model.EmailSuccess))
+                            {
+                                <div class="gf-alert gf-alert--success" role="status">@Model.EmailSuccess</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.EmailError))
+                            {
+                                <div class="gf-alert gf-alert--danger" role="alert">@Model.EmailError</div>
+                            }
+
                             <form method="post" asp-page-handler="Email">
                                 <div class="gf-field">
-                                    <label class="gf-label" asp-for="NewEmail">New email</label>
-                                    <input class="gf-input" asp-for="NewEmail" type="email" autocomplete="email" />
+                                    <label class="gf-label" asp-for="Email">Email</label>
+                                    <input class="gf-input" asp-for="Email" type="email" autocomplete="email" />
                                 </div>
                                 <div class="gf-field">
                                     <label class="gf-label" asp-for="EmailCurrentPassword">Current password</label>
@@ -62,10 +62,19 @@
                             <div><h2>Change password</h2><p>Use at least eight characters with a letter and number.</p></div>
                         </div>
                         <div class="gf-panel__body">
+                            @if (!string.IsNullOrWhiteSpace(Model.PasswordSuccess))
+                            {
+                                <div class="gf-alert gf-alert--success" role="status">@Model.PasswordSuccess</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.PasswordError))
+                            {
+                                <div class="gf-alert gf-alert--danger" role="alert">@Model.PasswordError</div>
+                            }
+
                             <form method="post" asp-page-handler="Password">
                                 <div class="gf-field">
-                                    <label class="gf-label" asp-for="CurrentPassword">Current password</label>
-                                    <input class="gf-input" asp-for="CurrentPassword" type="password" autocomplete="current-password" />
+                                    <label class="gf-label" asp-for="PasswordCurrentPassword">Current password</label>
+                                    <input class="gf-input" asp-for="PasswordCurrentPassword" type="password" autocomplete="current-password" />
                                 </div>
                                 <div class="gf-field">
                                     <label class="gf-label" asp-for="NewPassword">New password</label>
