@@ -62,6 +62,7 @@
 }
 
 <link rel="stylesheet" href="~/css/games-library-v2.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/games-library-polish.css" asp-append-version="true" />
 
 @if (filteredModel != null)
 {
@@ -70,12 +71,12 @@
             data-game-filter-open
             aria-controls="game-filter-drawer"
             aria-expanded="false"
-            title="Abrir filtros">
+            title="Open filters">
         <i class="fas fa-chevron-right" aria-hidden="true"></i>
         <span class="gf-library-filter-tab__label">Filters</span>
         @if (activeFilterCount > 0)
         {
-            <span class="gf-library-filter-tab__count" aria-label="@activeFilterCount filtros ativos">
+            <span class="gf-library-filter-tab__count" aria-label="@activeFilterCount active filters">
                 @activeFilterCount
             </span>
         }
@@ -97,14 +98,14 @@
                 <div class="gf-filter-drawer__eyebrow">Game discovery</div>
                 <h2 id="game-filter-title" class="gf-filter-drawer__title">Find your next game</h2>
                 <p class="gf-filter-drawer__subtitle">
-                    Combina pesquisa, plataforma, género, ano e classificação.
+                    Combine search, platform, genre, year and rating.
                 </p>
             </div>
 
             <button type="button"
                     class="gf-filter-drawer__close"
                     data-game-filter-close
-                    aria-label="Fechar filtros">
+                    aria-label="Close filters">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
         </div>
@@ -115,20 +116,20 @@
             <input type="hidden" name="Dir" value="@dir" />
 
             <div class="form-group">
-                <label for="games-filter-search">Pesquisar jogo</label>
+                <label for="games-filter-search">Search games</label>
                 <input id="games-filter-search"
                        class="form-control"
                        type="search"
                        name="Search"
                        value="@filteredModel.Search"
-                       placeholder="Ex.: Cyberpunk 2077"
+                       placeholder="e.g. Cyberpunk 2077"
                        autocomplete="off" />
             </div>
 
             <div class="form-group">
-                <label for="games-filter-platform">Plataforma</label>
+                <label for="games-filter-platform">Platform</label>
                 <select id="games-filter-platform" class="form-control" name="PlatformId">
-                    <option value="">Todas as plataformas</option>
+                    <option value="">All platforms</option>
                     @foreach (var platform in filteredModel.Platforms)
                     {
                         if (filteredModel.PlatformId == platform.Id)
@@ -144,9 +145,9 @@
             </div>
 
             <div class="form-group">
-                <label for="games-filter-genre">Género</label>
+                <label for="games-filter-genre">Genre</label>
                 <select id="games-filter-genre" class="form-control" name="GenreId">
-                    <option value="">Todos os géneros</option>
+                    <option value="">All genres</option>
                     @foreach (var genre in filteredModel.Genres)
                     {
                         if (filteredModel.GenreId == genre.Id)
@@ -163,7 +164,7 @@
 
             <div class="gf-filter-drawer__split">
                 <div class="form-group">
-                    <label for="games-filter-year">Ano</label>
+                    <label for="games-filter-year">Year</label>
                     <input id="games-filter-year"
                            class="form-control"
                            type="number"
@@ -175,7 +176,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="games-filter-rating">Rating mínimo</label>
+                    <label for="games-filter-rating">Minimum rating</label>
                     <input id="games-filter-rating"
                            class="form-control"
                            type="number"
@@ -189,33 +190,33 @@
             </div>
 
             <div class="form-group">
-                <label for="games-filter-release">Estado de lançamento</label>
+                <label for="games-filter-release">Release status</label>
                 <select id="games-filter-release" class="form-control" name="ReleaseStatus">
                     @if (string.IsNullOrWhiteSpace(filteredModel.ReleaseStatus))
                     {
-                        <option value="" selected>Todos</option>
+                        <option value="" selected>All</option>
                     }
                     else
                     {
-                        <option value="">Todos</option>
+                        <option value="">All</option>
                     }
 
                     @if (filteredModel.ReleaseStatus == "released")
                     {
-                        <option value="released" selected>Já lançados</option>
+                        <option value="released" selected>Released</option>
                     }
                     else
                     {
-                        <option value="released">Já lançados</option>
+                        <option value="released">Released</option>
                     }
 
                     @if (filteredModel.ReleaseStatus == "upcoming")
                     {
-                        <option value="upcoming" selected>Próximos lançamentos</option>
+                        <option value="upcoming" selected>Upcoming</option>
                     }
                     else
                     {
-                        <option value="upcoming">Próximos lançamentos</option>
+                        <option value="upcoming">Upcoming</option>
                     }
                 </select>
             </div>
@@ -223,15 +224,15 @@
             <div class="gf-filter-drawer__footer">
                 <button class="btn btn-main gf-filter-drawer__apply" type="submit">
                     <i class="fas fa-sliders-h mr-2" aria-hidden="true"></i>
-                    Aplicar filtros
+                    Apply filters
                 </button>
 
                 @if (filteredModel.HasActiveFilters)
                 {
                     <a class="btn btn-outline-light gf-filter-drawer__clear"
                        href="@ClearFiltersLink()"
-                       title="Limpar filtros"
-                       aria-label="Limpar filtros">
+                       title="Clear filters"
+                       aria-label="Clear filters">
                         <i class="fas fa-undo" aria-hidden="true"></i>
                     </a>
                 }
@@ -257,11 +258,11 @@
         <div class="games-sortbar">
             <span class="games-sortbar-label">Sort by</span>
 
-            <a class="games-sortbar-arrow" href="@DirLink("asc")" title="Ascendente" aria-label="Ascendente">
+            <a class="games-sortbar-arrow" href="@DirLink("asc")" title="Ascending" aria-label="Ascending">
                 <i class="fas fa-chevron-up"></i>
             </a>
 
-            <a class="games-sortbar-arrow" href="@DirLink("desc")" title="Descendente" aria-label="Descendente">
+            <a class="games-sortbar-arrow" href="@DirLink("desc")" title="Descending" aria-label="Descending">
                 <i class="fas fa-chevron-down"></i>
             </a>
 
@@ -298,7 +299,7 @@
     @if (Model.Games == null || Model.Games.Count == 0)
     {
         <div class="text-muted">
-            Nenhum resultado encontrado com os filtros selecionados.
+            No results were found with the selected filters.
         </div>
     }
     else
@@ -351,7 +352,7 @@
 
         @if (Model.TotalPages > 1)
         {
-            <nav class="games-pagination mt-4" aria-label="Paginação de jogos">
+            <nav class="games-pagination mt-4" aria-label="Game pagination">
                 @{
                     int current = Model.PageNumber;
                     int total = Model.TotalPages;
