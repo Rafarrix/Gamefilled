@@ -57,8 +57,12 @@ namespace Gamefilled.Pages.Settings
             if (user == null)
                 return RedirectToPage("/");
 
-            var cleanedDisplayName = string.IsNullOrWhiteSpace(DisplayName) ? user.Username : DisplayName.Trim();
+            var cleanedDisplayName = string.IsNullOrWhiteSpace(DisplayName)
+                ? user.Username
+                : DisplayName.Trim();
             var cleanedBio = string.IsNullOrWhiteSpace(Bio) ? null : Bio.Trim();
+            var cleanedAvatarUrl = string.IsNullOrWhiteSpace(AvatarUrl) ? null : AvatarUrl.Trim();
+            var cleanedBannerUrl = string.IsNullOrWhiteSpace(BannerUrl) ? null : BannerUrl.Trim();
 
             if (!string.IsNullOrWhiteSpace(cleanedBio))
             {
@@ -71,18 +75,27 @@ namespace Gamefilled.Pages.Settings
                     ModelState.AddModelError(nameof(Bio), "Bio cannot have more than 200 words.");
                     CurrentUsername = user.Username;
                     DisplayName = cleanedDisplayName;
-                    AvatarUrl = string.IsNullOrWhiteSpace(AvatarUrl) ? null : AvatarUrl.Trim();
-                    BannerUrl = string.IsNullOrWhiteSpace(BannerUrl) ? null : BannerUrl.Trim();
+                    AvatarUrl = cleanedAvatarUrl;
+                    BannerUrl = cleanedBannerUrl;
                     return Page();
                 }
             }
 
             user.DisplayName = cleanedDisplayName;
             user.Bio = cleanedBio;
-            user.AvatarUrl = string.IsNullOrWhiteSpace(AvatarUrl) ? null : AvatarUrl.Trim();
-            user.BannerUrl = string.IsNullOrWhiteSpace(BannerUrl) ? null : BannerUrl.Trim();
+            user.AvatarUrl = cleanedAvatarUrl;
+            user.BannerUrl = cleanedBannerUrl;
 
             await _db.SaveChangesAsync();
+
+            HttpContext.Session.SetString(
+                "displayName",
+                cleanedDisplayName ?? user.Username ?? $"user{user.Id}");
+
+            if (!string.IsNullOrWhiteSpace(cleanedAvatarUrl))
+                HttpContext.Session.SetString("avatarUrl", cleanedAvatarUrl);
+            else
+                HttpContext.Session.Remove("avatarUrl");
 
             return Redirect($"/u/{username}");
         }
