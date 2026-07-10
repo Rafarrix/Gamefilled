@@ -1,5 +1,6 @@
 using Gamefilled.Application.Companies;
 using Gamefilled.Application.Games;
+using Gamefilled.Application.Notifications;
 using Gamefilled.Application.Social;
 using Gamefilled.Data;
 using Gamefilled.Infrastructure;
@@ -54,6 +55,7 @@ builder.Services.AddScoped<UserLibraryService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<SocialGraphService>();
 builder.Services.AddScoped<SocialListService>();
+builder.Services.AddScoped<NotificationService>();
 
 /* ============================================================================
    CACHE + SESSION
