@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Gamefilled.Infrastructure;
 
 /// <summary>
-/// DTO completo de detalhe de jogo usado na página /games/{id}.
+/// Full game-detail DTO used by /games/{id}.
 /// </summary>
 public class IgdbGameDetailsDto
 {
@@ -93,6 +93,12 @@ public class IgdbImageDto
 {
     [JsonPropertyName("image_id")]
     public string? ImageId { get; set; }
+
+    [JsonPropertyName("width")]
+    public int? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public int? Height { get; set; }
 }
 
 public class IgdbVideoDto
