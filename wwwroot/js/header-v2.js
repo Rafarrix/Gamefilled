@@ -1,5 +1,14 @@
 (() => {
+    const trimProfileHeroStats = () => {
+        const heroStats = document.querySelector('.gf-profile-v2__hero-stats');
+        if (!heroStats) return;
+
+        [...heroStats.children].slice(2).forEach(item => item.remove());
+    };
+
     const init = () => {
+        trimProfileHeroStats();
+
         const profile = document.getElementById('profile-li');
         if (!profile || typeof window.jQuery === 'undefined') {
             return;
@@ -12,7 +21,7 @@
         const menuElement = $menu.get(0);
         let closeTimer = null;
 
-        // Remove o comportamento hover antigo definido em site.js.
+        // Removes the legacy hover behavior registered in site.js.
         $profile.off('.profileHover');
 
         const isDesktop = () => window.matchMedia('(min-width: 992px)').matches;
