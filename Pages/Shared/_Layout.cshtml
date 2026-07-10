@@ -2,18 +2,36 @@
 @{
     string? displayName = null;
     string? username = null;
+    string? avatarUrl = null;
 
     var sessionFeature = Context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>();
     if (sessionFeature?.Session != null)
     {
         displayName = Context.Session.GetString("displayName");
         username = Context.Session.GetString("username");
+        avatarUrl = Context.Session.GetString("avatarUrl");
     }
 
     var isFullBleed = (ViewData["FullBleed"] as bool?) == true;
     var profileInitial = !string.IsNullOrWhiteSpace(displayName)
         ? char.ToUpperInvariant(displayName[0]).ToString()
         : "U";
+
+    var currentPath = (Context.Request.Path.Value ?? "/")
+        .TrimEnd('/')
+        .ToLowerInvariant();
+
+    if (string.IsNullOrWhiteSpace(currentPath))
+        currentPath = "/";
+
+    var registerActive = currentPath == "/users/register";
+    var loginActive = currentPath == "/users/login";
+    var gamesActive = currentPath == "/games" || currentPath.StartsWith("/games/");
+    var companiesActive = currentPath == "/company" || currentPath.StartsWith("/company/");
+    var notificationsActive = currentPath == "/notifications" || currentPath.StartsWith("/notifications/");
+    var profileActive = !string.IsNullOrWhiteSpace(username) &&
+        (currentPath == $"/u/{username.ToLowerInvariant()}" ||
+         currentPath.StartsWith($"/u/{username.ToLowerInvariant()}/"));
 }
 
 <!DOCTYPE html>
@@ -67,7 +85,10 @@
                 <div class="collapse navbar-collapse mt-2 mt-lg-0" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-auto align-items-lg-center">
                         <li class="nav-item">
-                            <a class="nav-link position-relative" id="nav-notification-bell" href="/notifications/" aria-label="Notifications">
+                            <a class="nav-link position-relative @(notificationsActive ? "is-active" : string.Empty)"
+                               id="nav-notification-bell"
+                               href="/notifications/"
+                               aria-label="Notifications">
                                 <i class="fas fa-bell" aria-hidden="true"></i>
                                 <span class="notification-indicator"></span>
                             </a>
@@ -76,17 +97,21 @@
                         @if (string.IsNullOrEmpty(username))
                         {
                             <li class="nav-item mr-1">
-                                <a class="nav-link" href="/users/Register">Register</a>
+                                <a class="nav-link @(registerActive ? "is-active" : string.Empty)"
+                                   href="/users/Register">Register</a>
                             </li>
                             <li class="nav-item mr-1">
-                                <a class="nav-link" href="/users/Login">Login</a>
+                                <a class="nav-link @(loginActive ? "is-active" : string.Empty)"
+                                   href="/users/Login">Login</a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item dropdown mr-1" id="profile-li">
                                 <div class="d-flex align-items-center" id="profile-compact">
-                                    <a class="nav-link pr-1" id="nav-username" href="/u/@username/">@displayName</a>
+                                    <a class="nav-link pr-1 @(profileActive ? "is-active" : string.Empty)"
+                                       id="nav-username"
+                                       href="/u/@username/">@displayName</a>
 
                                     <a class="nav-link dropdown-toggle hide-caret profile-toggle pl-1 pr-1"
                                        id="navbarDropdown"
@@ -102,7 +127,17 @@
 
                                 <div class="dropdown-menu dropdown-menu-right gf-profile-menu" aria-labelledby="navbarDropdown">
                                     <div class="gf-profile-menu__identity">
-                                        <span class="gf-profile-menu__avatar" aria-hidden="true">@profileInitial</span>
+                                        @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                        {
+                                            <img class="gf-profile-menu__avatar-img"
+                                                 src="@avatarUrl"
+                                                 alt="@displayName avatar" />
+                                        }
+                                        else
+                                        {
+                                            <span class="gf-profile-menu__avatar" aria-hidden="true">@profileInitial</span>
+                                        }
+
                                         <div class="gf-profile-menu__identity-text">
                                             <strong>@displayName</strong>
                                             <span>@@@username</span>
@@ -111,55 +146,67 @@
 
                                     <div class="gf-profile-menu__section">
                                         <div class="gf-profile-menu__label">Profile</div>
-                                        <div class="gf-profile-menu__grid">
+                                        <div class="gf-profile-menu__grid gf-profile-menu__grid--profile">
                                             <a class="gf-profile-menu__item" href="/u/@username/">
-                                                <i class="fas fa-user" aria-hidden="true"></i> Overview
+                                                <i class="fas fa-user" aria-hidden="true"></i>
+                                                <span>Overview</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/activity/">
-                                                <i class="fas fa-bolt" aria-hidden="true"></i> Activity
+                                                <i class="fas fa-bolt" aria-hidden="true"></i>
+                                                <span>Activity</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/reviews/">
-                                                <i class="fas fa-star" aria-hidden="true"></i> Reviews
+                                                <i class="fas fa-star" aria-hidden="true"></i>
+                                                <span>Reviews</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/friends/">
-                                                <i class="fas fa-user-group" aria-hidden="true"></i> Friends
+                                                <i class="fas fa-user-group" aria-hidden="true"></i>
+                                                <span>Friends</span>
                                             </a>
                                         </div>
                                     </div>
 
                                     <div class="gf-profile-menu__section">
                                         <div class="gf-profile-menu__label">Library</div>
-                                        <div class="gf-profile-menu__grid">
+                                        <div class="gf-profile-menu__grid gf-profile-menu__grid--library">
                                             <a class="gf-profile-menu__item" href="/u/@username/games/">
-                                                <i class="fas fa-circle-check" aria-hidden="true"></i> Played
+                                                <i class="fas fa-circle-check" aria-hidden="true"></i>
+                                                <span>Played</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/playing/">
-                                                <i class="fas fa-gamepad" aria-hidden="true"></i> Playing
+                                                <i class="fas fa-gamepad" aria-hidden="true"></i>
+                                                <span>Playing</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/backlog/">
-                                                <i class="fas fa-layer-group" aria-hidden="true"></i> Backlog
+                                                <i class="fas fa-layer-group" aria-hidden="true"></i>
+                                                <span>Backlog</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/wishlist/">
-                                                <i class="fas fa-heart" aria-hidden="true"></i> Wishlist
+                                                <i class="fas fa-heart" aria-hidden="true"></i>
+                                                <span>Wishlist</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/lists/">
-                                                <i class="fas fa-list" aria-hidden="true"></i> Lists
+                                                <i class="fas fa-list" aria-hidden="true"></i>
+                                                <span>Lists</span>
                                             </a>
                                             <a class="gf-profile-menu__item" href="/u/@username/journal/">
-                                                <i class="fas fa-book-open" aria-hidden="true"></i> Journal
+                                                <i class="fas fa-book-open" aria-hidden="true"></i>
+                                                <span>Journal</span>
                                             </a>
                                         </div>
                                     </div>
 
                                     <div class="gf-profile-menu__footer">
                                         <a class="gf-profile-menu__action" href="/Settings">
-                                            <i class="fas fa-gear" aria-hidden="true"></i> Settings
+                                            <i class="fas fa-gear" aria-hidden="true"></i>
+                                            <span>Settings</span>
                                         </a>
 
                                         <form method="post" asp-page="/users/Logout">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="gf-profile-menu__action gf-profile-menu__action--logout">
-                                                <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i> Log out
+                                                <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                                                <span>Log out</span>
                                             </button>
                                         </form>
                                     </div>
@@ -168,10 +215,12 @@
                         }
 
                         <li class="nav-item mr-1">
-                            <a class="nav-link" href="/games">Games</a>
+                            <a class="nav-link @(gamesActive ? "is-active" : string.Empty)"
+                               href="/games">Games</a>
                         </li>
                         <li class="nav-item mr-2">
-                            <a class="nav-link gf-nav-link--accent" href="/company">Companies</a>
+                            <a class="nav-link @(companiesActive ? "is-active" : string.Empty)"
+                               href="/company">Companies</a>
                         </li>
                     </ul>
 
@@ -234,5 +283,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/header-v2.js" asp-append-version="true"></script>
 </body>
 </html>
