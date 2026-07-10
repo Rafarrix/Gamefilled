@@ -15,6 +15,7 @@ namespace Gamefilled.Data
         public DbSet<UserFavoriteGame> UserFavoriteGames { get; set; }
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<UserGameEntry> UserGameEntries { get; set; }
+        public DbSet<UserNotification> UserNotifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +83,24 @@ namespace Gamefilled.Data
                 .ToTable(table => table.HasCheckConstraint(
                     "CK_UserGameEntries_Status",
                     "[Status] IN ('played','playing','backlog','wishlist')"));
+
+            modelBuilder.Entity<UserNotification>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserNotification>()
+                .HasOne(x => x.ActorUser)
+                .WithMany()
+                .HasForeignKey(x => x.ActorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserNotification>()
+                .HasIndex(x => new { x.UserId, x.ReadAt, x.CreatedAt });
+
+            modelBuilder.Entity<UserNotification>()
+                .HasIndex(x => new { x.UserId, x.ActorUserId, x.Type, x.CreatedAt });
         }
     }
 }
