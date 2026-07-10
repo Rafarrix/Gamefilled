@@ -1,47 +1,100 @@
 @page "/u/{username}/friends"
 @model Gamefilled.Pages.u.FriendsModel
 @{
-    ViewData["Title"] = $"{Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username} - Friends";
+    var profileName = Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username ?? "User";
+    var profileUsername = Model.ProfileUser.Username ?? string.Empty;
+
+    ViewData["Title"] = $"{profileName} · Friends";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container py-4">
-    <div class="gf-profile-panel">
-        <div class="gf-profile-panel__head">
-            <h2>Friends</h2>
+<link rel="stylesheet" href="~/css/people.css" asp-append-version="true" />
+
+<div class="gf-people-page">
+    <section class="gf-people-hero">
+        <div class="gf-people-hero__glow gf-people-hero__glow--one"></div>
+        <div class="gf-people-hero__glow gf-people-hero__glow--two"></div>
+
+        <div class="container gf-people-hero__inner">
+            <div class="gf-people-hero__copy">
+                <div class="gf-people-eyebrow">Mutual connections</div>
+                <h1>@profileName's friends</h1>
+                <p>People who follow each other across the Gamefilled community.</p>
+            </div>
+
+            <div class="gf-people-hero__stats" aria-label="Friends overview">
+                <div>
+                    <strong>@Model.Friends.Count</strong>
+                    <span>mutual friends</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container gf-people-shell">
+        <div class="gf-people-results-head">
+            <div>
+                <h2>Friends</h2>
+                <p>Mutual follows are treated as friendships.</p>
+            </div>
+
+            <a class="gf-people-clear" href="/u/@profileUsername">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Back to profile
+            </a>
         </div>
 
         @if (Model.Friends.Any())
         {
-            <div class="gf-profile-userlist">
-                @foreach (var user in Model.Friends)
+            <section class="gf-people-grid" aria-label="Mutual friends">
+                @foreach (var friend in Model.Friends)
                 {
-                    var avatar = string.IsNullOrWhiteSpace(user.AvatarUrl)
+                    var avatar = string.IsNullOrWhiteSpace(friend.AvatarUrl)
                         ? "/lib/imgs/defaultavatar.png"
-                        : user.AvatarUrl;
+                        : friend.AvatarUrl;
+                    var displayName = friend.DisplayName ?? friend.Username ?? "User";
 
-                    var displayName = user.DisplayName ?? user.Username ?? "User";
+                    <article class="gf-person-card">
+                        <a class="gf-person-card__identity" href="/u/@friend.Username">
+                            <span class="gf-person-card__avatar-wrap">
+                                <img class="gf-person-card__avatar"
+                                     src="@avatar"
+                                     alt="@displayName avatar"
+                                     loading="lazy" />
+                                <span class="gf-presence-dot @(friend.IsOnlineNow ? "is-online" : string.Empty)"
+                                      title="@friend.PresenceText"
+                                      aria-label="@friend.PresenceText"></span>
+                            </span>
 
-                    <a class="gf-profile-userlist__item" href="/u/@user.Username">
-                        <img class="gf-profile-userlist__avatar" src="@avatar" alt="@displayName avatar" />
+                            <span class="gf-person-card__names">
+                                <strong>@displayName</strong>
+                                <small>@@@friend.Username</small>
+                            </span>
+                        </a>
 
-                        <div class="gf-profile-userlist__meta">
-                            <div class="gf-profile-userlist__name">@displayName</div>
-                            <div class="gf-profile-userlist__username">@@@user.Username</div>
-
-                            <div class="gf-profile-userlist__status @(user.IsOnlineNow ? "is-online" : "is-offline")">
-                                <span class="gf-profile-userlist__status-dot"></span>
-                                <span>@user.PresenceText</span>
-                            </div>
+                        <div class="gf-person-card__badges">
+                            <span class="gf-social-badge is-mutual">
+                                <i class="fas fa-user-group" aria-hidden="true"></i>
+                                Mutual
+                            </span>
+                            <span class="gf-person-card__presence">@friend.PresenceText</span>
                         </div>
-                    </a>
+
+                        <div class="gf-person-card__actions">
+                            <a class="gf-person-card__profile" href="/u/@friend.Username">View profile</a>
+                        </div>
+                    </article>
                 }
-            </div>
+            </section>
         }
         else
         {
-            <div class="gf-profile-empty-state">
-                No mutual connections yet.
-            </div>
+            <section class="gf-people-empty">
+                <span class="gf-people-empty__icon"><i class="fas fa-user-group" aria-hidden="true"></i></span>
+                <h2>No mutual friends yet</h2>
+                <p>When two people follow each other, they will appear here.</p>
+                <a href="/people">Discover people</a>
+            </section>
         }
-    </div>
+    </main>
 </div>
