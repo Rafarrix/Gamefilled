@@ -17,9 +17,9 @@
 
         <div class="container gf-people-hero__inner">
             <div class="gf-people-hero__copy">
-                <div class="gf-people-eyebrow">Community</div>
-                <h1>@profileName's followers</h1>
-                <p>People who follow this player on Gamefilled.</p>
+                <div class="gf-people-eyebrow">@(Model.IsOwnProfile ? "Your community" : "Community")</div>
+                <h1>@(Model.IsOwnProfile ? "Your followers" : $"{profileName}'s followers")</h1>
+                <p>@(Model.IsOwnProfile ? "People who chose to follow your Gamefilled profile." : "People who follow this player on Gamefilled.")</p>
             </div>
 
             <div class="gf-people-hero__stats" aria-label="Followers overview">
@@ -34,7 +34,7 @@
     <main class="container gf-people-shell">
         <div class="gf-people-results-head">
             <div>
-                <h2>Followers</h2>
+                <h2>@(Model.IsOwnProfile ? "People following you" : "Followers")</h2>
                 <p>Online players appear first.</p>
             </div>
 
@@ -52,8 +52,8 @@
         {
             <section class="gf-people-empty">
                 <span class="gf-people-empty__icon"><i class="fas fa-users" aria-hidden="true"></i></span>
-                <h2>No followers yet</h2>
-                <p>Followers will appear here when people connect with this profile.</p>
+                <h2>@(Model.IsOwnProfile ? "No followers yet" : "No followers yet")</h2>
+                <p>@(Model.IsOwnProfile ? "Share your profile and connect with players who match your taste." : "Followers will appear here when people connect with this profile.")</p>
                 <a href="/people">Discover people</a>
             </section>
         }
