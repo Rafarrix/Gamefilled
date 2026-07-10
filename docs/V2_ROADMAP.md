@@ -48,7 +48,7 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Cache platforms and genres.
 - [x] Add an accessible off-canvas filter drawer.
 - [x] Use IGDB PopScore Visits for Trending with a safe fallback.
-- [x] Link game genres, platforms, release state and release year to filtered discovery pages.
+- [x] Link game genres, platforms and release year to filtered discovery pages.
 - [ ] Migrate average play-time and finish-time sorting into the V2 service.
 - [ ] Add automated query-builder tests.
 
@@ -57,7 +57,7 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Add canonical `/company/{id}/{slug}` pages.
 - [x] Link companies from game pages.
 - [x] Distinguish developer, publisher, porting and supporting roles.
-- [x] Show description, logo, founding date, localized country, status, size, parent and official websites.
+- [x] Show description, logo, founding date, country, status, size, parent and official websites.
 - [x] Build a chronological associated-games catalogue.
 - [x] Add searchable and paginated company directory pages.
 - [ ] Add subsidiaries and a visual company network.
@@ -68,27 +68,45 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Add clickable involved companies.
 - [x] Add trailers when the IGDB supplies a valid YouTube ID.
 - [x] Add a unified Media Room with trailer and screenshot lightbox navigation.
-- [x] Preserve artworks, screenshots, ratings, follows, hypes and time-to-beat.
 - [x] Add the first **Game Universe** drawer for parent games, DLCs, expansions, ports, remakes and remasters.
+- [x] Improve hero-image selection, blur and page blending.
+- [x] Preserve artworks, screenshots, ratings, follows, hypes and time-to-beat.
 - [ ] Extend Game Universe with franchises, collections and clearer relationship visualization.
 - [ ] Build **Release Timeline** by platform and region.
 - [ ] Build **Where to Play** with official platform/store links.
 - [ ] Add engines, multiplayer modes, perspectives and language support.
 - [ ] Add age-rating and content information.
 
-## Phase 4 — Distinct Gamefilled design system
+## Phase 4 — User discovery and Profile V2
+
+This is the next product sprint after the current discovery/game-details Pull Request is validated and merged.
+
+- [ ] Add a public, searchable and paginated `/people` directory.
+- [ ] Search users by username and display name without exposing private fields.
+- [ ] Show avatar, bio excerpt, online status and social counts.
+- [ ] Support follow/unfollow from discovery results.
+- [ ] Identify mutual follows as friends.
+- [ ] Redesign the profile hero and social summary.
+- [ ] Make favourite games the main visual feature of the profile.
+- [ ] Replace placeholder panels with real data or hide them until ready.
+- [ ] Improve activity cards, follower lists, following lists and responsive behaviour.
+- [ ] Add user-search, follow-state and privacy-boundary tests.
+
+See GitHub issue #3 for detailed acceptance criteria.
+
+## Phase 5 — Distinct Gamefilled design system
 
 - [ ] Define design tokens for spacing, typography, surfaces, radii and interaction states.
 - [ ] Replace remaining Backloggd-like layouts with a distinctive Gamefilled system.
 - [ ] Prefer editorial, asymmetrical and data-storytelling layouts.
 - [ ] Create reusable cards, drawers, media blocks and metadata components.
-- [ ] Redesign the homepage, game page and user profile around the new system.
+- [ ] Continue redesigning the homepage, game page and user profile around the new system.
 - [x] Modernize the header navigation and user dropdown direction.
 - [x] Add route-aware active navigation states.
 - [x] Use profile avatars in the header menu when available.
 - [ ] Complete keyboard, contrast and reduced-motion reviews.
 
-## Phase 5 — Authentication and security
+## Phase 6 — Authentication and security
 
 - [ ] Migrate custom users to ASP.NET Core Identity.
 - [ ] Add email confirmation and password recovery.
@@ -97,9 +115,9 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [ ] Review authorization, CSRF, XSS, cookies, headers and uploads.
 - [ ] Complete an OWASP-oriented pre-production review.
 
-## Phase 6 — Steam and personalized social layer
+## Phase 7 — Steam and personalized social layer
 
-This phase stays planned but should begin only after authentication, database migrations and the core game pages are stable.
+This phase stays planned but should begin only after authentication, database migrations and the core social/profile experience are stable.
 
 - [ ] Add optional Steam account linking through the official Steam identity flow.
 - [ ] Import owned games, playtime, achievements and recently played data where the user's privacy settings permit it.
@@ -110,15 +128,15 @@ This phase stays planned but should begin only after authentication, database mi
 - [ ] Expand the social feed with opt-in Steam activity and user-generated Gamefilled activity.
 - [ ] Add friend comparison, shared games and recommendation signals.
 
-## Phase 7 — Database, tests and operations
+## Phase 8 — Database, tests and operations
 
 - [ ] Add EF Core migrations.
 - [ ] Add unit tests for query normalization and generation.
-- [ ] Add integration tests for company and game services.
+- [ ] Add integration tests for company, game and user-discovery services.
 - [ ] Add route smoke tests.
 - [ ] Add structured logging and health checks.
 
-## Phase 8 — Docker and production
+## Phase 9 — Docker and production
 
 - [ ] Add a multi-stage Dockerfile.
 - [ ] Add a development Docker Compose environment.
