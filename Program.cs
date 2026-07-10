@@ -1,5 +1,6 @@
 using Gamefilled.Application.Companies;
 using Gamefilled.Application.Games;
+using Gamefilled.Application.Social;
 using Gamefilled.Data;
 using Gamefilled.Infrastructure;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -50,9 +51,10 @@ builder.Services.AddHttpClient<IgdbApiClient>(client =>
 
 builder.Services.AddScoped<IGameDiscoveryService, GameDiscoveryService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<SocialGraphService>();
 
 /* ============================================================================
-   CACHE + SESSÃO
+   CACHE + SESSION
    ============================================================================ */
 builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
@@ -72,14 +74,14 @@ builder.Services.AddSession(options =>
 });
 
 /* ============================================================================
-   FILTROS CUSTOM
+   CUSTOM FILTERS
    ============================================================================ */
 builder.Services.AddScoped<RequireLoginFilter>();
 
 var app = builder.Build();
 
 /* ============================================================================
-   PIPELINE HTTP
+   HTTP PIPELINE
    ============================================================================ */
 if (!app.Environment.IsDevelopment())
 {
@@ -92,6 +94,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseCookiePolicy();
 app.UseSession();
+app.UseMiddleware<UserPresenceMiddleware>();
 app.MapRazorPages();
 
 app.Run();
