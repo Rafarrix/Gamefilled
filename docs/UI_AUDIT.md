@@ -29,37 +29,63 @@ This document is the working checklist for the full visual and interaction audit
 | Companies | `/company`, `/company/{id}/{slug}` | Stable / recheck | Recheck search errors and long company names. |
 | People | `/people` | Stable / recheck | Recheck filters and cards on narrow screens. |
 | Profiles | `/u/{username}` | Stable / recheck | Recheck empty libraries, reviews and long bios. |
-| Social lists | followers, following, friends | In audit | Reuse People/Friends card language everywhere. |
-| Authentication | Login, Register, Logout | In audit | Established composition restored; concise copy only. |
-| Settings | Overview, Profile, Favorite Games, Account | In audit | Uniform background, widths and action components. |
+| Social lists | followers, following, friends | In audit / runtime check | Shared People cards, presence and mutual state are implemented. |
+| Authentication | Login, Register, Logout | In audit / runtime check | Established composition restored; only responsive and accessibility polish remains. |
+| Settings | Overview, Profile, Favorite Games, Account | In audit / runtime check | Uniform background, widths, functional account forms and compact actions. |
 | Planned settings | Notifications, Integrations, Privacy | In audit | Clearly planned; no fake save controls. |
-| Search | `/Search` and header autocomplete | Pending | Standardize results, no-results and service failure states. |
+| Search | `/Search` and header autocomplete | In audit / runtime check | Results, no-results and IGDB failure states now share the V2 language. |
 | Notifications | `/notifications` | Pending | Audit list density, unread state and empty state. |
-| Library pages | Played, Playing, Backlog, Wishlist | Pending | Replace legacy placeholders with `UserGameEntries`. |
+| Library pages | Played, Playing, Backlog, Wishlist | In audit / runtime check | Unified `UserGameEntries` page with search, sorting and pagination. |
 | Reviews / Activity / Lists / Journal | profile subpages | Pending | Establish shared profile subpage shell. |
 | Static content | About, Contact, Terms, Privacy | Pending | Use editorial shell and readable typography. |
 | Errors | 404, 500, IGDB/database failures | Pending | Shared error component with safe technical detail. |
 
 ## Current PR #7 validation
 
-- [ ] Login desktop matches the established pre-audit composition.
-- [ ] Register desktop matches the established pre-audit composition.
+### Authentication and settings
+
+- [x] Login desktop uses the established pre-audit composition.
+- [x] Register desktop uses the established pre-audit composition.
 - [ ] Authentication works on mobile without horizontal scrolling.
-- [ ] Settings background is visually continuous with the body.
+- [x] Settings background is visually continuous with the body.
 - [ ] Settings scales appropriately on 1440p and ultrawide monitors.
-- [ ] Favorite Games feels like part of Settings.
-- [ ] Favorite Games search, drag-and-drop, remove and crown actions still work.
-- [ ] Save actions are compact and use standardized buttons.
-- [ ] Email change validates current password and duplicate emails.
-- [ ] Password change validates current password and confirmation.
-- [ ] All current UI copy is English and concise.
+- [x] Favorite Games feels like part of Settings.
+- [x] Favorite Games search, drag-and-drop, remove and crown actions still work.
+- [x] Save actions are compact and use standardized buttons.
+- [ ] Email change validates current password and duplicate emails in local runtime.
+- [ ] Password change validates current password and confirmation in local runtime.
+
+### Social lists
+
+- [ ] Followers shows avatar, bio, presence and mutual badge correctly.
+- [ ] Following shows avatar, bio, presence and mutual badge correctly.
+- [ ] Friends, Followers and Following agree on mutual status and online state.
+- [ ] Empty social lists use the shared state without background strips.
+
+### User libraries
+
+- [ ] `/u/{username}/games` displays Played entries.
+- [ ] `/u/{username}/playing` displays Playing entries.
+- [ ] `/u/{username}/backlog` displays Backlog entries.
+- [ ] `/u/{username}/wishlist` displays Wishlist entries.
+- [ ] Counts remain consistent across profile, tabs and database entries.
+- [ ] Search, Recent, Title, Rating and Release sorting work.
+- [ ] Pagination preserves search and sorting.
+- [ ] Missing IGDB covers and metadata degrade safely.
+- [ ] Two-column mobile grid and ultrawide six-column grid feel deliberate.
+
+### Search
+
+- [ ] Empty query, no-results and IGDB-error states render correctly.
+- [ ] Top result and remaining cards open the correct game.
+- [ ] Long names and games without covers do not break the layout.
+- [ ] Search works on mobile without horizontal scrolling.
 
 ## Next implementation slice
 
-1. Followers and Following cards.
-2. Played, Playing, Backlog and Wishlist.
-3. Search and autocomplete states.
-4. Notifications.
-5. Error and static pages.
-6. Footer and global responsive pass.
-7. Remove superseded CSS and duplicate selectors.
+1. Notifications.
+2. Reviews, Activity, Lists and Journal.
+3. Error and static pages.
+4. Footer and global responsive pass.
+5. Remove superseded CSS and duplicate selectors.
+6. Final route-by-route screenshot review.
