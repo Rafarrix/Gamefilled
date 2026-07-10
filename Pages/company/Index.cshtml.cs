@@ -52,7 +52,7 @@ public sealed class IndexModel : PageModel
                 PageNumber = Math.Max(1, PageNumber),
                 PageSize = 36
             };
-            LoadError = "Não foi possível carregar as empresas. Tenta novamente dentro de momentos.";
+            LoadError = "Companies could not be loaded. Please try again in a moment.";
         }
     }
 }
