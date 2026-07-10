@@ -19,9 +19,6 @@ public class IgdbGameDetailsDto
     [JsonPropertyName("summary")]
     public string? Summary { get; set; }
 
-    [JsonPropertyName("storyline")]
-    public string? Storyline { get; set; }
-
     [JsonPropertyName("first_release_date")]
     public long? FirstReleaseDateUnix { get; set; }
 
@@ -45,6 +42,33 @@ public class IgdbGameDetailsDto
 
     [JsonPropertyName("involved_companies")]
     public List<IgdbInvolvedCompanyDto>? InvolvedCompanies { get; set; }
+
+    [JsonPropertyName("parent_game")]
+    public IgdbRelatedGameDto? ParentGame { get; set; }
+
+    [JsonPropertyName("dlcs")]
+    public List<IgdbRelatedGameDto>? Dlcs { get; set; }
+
+    [JsonPropertyName("expansions")]
+    public List<IgdbRelatedGameDto>? Expansions { get; set; }
+
+    [JsonPropertyName("standalone_expansions")]
+    public List<IgdbRelatedGameDto>? StandaloneExpansions { get; set; }
+
+    [JsonPropertyName("expanded_games")]
+    public List<IgdbRelatedGameDto>? ExpandedGames { get; set; }
+
+    [JsonPropertyName("ports")]
+    public List<IgdbRelatedGameDto>? Ports { get; set; }
+
+    [JsonPropertyName("remakes")]
+    public List<IgdbRelatedGameDto>? Remakes { get; set; }
+
+    [JsonPropertyName("remasters")]
+    public List<IgdbRelatedGameDto>? Remasters { get; set; }
+
+    [JsonPropertyName("similar_games")]
+    public List<IgdbRelatedGameDto>? SimilarGames { get; set; }
 
     [JsonPropertyName("aggregated_rating")]
     public double? AggregatedRating { get; set; }
@@ -90,6 +114,47 @@ public class IgdbNamedDto
 
     [JsonPropertyName("slug")]
     public string? Slug { get; set; }
+}
+
+public class IgdbRelatedGameDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("slug")]
+    public string? Slug { get; set; }
+
+    [JsonPropertyName("first_release_date")]
+    public long? FirstReleaseDateUnix { get; set; }
+
+    [JsonPropertyName("cover")]
+    public IgdbCoverDto? Cover { get; set; }
+
+    public string? CoverUrl =>
+        string.IsNullOrWhiteSpace(Cover?.ImageId)
+            ? null
+            : $"https://images.igdb.com/igdb/image/upload/t_cover_small/{Cover.ImageId}.jpg";
+
+    public int? ReleaseYear
+    {
+        get
+        {
+            if (FirstReleaseDateUnix is null or <= 0)
+                return null;
+
+            try
+            {
+                return DateTimeOffset.FromUnixTimeSeconds(FirstReleaseDateUnix.Value).Year;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return null;
+            }
+        }
+    }
 }
 
 public class IgdbInvolvedCompanyDto
