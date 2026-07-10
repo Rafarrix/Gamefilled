@@ -1,16 +1,22 @@
+using Gamefilled.Application.Games;
+
 namespace Gamefilled.Pages.games.lib
 {
     /// <summary>
-    /// Página da biblioteca ordenada por data de lançamento.
+    /// PÃ¡gina da biblioteca ordenada por data de lanÃ§amento.
     /// </summary>
-    public class ReleaseDateModel : _GamesLibBase
+    public class ReleaseDateModel : _FilteredGamesLibBase
     {
-        public ReleaseDateModel(IConfiguration cfg, ILogger<ReleaseDateModel> logger, IHttpClientFactory http)
-            : base(cfg, logger, http) { }
+        public ReleaseDateModel(
+            IConfiguration cfg,
+            ILogger<ReleaseDateModel> logger,
+            IHttpClientFactory http,
+            IGameDiscoveryService discoveryService)
+            : base(cfg, logger, http, discoveryService) { }
 
         protected override void Configure()
         {
-            SortKey = "release-date";
+            SortKey = GameDiscoverySort.ReleaseDate;
             PageTitle = "Release Date";
         }
     }

@@ -1,66 +1,50 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using Microsoft.Extensions.Options;
 
-namespace Gamefilled.Infrastructure
+namespace Gamefilled.Infrastructure;
+
+/// <summary>
+/// Obtém e reutiliza o token OAuth da Twitch usado pela IGDB.
+/// A instância é registada como singleton para o cache ser partilhado por toda a aplicação.
+/// </summary>
+public sealed class IgdbTokenProvider
 {
-    /// <summary>
-    /// Serviço responsável por obter e guardar em memória o token OAuth do Twitch,
-    /// necessário para aceder à API IGDB.
-    ///
-    /// O que este ficheiro faz:
-    /// - pede token novo quando necessário
-    /// - reutiliza o token enquanto for válido
-    /// - aplica margem de segurança antes da expiração
-    ///
-    /// Importância:
-    /// Evita pedir um token novo em todos os requests, tornando o sistema
-    /// mais eficiente e organizado.
-    /// </summary>
-    public class IgdbTokenProvider
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IgdbOptions _options;
+    private readonly SemaphoreSlim _refreshLock = new(1, 1);
+
+    private string? _token;
+    private DateTimeOffset _tokenExpiresAtUtc;
+
+    public IgdbTokenProvider(
+        IHttpClientFactory httpClientFactory,
+        IOptions<IgdbOptions> options)
     {
-        /// <summary>
-        /// HttpClient usado para chamar o endpoint OAuth do Twitch.
-        /// </summary>
-        private readonly HttpClient _http;
+        _httpClientFactory = httpClientFactory;
+        _options = options.Value;
+    }
 
-        /// <summary>
-        /// Configuração da IGDB (ClientId e ClientSecret).
-        /// </summary>
-        private readonly IgdbOptions _options;
+    public async Task<string> GetAccessTokenAsync(CancellationToken ct = default)
+    {
+        if (HasValidToken())
+            return _token!;
 
-        /// <summary>
-        /// Token atualmente guardado em memória.
-        /// </summary>
-        private string? _token;
+        await _refreshLock.WaitAsync(ct);
 
-        /// <summary>
-        /// Data/hora em que o token deixa de ser considerado válido.
-        /// </summary>
-        private DateTimeOffset _tokenExpiresAtUtc;
-
-        public IgdbTokenProvider(HttpClient http, IOptions<IgdbOptions> options)
+        try
         {
-            _http = http;
-            _options = options.Value;
-        }
-
-        /// <summary>
-        /// Devolve sempre um token válido.
-        /// Se o token em memória ainda for válido, reutiliza-o.
-        /// Caso contrário, pede um novo token ao Twitch.
-        /// </summary>
-        public async Task<string> GetAccessTokenAsync(CancellationToken ct = default)
-        {
-            // Se já existir token e ainda for válido, reutiliza.
-            if (!string.IsNullOrWhiteSpace(_token) && DateTimeOffset.UtcNow < _tokenExpiresAtUtc)
+            // Outro pedido pode ter atualizado o token enquanto esperávamos pelo lock.
+            if (HasValidToken())
                 return _token!;
 
-            // Validação da configuração.
-            if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.ClientSecret))
-                throw new InvalidOperationException("IGDB ClientId/ClientSecret em falta no appsettings.json.");
+            if (string.IsNullOrWhiteSpace(_options.ClientId) ||
+                string.IsNullOrWhiteSpace(_options.ClientSecret))
+            {
+                throw new InvalidOperationException(
+                    "IGDB ClientId/ClientSecret are missing from configuration.");
+            }
 
-            // Endpoint OAuth do Twitch.
-            var url = "https://id.twitch.tv/oauth2/token";
+            var client = _httpClientFactory.CreateClient("TwitchAuth");
 
             using var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -69,26 +53,47 @@ namespace Gamefilled.Infrastructure
                 ["grant_type"] = "client_credentials"
             });
 
-            // Pedido de token ao Twitch.
-            using var resp = await _http.PostAsync(url, content, ct);
+            using var response = await client.PostAsync(
+                "https://id.twitch.tv/oauth2/token",
+                content,
+                ct);
 
-            // Lança exceção automática se houver erro HTTP.
-            resp.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync(ct);
+                throw new HttpRequestException(
+                    $"Twitch OAuth returned {(int)response.StatusCode} " +
+                    $"({response.ReasonPhrase}). Body: {Truncate(responseBody, 300)}",
+                    inner: null,
+                    response.StatusCode);
+            }
 
-            // Lê a resposta JSON para o DTO correspondente.
-            var data = await resp.Content.ReadFromJsonAsync<TwitchTokenResponse>(cancellationToken: ct);
+            var data = await response.Content.ReadFromJsonAsync<TwitchTokenResponse>(
+                cancellationToken: ct);
 
-            // Garante que veio token válido.
-            if (data == null || string.IsNullOrWhiteSpace(data.AccessToken))
-                throw new InvalidOperationException("Resposta de token inválida do Twitch.");
+            if (data is null || string.IsNullOrWhiteSpace(data.AccessToken))
+                throw new InvalidOperationException("Twitch returned an invalid OAuth token response.");
 
-            // Guarda token em memória.
             _token = data.AccessToken;
 
-            // Calcula expiração com folga de 60 segundos.
-            _tokenExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(Math.Max(60, data.ExpiresIn - 60));
+            // Nunca considera o token válido para além da expiração real.
+            var safeLifetimeSeconds = Math.Max(1, data.ExpiresIn - 60);
+            _tokenExpiresAtUtc = DateTimeOffset.UtcNow.AddSeconds(safeLifetimeSeconds);
 
-            return _token!;
+            return _token;
+        }
+        finally
+        {
+            _refreshLock.Release();
         }
     }
+
+    private bool HasValidToken() =>
+        !string.IsNullOrWhiteSpace(_token) &&
+        DateTimeOffset.UtcNow < _tokenExpiresAtUtc;
+
+    private static string Truncate(string value, int maxLength) =>
+        value.Length <= maxLength
+            ? value
+            : value[..maxLength] + "…";
 }

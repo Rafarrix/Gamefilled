@@ -1,19 +1,37 @@
 @using Microsoft.AspNetCore.Http
 @{
-    // Dados do utilizador vindos da sessão.
     string? displayName = null;
     string? username = null;
+    string? avatarUrl = null;
 
-    // Verifica primeiro se a sessão está disponível.
     var sessionFeature = Context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>();
     if (sessionFeature?.Session != null)
     {
         displayName = Context.Session.GetString("displayName");
         username = Context.Session.GetString("username");
+        avatarUrl = Context.Session.GetString("avatarUrl");
     }
 
-    // Define se a página atual usa layout fullbleed.
     var isFullBleed = (ViewData["FullBleed"] as bool?) == true;
+    var profileInitial = !string.IsNullOrWhiteSpace(displayName)
+        ? char.ToUpperInvariant(displayName[0]).ToString()
+        : "U";
+
+    var currentPath = (Context.Request.Path.Value ?? "/")
+        .TrimEnd('/')
+        .ToLowerInvariant();
+
+    if (string.IsNullOrWhiteSpace(currentPath))
+        currentPath = "/";
+
+    var registerActive = currentPath == "/users/register";
+    var loginActive = currentPath == "/users/login";
+    var gamesActive = currentPath == "/games" || currentPath.StartsWith("/games/");
+    var companiesActive = currentPath == "/company" || currentPath.StartsWith("/company/");
+    var notificationsActive = currentPath == "/notifications" || currentPath.StartsWith("/notifications/");
+    var profileActive = !string.IsNullOrWhiteSpace(username) &&
+        (currentPath == $"/u/{username.ToLowerInvariant()}" ||
+         currentPath.StartsWith($"/u/{username.ToLowerInvariant()}/"));
 }
 
 <!DOCTYPE html>
@@ -25,36 +43,28 @@
     <title>Gamefilled</title>
     <link rel="icon" type="image/png" href="~/lib/imgs/favicon.png" />
 
-    <!-- Meta base -->
     <meta name="description" content="Your personal virtual backlog of video game collection">
     <meta itemprop="name" content="Gamefilled">
     <meta itemprop="description" content="Your personal virtual backlog of video game collection">
     <meta itemprop="image" content="@Url.Content("~/lib/imgs/Gamefilled_Logo_0removebg.png")">
 
-    <!-- Icons + Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- CSS global -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/header-v2.css" asp-append-version="true">
 </head>
 
 <body class="d-flex flex-column min-vh-100 @(isFullBleed ? "fullbleed" : "")">
-
-    <!-- Elemento auxiliar visual -->
     <div class="d-none" id="main-gradient"></div>
 
-    <!-- HEADER -->
     <header class="site-header @(isFullBleed ? "site-header--overlay" : "")">
         <nav class="navbar navbar-expand-lg navbar-dark @(isFullBleed ? "navbar--overlay" : "")" id="primary-nav">
             <div class="container">
-
-                <!-- LOGO -->
                 <a class="navbar-brand mr-2 my-auto py-1" href="/">
                     <img id="gamefilled-logo1"
                          src="@Url.Content("~/lib/imgs/Gamefilled_Logo_0removebg.png")"
@@ -62,43 +72,46 @@
                          height="50" />
                 </a>
 
-                <!-- Botão de navegação para telemóvel/tablet -->
-                <button class="navbar-toggler collapsed ml-auto" type="button"
+                <button class="navbar-toggler collapsed ml-auto"
+                        type="button"
                         data-toggle="collapse"
                         data-target="#navbarSupportedContent"
                         aria-controls="navbarSupportedContent"
                         aria-expanded="false"
-                        aria-label="Abrir navegação">
+                        aria-label="Open navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- DESKTOP / ÁREA COLAPSÁVEL -->
                 <div class="collapse navbar-collapse mt-2 mt-lg-0" id="navbarSupportedContent">
-
                     <ul class="navbar-nav ml-auto align-items-lg-center">
                         <li class="nav-item">
-                            <a class="nav-link position-relative" id="nav-notification-bell" href="/notifications/">
-                                <i class="fas fa-bell"></i>
+                            <a class="nav-link position-relative @(notificationsActive ? "is-active" : string.Empty)"
+                               id="nav-notification-bell"
+                               href="/notifications/"
+                               aria-label="Notifications">
+                                <i class="fas fa-bell" aria-hidden="true"></i>
                                 <span class="notification-indicator"></span>
                             </a>
                         </li>
 
-                        @* Se não existir sessão de utilizador, mostra login/register *@
                         @if (string.IsNullOrEmpty(username))
                         {
-                            <li class="nav-item mr-2">
-                                <a class="nav-link" href="/users/Register">Register</a>
+                            <li class="nav-item mr-1">
+                                <a class="nav-link @(registerActive ? "is-active" : string.Empty)"
+                                   href="/users/Register">Register</a>
                             </li>
-                            <li class="nav-item mr-2">
-                                <a class="nav-link" href="/users/Login">Login</a>
+                            <li class="nav-item mr-1">
+                                <a class="nav-link @(loginActive ? "is-active" : string.Empty)"
+                                   href="/users/Login">Login</a>
                             </li>
                         }
                         else
                         {
-                            @* Se existir utilizador autenticado, mostra menu de perfil *@
-                            <li class="nav-item dropdown" id="profile-li">
+                            <li class="nav-item dropdown mr-1" id="profile-li">
                                 <div class="d-flex align-items-center" id="profile-compact">
-                                    <a class="nav-link pr-1" id="nav-username" href="/u/@(username)/">@displayName</a>
+                                    <a class="nav-link pr-1 @(profileActive ? "is-active" : string.Empty)"
+                                       id="nav-username"
+                                       href="/u/@username/">@displayName</a>
 
                                     <a class="nav-link dropdown-toggle hide-caret profile-toggle pl-1 pr-1"
                                        id="navbarDropdown"
@@ -107,55 +120,114 @@
                                        aria-haspopup="true"
                                        aria-expanded="false"
                                        href="#"
-                                       title="Menu">
-                                        <i class="fas fa-chevron-down fa-xs"></i>
+                                       title="Open user menu">
+                                        <i class="fas fa-chevron-down fa-xs" aria-hidden="true"></i>
                                     </a>
                                 </div>
 
-                                <div class="dropdown-menu mt-0 py-0" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item py-1" href="/u/@(username)/">Profile</a>
-                                    <div class="dropdown-divider my-0"></div>
+                                <div class="dropdown-menu dropdown-menu-right gf-profile-menu" aria-labelledby="navbarDropdown">
+                                    <div class="gf-profile-menu__identity">
+                                        @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                        {
+                                            <img class="gf-profile-menu__avatar-img"
+                                                 src="@avatarUrl"
+                                                 alt="@displayName avatar" />
+                                        }
+                                        else
+                                        {
+                                            <span class="gf-profile-menu__avatar" aria-hidden="true">@profileInitial</span>
+                                        }
 
-                                    <a class="dropdown-item py-1" href="/u/@(username)/games/">Played</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/playing/">Playing</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/backlog/">Backlog</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/wishlist/">Wishlist</a>
+                                        <div class="gf-profile-menu__identity-text">
+                                            <strong>@displayName</strong>
+                                            <span>@@@username</span>
+                                        </div>
+                                    </div>
 
-                                    <div class="dropdown-divider my-0"></div>
+                                    <div class="gf-profile-menu__section">
+                                        <div class="gf-profile-menu__label">Profile</div>
+                                        <div class="gf-profile-menu__grid gf-profile-menu__grid--profile">
+                                            <a class="gf-profile-menu__item" href="/u/@username/">
+                                                <i class="fas fa-user" aria-hidden="true"></i>
+                                                <span>Overview</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/activity/">
+                                                <i class="fas fa-bolt" aria-hidden="true"></i>
+                                                <span>Activity</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/reviews/">
+                                                <i class="fas fa-star" aria-hidden="true"></i>
+                                                <span>Reviews</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/friends/">
+                                                <i class="fas fa-user-group" aria-hidden="true"></i>
+                                                <span>Friends</span>
+                                            </a>
+                                        </div>
+                                    </div>
 
-                                    <a class="dropdown-item py-1" href="/u/@(username)/journal/">Journal</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/activity/">Activity</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/reviews/">Reviews</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/lists/">Lists</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/friends/">Friends</a>
-                                    <a class="dropdown-item py-1" href="/u/@(username)/likes/">Likes</a>
+                                    <div class="gf-profile-menu__section">
+                                        <div class="gf-profile-menu__label">Library</div>
+                                        <div class="gf-profile-menu__grid gf-profile-menu__grid--library">
+                                            <a class="gf-profile-menu__item" href="/u/@username/games/">
+                                                <i class="fas fa-circle-check" aria-hidden="true"></i>
+                                                <span>Played</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/playing/">
+                                                <i class="fas fa-gamepad" aria-hidden="true"></i>
+                                                <span>Playing</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/backlog/">
+                                                <i class="fas fa-layer-group" aria-hidden="true"></i>
+                                                <span>Backlog</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/wishlist/">
+                                                <i class="fas fa-heart" aria-hidden="true"></i>
+                                                <span>Wishlist</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/lists/">
+                                                <i class="fas fa-list" aria-hidden="true"></i>
+                                                <span>Lists</span>
+                                            </a>
+                                            <a class="gf-profile-menu__item" href="/u/@username/journal/">
+                                                <i class="fas fa-book-open" aria-hidden="true"></i>
+                                                <span>Journal</span>
+                                            </a>
+                                        </div>
+                                    </div>
 
-                                    <div class="dropdown-divider my-0"></div>
+                                    <div class="gf-profile-menu__footer">
+                                        <a class="gf-profile-menu__action" href="/Settings">
+                                            <i class="fas fa-gear" aria-hidden="true"></i>
+                                            <span>Settings</span>
+                                        </a>
 
-                                    <a class="dropdown-item py-1" href="/Settings">Settings</a>
-
-                                    <!-- Logout via POST -->
-                                    <form method="post" asp-page="/users/Logout" class="m-0 p-0">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item pt-1 pb-2 w-100 text-left">
-                                            Log Out
-                                        </button>
-                                    </form>
+                                        <form method="post" asp-page="/users/Logout">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="gf-profile-menu__action gf-profile-menu__action--logout">
+                                                <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                                                <span>Log out</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </li>
                         }
 
+                        <li class="nav-item mr-1">
+                            <a class="nav-link @(gamesActive ? "is-active" : string.Empty)"
+                               href="/games">Games</a>
+                        </li>
                         <li class="nav-item mr-2">
-                            <a class="nav-link" href="/games">Games</a>
+                            <a class="nav-link @(companiesActive ? "is-active" : string.Empty)"
+                               href="/company">Companies</a>
                         </li>
                     </ul>
 
-                    <!-- SEARCH -->
                     <form class="form-inline mx-3 mx-lg-0 my-2 my-lg-0"
                           data-turbo="false"
                           action="/search"
                           method="get">
-
                         <div class="search-wrap position-relative" id="nav-search-wrap">
                             <input class="form-control search-bar"
                                    id="nav-bar-search"
@@ -166,30 +238,25 @@
                                    autocomplete="off" />
 
                             <button class="search-icon-btn" type="submit" aria-label="Search">
-                                <i class="fas fa-search"></i>
+                                <i class="fas fa-search" aria-hidden="true"></i>
                             </button>
 
-                            <!-- Dropdown do autocomplete -->
                             <div class="igdb-dropdown d-none" id="igdb-dropdown" role="listbox" aria-label="Search results"></div>
                         </div>
                     </form>
-
                 </div>
             </div>
         </nav>
 
-        <!-- Barra visual de loading -->
         <div id="header-loader">
             <div class="header-loader-bar"></div>
         </div>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main role="main" class="@(isFullBleed ? "flex-grow-1 p-0" : "container flex-grow-1 pb-3")">
         @RenderBody()
     </main>
 
-    <!-- FOOTER -->
     <footer class="footer mt-auto">
         <div class="container py-2">
             <div class="row mx-0">
@@ -213,9 +280,9 @@
         </div>
     </footer>
 
-    <!-- SCRIPTS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/header-v2.js" asp-append-version="true"></script>
 </body>
 </html>

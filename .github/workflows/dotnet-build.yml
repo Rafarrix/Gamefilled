@@ -1,0 +1,40 @@
+name: .NET Build
+
+on:
+  push:
+    branches:
+      - v2-development
+      - "feature/**"
+  pull_request:
+    branches:
+      - v2-development
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet build --configuration Release --no-restore 2>&1 | tee build.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn

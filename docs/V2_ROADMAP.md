@@ -1,102 +1,145 @@
-# Gamefilled V2
+# Gamefilled V2 Roadmap
 
 ## Goal
 
-Evolve the PAP version into a production-ready gaming discovery and social platform without discarding the existing ASP.NET Core backend or the current visual identity.
+Evolve the PAP version into a production-ready gaming discovery and social platform without discarding the existing ASP.NET Core backend or the current dark and green Gamefilled identity.
 
 ## Branch strategy
 
 - `master`: stable PAP baseline.
 - `v2-development`: integration branch for Gamefilled V2.
-- `feature/*`: isolated work such as discovery filters, trailers, design system and authentication.
+- `feature/*`: isolated development merged through Pull Requests.
 
 ## Initial technical audit
 
 ### Existing strengths
 
 - ASP.NET Core Razor Pages with Entity Framework Core and SQL Server.
-- IGDB integration already separated into `IgdbClient` and `IgdbTokenProvider`.
-- Typed `HttpClient` for IGDB and an in-memory OAuth token cache.
-- Existing user profiles, follows, activity and favorite games.
-- Pagination and several library sorting modes already implemented.
+- Existing IGDB integration and typed HTTP clients.
+- User profiles, follows, activity and favourite games.
+- Pagination and multiple game-library sorting modes.
 
 ### Priority problems
 
-1. `_GamesLibBase` implements a second IGDB client, including token retrieval, HTTP calls, parsing and error handling. This duplicates `IgdbClient` and should be replaced by a single service layer.
-2. Authentication is custom and based on session values. It should eventually migrate to ASP.NET Core Identity before production.
-3. Login throttling is stored in the visitor session and can be bypassed by clearing cookies or starting a new session.
-4. Login responses distinguish between an unknown user and an incorrect password, enabling account enumeration.
-5. Registration trims passwords, accepts a minimum of only six characters and performs very basic email validation.
-6. The original database export contained seeded emails and password hashes and used machine-specific SQL Server file paths.
-7. There are no automated tests, migrations, health checks or CI workflow yet.
-8. The repository did not include a safe configuration example or a setup guide.
+1. Legacy pages still contain duplicated IGDB access logic.
+2. Authentication is custom and session-based.
+3. Login throttling is tied to the visitor session.
+4. Authentication responses can expose whether an account exists.
+5. Registration validation needs strengthening.
+6. The original database export exposed seeded data and machine-specific paths.
+7. Automated tests and EF Core migrations are still missing.
+8. Some interfaces are too visually close to Backloggd and need a clearer Gamefilled identity.
 
-## V2 delivery phases
+## Phase 0 — Foundation
 
-### Phase 0 — Foundation
-
-- [x] Create `v2-development` branch.
-- [x] Replace the database dump with a portable schema-only script in the V2 branch.
-- [x] Add `appsettings.example.json`.
+- [x] Create `v2-development`.
+- [x] Create safe database schema and configuration examples.
+- [x] Add GitHub Actions restore/build validation.
 - [ ] Add a complete README with local setup instructions.
-- [ ] Introduce EF Core migrations and stop treating a generated SQL dump as the source of truth.
-- [ ] Add a basic test project.
-- [ ] Add GitHub Actions build and test workflow.
+- [ ] Introduce EF Core migrations.
+- [ ] Add unit and integration test projects.
 
-### Phase 1 — Discovery architecture
+## Phase 1 — Discovery engine
 
-- [ ] Create a `GameDiscoveryService` interface and implementation.
-- [ ] Move all IGDB requests from `_GamesLibBase` into the IGDB infrastructure layer.
-- [ ] Introduce strongly typed filter and pagination request models.
-- [ ] Add platform, genre, release-year and rating filters.
-- [ ] Keep filters and sorting in the URL query string.
-- [ ] Add metadata caching for platforms and genres.
-- [ ] Add graceful timeout, cancellation and retry handling.
+- [x] Create `IGameDiscoveryService` and implementation.
+- [x] Add typed pagination, sorting and filter models.
+- [x] Add search, platform, genre, year, rating and release-state filters.
+- [x] Preserve filter state through URLs and pagination.
+- [x] Cache platforms and genres.
+- [x] Add an accessible off-canvas filter drawer.
+- [x] Use IGDB PopScore Visits for Trending with a safe fallback.
+- [x] Link game genres, platforms and release year to filtered discovery pages.
+- [ ] Migrate average play-time and finish-time sorting into the V2 service.
+- [ ] Add automated query-builder tests.
 
-### Phase 2 — Game details and media
+## Phase 2 — Companies
 
-- [ ] Add IGDB videos to game detail DTOs.
-- [ ] Render YouTube trailers only when a valid video is available.
-- [ ] Improve screenshots, artworks, companies and platform presentation.
-- [ ] Add similar games and related content.
-- [ ] Add proper empty, loading and error states.
+- [x] Add canonical `/company/{id}/{slug}` pages.
+- [x] Link companies from game pages.
+- [x] Distinguish developer, publisher, porting and supporting roles.
+- [x] Show description, logo, founding date, country, status, size, parent and official websites.
+- [x] Build a chronological associated-games catalogue.
+- [x] Add searchable and paginated company directory pages.
+- [ ] Add subsidiaries and a visual company network.
 
-### Phase 3 — Frontend redesign
+## Phase 3 — Game details and media
 
-- [ ] Define CSS design tokens for colors, spacing, typography, radii and shadows.
-- [ ] Build reusable game-card, filter, button, input and modal components.
-- [ ] Redesign homepage and discovery pages while preserving the Gamefilled colors and identity.
-- [ ] Implement a responsive mobile filter drawer.
-- [ ] Improve accessibility, keyboard navigation and contrast.
-- [ ] Optimize images, lazy loading and layout stability.
+- [x] Use the shared IGDB client for game details.
+- [x] Add clickable involved companies.
+- [x] Add trailers when the IGDB supplies a valid YouTube ID.
+- [x] Add a unified Media Room with trailer and screenshot lightbox navigation.
+- [x] Add the first **Game Universe** drawer for parent games, DLCs, expansions, ports, remakes and remasters.
+- [x] Improve hero-image selection, blur and page blending.
+- [x] Preserve artworks, screenshots, ratings, follows, hypes and time-to-beat.
+- [ ] Extend Game Universe with franchises, collections and clearer relationship visualization.
+- [ ] Build **Release Timeline** by platform and region.
+- [ ] Build **Where to Play** with official platform/store links.
+- [ ] Add engines, multiplayer modes, perspectives and language support.
+- [ ] Add age-rating and content information.
 
-### Phase 4 — Authentication and security
+## Phase 4 — User discovery and Profile V2
+
+This is the next product sprint after the current discovery/game-details Pull Request is validated and merged.
+
+- [ ] Add a public, searchable and paginated `/people` directory.
+- [ ] Search users by username and display name without exposing private fields.
+- [ ] Show avatar, bio excerpt, online status and social counts.
+- [ ] Support follow/unfollow from discovery results.
+- [ ] Identify mutual follows as friends.
+- [ ] Redesign the profile hero and social summary.
+- [ ] Make favourite games the main visual feature of the profile.
+- [ ] Replace placeholder panels with real data or hide them until ready.
+- [ ] Improve activity cards, follower lists, following lists and responsive behaviour.
+- [ ] Add user-search, follow-state and privacy-boundary tests.
+
+See GitHub issue #3 for detailed acceptance criteria.
+
+## Phase 5 — Distinct Gamefilled design system
+
+- [ ] Define design tokens for spacing, typography, surfaces, radii and interaction states.
+- [ ] Replace remaining Backloggd-like layouts with a distinctive Gamefilled system.
+- [ ] Prefer editorial, asymmetrical and data-storytelling layouts.
+- [ ] Create reusable cards, drawers, media blocks and metadata components.
+- [ ] Continue redesigning the homepage, game page and user profile around the new system.
+- [x] Modernize the header navigation and user dropdown direction.
+- [x] Add route-aware active navigation states.
+- [x] Use profile avatars in the header menu when available.
+- [ ] Complete keyboard, contrast and reduced-motion reviews.
+
+## Phase 6 — Authentication and security
 
 - [ ] Migrate custom users to ASP.NET Core Identity.
 - [ ] Add email confirmation and password recovery.
-- [ ] Replace session-based login throttling with server-side rate limiting.
-- [ ] Use generic authentication failure messages.
-- [ ] Validate and normalize usernames and emails consistently.
-- [ ] Review CSRF, XSS, authorization, cookies, headers and uploads.
-- [ ] Perform an OWASP-based pre-production review.
+- [ ] Replace session throttling with server-side rate limiting.
+- [ ] Use generic login errors.
+- [ ] Review authorization, CSRF, XSS, cookies, headers and uploads.
+- [ ] Complete an OWASP-oriented pre-production review.
 
-### Phase 5 — Docker and production
+## Phase 7 — Steam and personalized social layer
 
-- [ ] Add application Dockerfile.
-- [ ] Add Docker Compose for the app and SQL Server development environment.
-- [ ] Add environment-based configuration and secret management.
-- [ ] Add health checks, structured logging and backups.
-- [ ] Configure HTTPS, domain, deployment and monitoring.
-- [ ] Prepare privacy policy and terms before public registrations.
+This phase stays planned but should begin only after authentication, database migrations and the core social/profile experience are stable.
 
-## First implementation sprint
+- [ ] Add optional Steam account linking through the official Steam identity flow.
+- [ ] Import owned games, playtime, achievements and recently played data where the user's privacy settings permit it.
+- [ ] Match Steam app IDs with IGDB external-game records.
+- [ ] Store synchronization status and timestamps without storing Steam credentials.
+- [ ] Build personalized library insights, recommendations and profile statistics.
+- [ ] Add privacy controls for imported game activity.
+- [ ] Expand the social feed with opt-in Steam activity and user-generated Gamefilled activity.
+- [ ] Add friend comparison, shared games and recommendation signals.
 
-The first V2 sprint should focus on one vertical slice:
+## Phase 8 — Database, tests and operations
 
-1. Refactor the popular games page to use a new centralized discovery service.
-2. Add platform and genre metadata endpoints.
-3. Implement platform and genre filters in the library page.
-4. Preserve pagination and sorting in query parameters.
-5. Add tests for filter query generation and input validation.
+- [ ] Add EF Core migrations.
+- [ ] Add unit tests for query normalization and generation.
+- [ ] Add integration tests for company, game and user-discovery services.
+- [ ] Add route smoke tests.
+- [ ] Add structured logging and health checks.
 
-This establishes the architecture that all later discovery pages will reuse.
+## Phase 9 — Docker and production
+
+- [ ] Add a multi-stage Dockerfile.
+- [ ] Add a development Docker Compose environment.
+- [ ] Move production configuration to environment variables and secrets.
+- [ ] Define deployment, HTTPS, monitoring, backups and recovery.
+- [ ] Prepare privacy policy and terms before public registration.

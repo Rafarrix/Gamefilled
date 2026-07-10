@@ -1,0 +1,167 @@
+.gf-game-page {
+    min-height: 100vh;
+    background: #0e1015;
+}
+
+#game-cover-art,
+.gf-cover-art {
+    height: 700px;
+    background: #0e1015;
+    overflow: hidden;
+}
+
+#game-cover-art img,
+.gf-cover-art img {
+    position: absolute;
+    inset: -18px;
+    width: calc(100% + 36px);
+    height: calc(100% + 36px);
+    max-width: none;
+    object-fit: cover;
+    object-position: 50% 38%;
+    transform: scale(1.035);
+    filter: blur(6px) saturate(.95) brightness(.62);
+}
+
+#gradient {
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(8, 10, 14, .88) 0%,
+            rgba(8, 10, 14, .52) 18%,
+            rgba(8, 10, 14, .20) 43%,
+            rgba(14, 16, 21, .60) 70%,
+            #0e1015 96%,
+            #0e1015 100%
+        ),
+        linear-gradient(
+            to right,
+            rgba(7, 9, 12, .64) 0%,
+            rgba(7, 9, 12, .14) 38%,
+            rgba(7, 9, 12, .18) 68%,
+            rgba(7, 9, 12, .58) 100%
+        ),
+        radial-gradient(
+            115% 120% at 50% 30%,
+            transparent 0%,
+            rgba(8, 10, 14, .24) 56%,
+            rgba(14, 16, 21, .78) 100%
+        );
+}
+
+.bl-shell {
+    max-width: 1160px;
+    padding-top: 170px;
+}
+
+.bl-title-row {
+    display: block;
+}
+
+.bl-title-wrap {
+    width: 100%;
+}
+
+.bl-title {
+    max-width: 100%;
+    font-size: clamp(2.25rem, 3.2vw, 3.25rem);
+    line-height: 1.04;
+    letter-spacing: -.035em;
+    overflow-wrap: anywhere;
+}
+
+.bl-byline {
+    margin-top: 8px;
+}
+
+.gf-game-release-value {
+    align-items: center;
+}
+
+.gf-game-release-state {
+    color: rgba(229, 231, 235, .66);
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.gf-game-release-state::after {
+    content: "·";
+    margin-left: 8px;
+    color: rgba(229, 231, 235, .28);
+}
+
+.gf-game-release-date {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .10);
+    background: rgba(255, 255, 255, .055);
+    color: rgba(243, 244, 246, .90);
+    font-size: .78rem;
+    font-weight: 700;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease, color .15s ease;
+}
+
+.gf-game-release-date:hover,
+.gf-game-release-date:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(74, 222, 128, .34);
+    background: rgba(0, 176, 32, .13);
+    color: #dcfce7;
+    text-decoration: none;
+    outline: none;
+}
+
+.gf-universe-tab {
+    right: -1px;
+    background: #0e1015;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .16);
+}
+
+.gf-universe-tab:hover,
+.gf-universe-tab:focus-visible {
+    background: #132019;
+}
+
+@media (max-width: 992px) {
+    #game-cover-art,
+    .gf-cover-art {
+        height: 720px;
+    }
+
+    #game-cover-art img,
+    .gf-cover-art img {
+        object-position: center 32%;
+        filter: blur(6px) saturate(.92) brightness(.56);
+    }
+
+    .bl-shell {
+        padding-top: 168px;
+    }
+}
+
+@media (max-width: 768px) {
+    #game-cover-art,
+    .gf-cover-art {
+        height: 760px;
+    }
+
+    #game-cover-art img,
+    .gf-cover-art img {
+        object-position: center top;
+        filter: blur(5px) saturate(.90) brightness(.48);
+    }
+
+    .bl-title {
+        font-size: clamp(2rem, 9vw, 2.75rem);
+    }
+}
+
+@media (max-width: 420px) {
+    #game-cover-art,
+    .gf-cover-art {
+        height: 720px;
+    }
+}

@@ -1,16 +1,22 @@
+using Gamefilled.Application.Games;
+
 namespace Gamefilled.Pages.games.lib
 {
     /// <summary>
-    /// Página da biblioteca ordenada alfabeticamente por título.
+    /// PÃ¡gina da biblioteca ordenada alfabeticamente por tÃ­tulo.
     /// </summary>
-    public class TitleModel : _GamesLibBase
+    public class TitleModel : _FilteredGamesLibBase
     {
-        public TitleModel(IConfiguration cfg, ILogger<TitleModel> logger, IHttpClientFactory http)
-            : base(cfg, logger, http) { }
+        public TitleModel(
+            IConfiguration cfg,
+            ILogger<TitleModel> logger,
+            IHttpClientFactory http,
+            IGameDiscoveryService discoveryService)
+            : base(cfg, logger, http, discoveryService) { }
 
         protected override void Configure()
         {
-            SortKey = "title";
+            SortKey = GameDiscoverySort.Title;
             PageTitle = "Game Title";
         }
     }

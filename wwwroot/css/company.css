@@ -1,0 +1,314 @@
+.gf-company-page {
+    min-height: 100%;
+    padding: 36px 0 72px;
+}
+
+.gf-company-shell {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+}
+
+.gf-company-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 30px;
+    align-items: center;
+    padding: 34px;
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 88% 10%, rgba(0, 176, 32, .20), transparent 34%),
+        linear-gradient(145deg, #1a1f29, #11141b 68%);
+    border: 1px solid rgba(255, 255, 255, .09);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, .30);
+}
+
+.gf-company-hero::after {
+    content: "";
+    position: absolute;
+    right: -85px;
+    bottom: -140px;
+    width: 360px;
+    height: 360px;
+    border: 1px solid rgba(74, 222, 128, .18);
+    border-radius: 50%;
+}
+
+.gf-company-logo {
+    position: relative;
+    z-index: 1;
+    width: 180px;
+    height: 180px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .95);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .28);
+}
+
+.gf-company-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.gf-company-logo__fallback {
+    color: #111827;
+    font-size: 3rem;
+    font-weight: 900;
+}
+
+.gf-company-identity {
+    position: relative;
+    z-index: 1;
+}
+
+.gf-company-eyebrow {
+    color: #4ade80;
+    text-transform: uppercase;
+    letter-spacing: .13em;
+    font-size: .75rem;
+    font-weight: 850;
+}
+
+.gf-company-title {
+    margin: 8px 0 0;
+    color: #f9fafb;
+    font-size: clamp(2.5rem, 6vw, 4.8rem);
+    line-height: .96;
+    font-weight: 900;
+    letter-spacing: -.045em;
+}
+
+.gf-company-description {
+    max-width: 820px;
+    margin: 20px 0 0;
+    color: rgba(229, 231, 235, .82);
+    font-size: 1rem;
+    line-height: 1.75;
+    white-space: pre-line;
+}
+
+.gf-company-facts {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.gf-company-fact {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .08);
+    color: #d1d5db;
+    font-size: .82rem;
+}
+
+.gf-company-fact strong {
+    color: #fff;
+}
+
+.gf-company-parent {
+    color: #86efac;
+    font-weight: 700;
+}
+
+.gf-company-links {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.gf-company-link {
+    min-height: 40px;
+    padding: 9px 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
+    background: rgba(0, 176, 32, .10);
+    border: 1px solid rgba(74, 222, 128, .22);
+    color: #bbf7d0;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.gf-company-link:hover {
+    background: rgba(0, 176, 32, .17);
+    color: #fff;
+    text-decoration: none;
+}
+
+.gf-company-stats {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.gf-company-stat {
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .035);
+    border: 1px solid rgba(255, 255, 255, .075);
+}
+
+.gf-company-stat strong {
+    display: block;
+    color: #f9fafb;
+    font-size: 1.8rem;
+    font-weight: 900;
+}
+
+.gf-company-stat span {
+    color: rgba(229, 231, 235, .60);
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.gf-company-catalogue {
+    margin-top: 52px;
+}
+
+.gf-company-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.gf-company-section-head h2 {
+    margin: 0;
+    color: #f9fafb;
+    font-size: 2rem;
+    font-weight: 900;
+}
+
+.gf-company-section-head p {
+    margin: 6px 0 0;
+    color: rgba(229, 231, 235, .62);
+}
+
+.gf-company-games {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 18px;
+}
+
+.gf-company-game {
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.gf-company-game:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.gf-company-game__cover {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 13px;
+    background: #1a1e27;
+    border: 1px solid rgba(255, 255, 255, .07);
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.gf-company-game:hover .gf-company-game__cover {
+    transform: translateY(-4px);
+    border-color: rgba(74, 222, 128, .35);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, .28);
+}
+
+.gf-company-game__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gf-company-game__roles {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.gf-company-role {
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(8, 11, 16, .86);
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: #f3f4f6;
+    font-size: .62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    backdrop-filter: blur(6px);
+}
+
+.gf-company-role--developer {
+    color: #86efac;
+}
+
+.gf-company-role--publisher {
+    color: #93c5fd;
+}
+
+.gf-company-game__name {
+    margin-top: 10px;
+    color: #f3f4f6;
+    font-size: .9rem;
+    line-height: 1.35;
+    font-weight: 750;
+}
+
+.gf-company-game__meta {
+    margin-top: 3px;
+    color: rgba(229, 231, 235, .52);
+    font-size: .78rem;
+}
+
+.gf-company-empty {
+    padding: 28px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .07);
+    color: rgba(229, 231, 235, .65);
+}
+
+@media (max-width: 760px) {
+    .gf-company-page {
+        padding-top: 20px;
+    }
+
+    .gf-company-hero {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+
+    .gf-company-logo {
+        width: 132px;
+        height: 132px;
+    }
+
+    .gf-company-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .gf-company-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

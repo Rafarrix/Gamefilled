@@ -1,18 +1,184 @@
-﻿@page "/games/{id:int}"
+@page "/games/{id:int}"
+@using System.Globalization
 @model Gamefilled.Pages.games.GameModel
 @{
-    // Define o título da página com o nome do jogo, se existir.
     ViewData["Title"] = Model.Game?.Name ?? "Game";
-
-    // Ativa layout fullbleed no _Layout.
     ViewData["FullBleed"] = true;
+
+    var companies = (Model.Game?.InvolvedCompanies ?? new List<Gamefilled.Infrastructure.IgdbInvolvedCompanyDto>())
+        .Where(item => item.Company is { Id: > 0 } && !string.IsNullOrWhiteSpace(item.Company.Name))
+        .GroupBy(item => item.Company!.Id)
+        .Select(group => new
+        {
+            Company = group.First().Company!,
+            Developer = group.Any(item => item.Developer),
+            Publisher = group.Any(item => item.Publisher),
+            Porting = group.Any(item => item.Porting),
+            Supporting = group.Any(item => item.Supporting)
+        })
+        .OrderByDescending(item => item.Developer)
+        .ThenByDescending(item => item.Publisher)
+        .ThenBy(item => item.Company.Name)
+        .ToList();
+
+    var primaryDeveloper = companies.FirstOrDefault(item => item.Developer)?.Company;
+    var trailer = Model.Game?.Videos?
+        .FirstOrDefault(video => !string.IsNullOrWhiteSpace(video.VideoId));
+    var screenshots = (Model.Game?.Screenshots ?? new List<Gamefilled.Infrastructure.IgdbImageDto>())
+        .Where(screenshot => !string.IsNullOrWhiteSpace(screenshot.ImageId))
+        .Take(8)
+        .ToList();
+    var hasMedia = trailer != null || screenshots.Count > 0;
+
+    var platforms = (Model.Game?.Platforms ?? new List<Gamefilled.Infrastructure.IgdbNamedDto>())
+        .Where(platform => platform.Id > 0 && !string.IsNullOrWhiteSpace(platform.Name))
+        .OrderBy(platform => PlatformSortKey(platform.Name))
+        .ThenBy(platform => platform.Name, StringComparer.OrdinalIgnoreCase)
+        .Take(16)
+        .ToList();
+
+    DateTimeOffset? releaseDate = null;
+    if (Model.Game?.FirstReleaseDateUnix is > 0)
+    {
+        try
+        {
+            releaseDate = DateTimeOffset.FromUnixTimeSeconds(Model.Game.FirstReleaseDateUnix.Value);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            releaseDate = null;
+        }
+    }
+
+    var releaseYear = releaseDate?.Year;
+    var releaseLabel = releaseDate.HasValue && releaseDate.Value <= DateTimeOffset.UtcNow
+        ? "Released"
+        : "Upcoming";
+
+    var universeSections = new List<(string Title, IReadOnlyList<Gamefilled.Infrastructure.IgdbRelatedGameDto> Games)>();
+
+    void AddUniverseSection(string title, IEnumerable<Gamefilled.Infrastructure.IgdbRelatedGameDto>? source)
+    {
+        var games = (source ?? Array.Empty<Gamefilled.Infrastructure.IgdbRelatedGameDto>())
+            .Where(game => game.Id > 0 && !string.IsNullOrWhiteSpace(game.Name))
+            .GroupBy(game => game.Id)
+            .Select(group => group.First())
+            .OrderBy(game => game.ReleaseYear ?? int.MaxValue)
+            .ThenBy(game => game.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (games.Count > 0)
+            universeSections.Add((title, games));
+    }
+
+    if (Model.Game?.ParentGame is { Id: > 0 } parentGame)
+        AddUniverseSection("Parent game", new[] { parentGame });
+
+    AddUniverseSection("DLC", Model.Game?.Dlcs);
+    AddUniverseSection("Expansions", Model.Game?.Expansions);
+    AddUniverseSection("Standalone expansions", Model.Game?.StandaloneExpansions);
+    AddUniverseSection("Expanded games", Model.Game?.ExpandedGames);
+    AddUniverseSection("Ports", Model.Game?.Ports);
+    AddUniverseSection("Remakes", Model.Game?.Remakes);
+    AddUniverseSection("Remasters", Model.Game?.Remasters);
+
+    var universeCount = universeSections.Sum(universeGroup => universeGroup.Games.Count);
 }
 
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/game-v2.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/game-universe.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/game-detail-polish.css" asp-append-version="true" />
 
 <div class="gf-game-page">
+    @if (universeCount > 0)
+    {
+        <button type="button"
+                class="gf-universe-tab"
+                data-universe-open
+                aria-controls="game-universe-drawer"
+                aria-expanded="false"
+                title="Open Game Universe">
+            <i class="fas fa-diagram-project" aria-hidden="true"></i>
+            <span class="gf-universe-tab__label">Universe</span>
+            <span class="gf-universe-tab__count" aria-label="@universeCount connections">@universeCount</span>
+        </button>
 
-    <!-- Background superior estilo Backloggd -->
+        <div class="gf-universe-overlay"
+             data-universe-overlay
+             aria-hidden="true"></div>
+
+        <aside id="game-universe-drawer"
+               class="gf-universe-drawer"
+               data-universe-drawer
+               role="dialog"
+               aria-modal="true"
+               aria-labelledby="game-universe-title"
+               aria-hidden="true">
+            <div class="gf-universe-drawer__header">
+                <div>
+                    <div class="gf-universe-drawer__eyebrow">Gamefilled connections</div>
+                    <h2 id="game-universe-title" class="gf-universe-drawer__title">Game Universe</h2>
+                    <p class="gf-universe-drawer__subtitle">
+                        Expansions, DLC, ports, remakes and other versions connected to this game.
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="gf-universe-drawer__close"
+                        data-universe-close
+                        aria-label="Close Game Universe">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="gf-universe-drawer__body">
+                @foreach (var universeSection in universeSections)
+                {
+                    <div class="gf-universe-section">
+                        <div class="gf-universe-section__head">
+                            <h3 class="gf-universe-section__title">@universeSection.Title</h3>
+                            <span class="gf-universe-section__count">@universeSection.Games.Count</span>
+                        </div>
+
+                        <div class="gf-universe-list">
+                            @foreach (var relatedGame in universeSection.Games)
+                            {
+                                <a class="gf-universe-game"
+                                   href="/games/@relatedGame.Id"
+                                   title="Open @relatedGame.Name">
+                                    <div class="gf-universe-game__cover">
+                                        @if (!string.IsNullOrWhiteSpace(relatedGame.CoverUrl))
+                                        {
+                                            <img src="@relatedGame.CoverUrl"
+                                                 alt="@relatedGame.Name"
+                                                 loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <div class="gf-universe-game__fallback">
+                                                <i class="fas fa-gamepad" aria-hidden="true"></i>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="gf-universe-game__content">
+                                        <div class="gf-universe-game__name">@relatedGame.Name</div>
+                                        <div class="gf-universe-game__year">
+                                            @(relatedGame.ReleaseYear?.ToString() ?? "Release unknown")
+                                        </div>
+                                    </div>
+
+                                    <i class="fas fa-chevron-right gf-universe-game__arrow" aria-hidden="true"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </aside>
+    }
+
     <div class="gf-cover-art" id="game-cover-art">
         <div id="gradient"></div>
 
@@ -22,11 +188,8 @@
         }
     </div>
 
-    <!-- Conteúdo principal -->
     <div class="bl-shell">
         <div class="bl-top">
-
-            <!-- Cover principal -->
             <div class="bl-cover">
                 @if (!string.IsNullOrWhiteSpace(Model.CoverUrl))
                 {
@@ -39,79 +202,126 @@
             </div>
 
             <div class="bl-main">
-
-                <!-- Título, estúdio e data -->
                 <div class="bl-title-row">
                     <div class="bl-title-wrap">
                         <h1 class="bl-title">@Model.Game?.Name</h1>
 
-                        @{
-                            // Tenta descobrir o primeiro developer principal.
-                            var dev = Model.Game?.InvolvedCompanies?
-                            .Where(x => x.Developer == true && !string.IsNullOrWhiteSpace(x.Company?.Name))
-                            .Select(x => x.Company!.Name!)
-                            .Distinct()
-                            .FirstOrDefault();
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(dev))
+                        @if (primaryDeveloper != null)
                         {
-                            <div class="bl-byline">by <strong>@dev</strong></div>
+                            <div class="bl-byline">
+                                by
+                                <a class="gf-game-company-link"
+                                   href="/company/@primaryDeveloper.Id/@primaryDeveloper.Slug">
+                                    @primaryDeveloper.Name
+                                </a>
+                            </div>
                         }
                     </div>
-
-                    @if (Model.Game?.FirstReleaseDateUnix != null)
-                    {
-                        <div class="bl-release">
-                            <span class="pill pill-muted">Released</span>
-                            <span class="pill">@UnixToDate(Model.Game.FirstReleaseDateUnix.Value)</span>
-                        </div>
-                    }
                 </div>
 
-                <!-- Resumo do jogo -->
                 @if (!string.IsNullOrWhiteSpace(Model.Game?.Summary))
                 {
                     <p class="bl-summary">@Model.Game.Summary</p>
                 }
 
-                <!-- Rows de géneros e plataformas -->
                 <div class="bl-rows">
-                    <div class="bl-row">
-                        <div class="bl-row__label">GENRES</div>
-                        <div class="bl-row__value">
-                            @foreach (var g in (Model.Game?.Genres ?? new()).Take(8))
-                            {
-                                if (!string.IsNullOrWhiteSpace(g.Name))
-                                {
-                                    <span class="bl-chip">@g.Name</span>
-                                }
-                            }
-                        </div>
-                    </div>
+                    @if (releaseDate.HasValue)
+                    {
+                        <div class="bl-row">
+                            <div class="bl-row__label">RELEASE</div>
+                            <div class="bl-row__value gf-game-release-value">
+                                <span class="gf-game-release-state">@releaseLabel</span>
 
-                    <div class="bl-row">
-                        <div class="bl-row__label">PLATFORMS</div>
-                        <div class="bl-row__value">
-                            @foreach (var p in (Model.Game?.Platforms ?? new()).Take(12))
-                            {
-                                if (!string.IsNullOrWhiteSpace(p.Name))
+                                @if (releaseYear.HasValue)
                                 {
-                                    <span class="gf-platform-pill @PlatformClass(p.Name)"
-                                          data-platform="@PlatformLabel(p.Name)"
-                                          title="@PlatformLabel(p.Name)"
-                                          aria-label="@PlatformLabel(p.Name)">
-                                        <span class="gf-platform-pill__icon">
-                                            <i class="@PlatformIcon(p.Name)" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
+                                    <a class="gf-game-release-date"
+                                       href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseYear=@releaseYear"
+                                       title="View games released in @releaseYear">
+                                        @UnixToDate(releaseDate.Value.ToUnixTimeSeconds())
+                                    </a>
                                 }
-                            }
+                            </div>
                         </div>
-                    </div>
+                    }
+
+                    @if (Model.Game?.Genres?.Any() == true)
+                    {
+                        <div class="bl-row">
+                            <div class="bl-row__label">GENRES</div>
+                            <div class="bl-row__value">
+                                @foreach (var genre in Model.Game.Genres.Take(8))
+                                {
+                                    if (genre.Id > 0 && !string.IsNullOrWhiteSpace(genre.Name))
+                                    {
+                                        <a class="bl-chip gf-game-filter-chip"
+                                           href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&GenreId=@genre.Id"
+                                           title="View @genre.Name games">
+                                            @genre.Name
+                                        </a>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (platforms.Count > 0)
+                    {
+                        <div class="bl-row">
+                            <div class="bl-row__label">PLATFORMS</div>
+                            <div class="bl-row__value">
+                                @foreach (var platform in platforms)
+                                {
+                                    <a class="gf-platform-pill gf-game-platform-link @PlatformClass(platform.Name)"
+                                       href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&PlatformId=@platform.Id"
+                                       data-platform="@PlatformLabel(platform.Name)"
+                                       title="View games for @PlatformLabel(platform.Name)"
+                                       aria-label="View games for @PlatformLabel(platform.Name)">
+                                        <span class="gf-platform-pill__icon">
+                                            <i class="@PlatformIcon(platform.Name)" aria-hidden="true"></i>
+                                        </span>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (companies.Count > 0)
+                    {
+                        <div class="bl-row">
+                            <div class="bl-row__label">COMPANIES</div>
+                            <div class="bl-row__value">
+                                @foreach (var item in companies.Take(12))
+                                {
+                                    <a class="bl-chip gf-game-company-chip"
+                                       href="/company/@item.Company.Id/@item.Company.Slug">
+                                        <span>@item.Company.Name</span>
+
+                                        @if (item.Developer)
+                                        {
+                                            <span class="gf-game-company-role">Dev</span>
+                                        }
+
+                                        @if (item.Publisher)
+                                        {
+                                            <span class="gf-game-company-role">Publisher</span>
+                                        }
+
+                                        @if (item.Porting)
+                                        {
+                                            <span class="gf-game-company-role">Port</span>
+                                        }
+
+                                        @if (item.Supporting)
+                                        {
+                                            <span class="gf-game-company-role">Support</span>
+                                        }
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
 
-                <!-- Cards estatísticos -->
                 <div class="bl-cards bl-cards--3">
                     <div class="bl-card bl-card--center">
                         <div class="bl-card__label">Avg Rating</div>
@@ -132,7 +342,6 @@
                     </div>
                 </div>
 
-                <!-- Painel de time to beat -->
                 <div class="bl-ttb-panel">
                     <div class="bl-ttb-panel__title">Time to beat</div>
 
@@ -154,18 +363,115 @@
                     </div>
                 </div>
 
-                <!-- Screenshots -->
-                @if (Model.Game?.Screenshots?.Any() == true)
+                @if (hasMedia)
                 {
-                    <div class="bl-screens">
-                        <div class="bl-section-title">Screenshots</div>
+                    <div class="gf-media-room" data-media-room>
+                        <div class="gf-media-room__head">
+                            <div>
+                                <h2>Media Room</h2>
+                                <p>Browse trailers and screenshots in one gallery.</p>
+                            </div>
+                        </div>
 
-                        <div class="bl-media">
-                            @foreach (var s in Model.Game.Screenshots.Take(6))
+                        <div class="gf-media-grid">
+                            @if (trailer != null)
                             {
-                                var url = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{s.ImageId}.jpg";
-                                <img class="bl-media__img" src="@url" alt="Screenshot" loading="lazy" />
+                                var trailerTitle = string.IsNullOrWhiteSpace(trailer.Name)
+                                    ? $"{Model.Game?.Name} trailer"
+                                    : trailer.Name;
+                                var trailerEmbedUrl = $"https://www.youtube-nocookie.com/embed/{trailer.VideoId}?autoplay=1&rel=0";
+                                var trailerThumbnailUrl = $"https://i.ytimg.com/vi/{trailer.VideoId}/hqdefault.jpg";
+
+                                <button type="button"
+                                        class="gf-media-item"
+                                        data-media-item
+                                        data-media-type="video"
+                                        data-media-src="@trailerEmbedUrl"
+                                        data-media-title="@trailerTitle"
+                                        aria-label="Open @trailerTitle">
+                                    <img src="@trailerThumbnailUrl"
+                                         alt="@trailerTitle"
+                                         loading="lazy" />
+                                    <span class="gf-media-item__badge">
+                                        <i class="fas fa-film" aria-hidden="true"></i>
+                                        Trailer
+                                    </span>
+                                    <span class="gf-media-item__play" aria-hidden="true">
+                                        <i class="fas fa-play"></i>
+                                    </span>
+                                    <span class="gf-media-item__title">@trailerTitle</span>
+                                </button>
                             }
+
+                            @for (var index = 0; index < screenshots.Count; index++)
+                            {
+                                var screenshot = screenshots[index];
+                                var thumbnailUrl = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{screenshot.ImageId}.jpg";
+                                var fullUrl = $"https://images.igdb.com/igdb/image/upload/t_1080p/{screenshot.ImageId}.jpg";
+                                var screenshotTitle = $"{Model.Game?.Name} screenshot {index + 1}";
+
+                                <button type="button"
+                                        class="gf-media-item"
+                                        data-media-item
+                                        data-media-type="image"
+                                        data-media-src="@fullUrl"
+                                        data-media-title="@screenshotTitle"
+                                        aria-label="Open screenshot @(index + 1)">
+                                    <img src="@thumbnailUrl"
+                                         alt="@screenshotTitle"
+                                         loading="lazy" />
+                                    <span class="gf-media-item__badge">
+                                        <i class="fas fa-image" aria-hidden="true"></i>
+                                        Screenshot
+                                    </span>
+                                    <span class="gf-media-item__title">Screenshot @(index + 1)</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="gf-media-lightbox"
+                         data-media-lightbox
+                         role="dialog"
+                         aria-modal="true"
+                         aria-label="Media viewer"
+                         aria-hidden="true"
+                         hidden>
+                        <button type="button"
+                                class="gf-media-lightbox__backdrop"
+                                data-media-close
+                                aria-label="Close gallery"></button>
+
+                        <div class="gf-media-lightbox__dialog">
+                            <div class="gf-media-lightbox__toolbar">
+                                <div class="gf-media-lightbox__meta">
+                                    <span class="gf-media-lightbox__title" data-media-title></span>
+                                    <span class="gf-media-lightbox__counter" data-media-counter></span>
+                                </div>
+
+                                <button type="button"
+                                        class="gf-media-lightbox__close"
+                                        data-media-close
+                                        aria-label="Close gallery">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                </button>
+                            </div>
+
+                            <div class="gf-media-lightbox__stage" data-media-stage></div>
+
+                            <button type="button"
+                                    class="gf-media-lightbox__nav gf-media-lightbox__nav--previous"
+                                    data-media-previous
+                                    aria-label="Previous media">
+                                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="gf-media-lightbox__nav gf-media-lightbox__nav--next"
+                                    data-media-next
+                                    aria-label="Next media">
+                                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
                 }
@@ -174,153 +480,130 @@
     </div>
 </div>
 
+<script src="~/js/game-media-room.js" asp-append-version="true" defer></script>
+<script src="~/js/game-universe.js" asp-append-version="true" defer></script>
+
 @functions {
-    // Converte UNIX timestamp em data legível.
     static string UnixToDate(long unix)
     {
-        try { return DateTimeOffset.FromUnixTimeSeconds(unix).ToString("MMM dd, yyyy"); }
-        catch { return ""; }
+        try
+        {
+            return DateTimeOffset
+                .FromUnixTimeSeconds(unix)
+                .ToString("MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US"));
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
-    // Formata rating com 1 casa decimal.
-    static string Fmt(double? v) => v == null ? "—" : Math.Round(v.Value, 1).ToString("0.0");
+    static string Fmt(double? value) =>
+        value == null ? "—" : Math.Round(value.Value, 1).ToString("0.0", CultureInfo.InvariantCulture);
 
-    // Formata contagens com separadores.
-    static string Count(int? v) => v == null ? "—" : v.Value.ToString("N0");
+    static string Count(int? value) =>
+        value == null ? "—" : value.Value.ToString("N0", CultureInfo.GetCultureInfo("en-US"));
 
-    // Converte segundos IGDB em texto de horas.
     static string Ttb(int? seconds)
     {
         if (seconds == null || seconds <= 0) return "—";
-
-        var h = Math.Round(seconds.Value / 3600.0);
-        if (h <= 0) h = 1;
-
-        return $"{h}h";
+        var hours = Math.Max(1, Math.Round(seconds.Value / 3600.0));
+        return $"{hours}h";
     }
 
-    // Estimativa "to master" derivada do valor completely.
-    static int? MasterLike(int? completelySeconds)
-        => completelySeconds == null ? null : (int)(completelySeconds.Value * 2.2);
+    static int? MasterLike(int? completelySeconds) =>
+        completelySeconds == null ? null : (int)(completelySeconds.Value * 2.2);
+
+    static int PlatformSortKey(string? platformName)
+    {
+        var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (platform.Contains("playstation 5")) return 1005;
+        if (platform.Contains("playstation 4")) return 1004;
+        if (platform.Contains("playstation 3")) return 1003;
+        if (platform.Contains("playstation 2")) return 1002;
+        if (platform == "playstation" || platform.Contains("playstation 1")) return 1001;
+        if (platform.Contains("psp")) return 1010;
+        if (platform.Contains("vita")) return 1011;
+        if (platform.Contains("playstation") || platform.StartsWith("ps")) return 1090;
+
+        if (platform.Contains("xbox series")) return 2004;
+        if (platform.Contains("xbox one")) return 2003;
+        if (platform.Contains("xbox 360")) return 2002;
+        if (platform == "xbox") return 2001;
+        if (platform.Contains("xbox")) return 2090;
+
+        if (platform.Contains("nintendo entertainment system") || platform == "nes") return 3001;
+        if (platform.Contains("super nintendo") || platform == "snes") return 3002;
+        if (platform.Contains("nintendo 64")) return 3003;
+        if (platform.Contains("gamecube")) return 3004;
+        if (platform.Contains("wii u")) return 3006;
+        if (platform == "wii") return 3005;
+        if (platform.Contains("switch")) return 3007;
+        if (platform.Contains("game boy")) return 3010;
+        if (platform.Contains("nintendo ds")) return 3011;
+        if (platform.Contains("3ds")) return 3012;
+        if (platform.Contains("nintendo")) return 3090;
+
+        if (platform.Contains("pc") || platform.Contains("windows") || platform.Contains("dos")) return 4000;
+        if (platform.Contains("mac")) return 4010;
+        if (platform.Contains("linux") || platform.Contains("ubuntu")) return 4020;
+        if (platform.Contains("android")) return 5000;
+        if (platform.Contains("ios") || platform.Contains("iphone") || platform.Contains("ipad")) return 5010;
+        if (platform.Contains("browser") || platform.Contains("web")) return 6000;
+        if (platform.Contains("cloud")) return 6010;
+
+        return 9000;
+    }
 
     static string PlatformClass(string? platformName)
     {
-        var p = (platformName ?? "").Trim().ToLowerInvariant();
+        var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (string.IsNullOrWhiteSpace(p))
-            return "gf-platform-pill--generic";
-
-        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp")
-            return "gf-platform-pill--playstation";
-
-        if (p.Contains("xbox"))
-            return "gf-platform-pill--xbox";
-
-        if (p.Contains("switch"))
-            return "gf-platform-pill--switch";
-
-        if (p.Contains("nintendo") || p.Contains("game boy") || p.Contains("gameboy") || p.Contains("ds") || p.Contains("3ds") || p.Contains("wii"))
-            return "gf-platform-pill--nintendo";
-
-        if (p.Contains("pc") || p.Contains("windows") || p.Contains("dos") || p.Contains("steam"))
-            return "gf-platform-pill--pc";
-
-        if (p.Contains("mac"))
-            return "gf-platform-pill--mac";
-
-        if (p.Contains("linux") || p.Contains("ubuntu"))
-            return "gf-platform-pill--linux";
-
-        if (p.Contains("android"))
-            return "gf-platform-pill--android";
-
-        if (p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad"))
-            return "gf-platform-pill--ios";
-
-        if (p.Contains("mobile"))
-            return "gf-platform-pill--mobile";
-
-        if (p.Contains("browser") || p.Contains("web"))
-            return "gf-platform-pill--browser";
-
-        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn") || p.Contains("game gear"))
-            return "gf-platform-pill--sega";
-
-        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga"))
-            return "gf-platform-pill--retro";
-
-        if (p.Contains("cloud"))
-            return "gf-platform-pill--cloud";
-
+        if (platform.Contains("playstation") || platform.StartsWith("ps")) return "gf-platform-pill--playstation";
+        if (platform.Contains("xbox")) return "gf-platform-pill--xbox";
+        if (platform.Contains("switch")) return "gf-platform-pill--switch";
+        if (platform.Contains("nintendo") || platform.Contains("game boy") || platform.Contains("3ds") || platform.Contains("wii")) return "gf-platform-pill--nintendo";
+        if (platform.Contains("pc") || platform.Contains("windows") || platform.Contains("dos") || platform.Contains("steam")) return "gf-platform-pill--pc";
+        if (platform.Contains("mac")) return "gf-platform-pill--mac";
+        if (platform.Contains("linux") || platform.Contains("ubuntu")) return "gf-platform-pill--linux";
+        if (platform.Contains("android")) return "gf-platform-pill--android";
+        if (platform.Contains("ios") || platform.Contains("iphone") || platform.Contains("ipad")) return "gf-platform-pill--ios";
+        if (platform.Contains("browser") || platform.Contains("web")) return "gf-platform-pill--browser";
+        if (platform.Contains("cloud")) return "gf-platform-pill--cloud";
         return "gf-platform-pill--generic";
     }
 
     static string PlatformIcon(string? platformName)
     {
-        var p = (platformName ?? "").Trim().ToLowerInvariant();
+        var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (string.IsNullOrWhiteSpace(p))
-            return "fas fa-gamepad";
-
-        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp")
-            return "fab fa-playstation";
-
-        if (p.Contains("xbox"))
-            return "fab fa-xbox";
-
-        if (p.Contains("steam"))
-            return "fab fa-steam";
-
-        if (p.Contains("windows") || p.Contains("pc") || p.Contains("dos"))
-            return "fab fa-windows";
-
-        if (p.Contains("mac") || p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad"))
-            return "fab fa-apple";
-
-        if (p.Contains("android"))
-            return "fab fa-android";
-
-        if (p.Contains("linux") || p.Contains("ubuntu"))
-            return "fab fa-linux";
-
-        if (p.Contains("browser") || p.Contains("web"))
-            return "fas fa-globe";
-
-        if (p.Contains("switch") || p.Contains("nintendo"))
-            return "fas fa-gamepad";
-
-        if (p.Contains("cloud"))
-            return "fas fa-cloud";
-
-        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn"))
-            return "fas fa-compact-disc";
-
-        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga"))
-            return "fas fa-joystick";
-
+        if (platform.Contains("playstation") || platform.StartsWith("ps")) return "fab fa-playstation";
+        if (platform.Contains("xbox")) return "fab fa-xbox";
+        if (platform.Contains("steam")) return "fab fa-steam";
+        if (platform.Contains("windows") || platform.Contains("pc") || platform.Contains("dos")) return "fab fa-windows";
+        if (platform.Contains("mac") || platform.Contains("ios") || platform.Contains("iphone") || platform.Contains("ipad")) return "fab fa-apple";
+        if (platform.Contains("android")) return "fab fa-android";
+        if (platform.Contains("linux") || platform.Contains("ubuntu")) return "fab fa-linux";
+        if (platform.Contains("browser") || platform.Contains("web")) return "fas fa-globe";
+        if (platform.Contains("cloud")) return "fas fa-cloud";
         return "fas fa-gamepad";
     }
 
     static string PlatformLabel(string? platformName)
     {
-        var p = (platformName ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(p)) return "Unknown";
+        var platform = (platformName ?? string.Empty).Trim();
 
-        return p switch
+        return platform switch
         {
             "PC (Microsoft Windows)" => "PC",
-            "Xbox Series X|S" => "Xbox Series X|S",
-            "Xbox One" => "Xbox One",
-            "Xbox 360" => "Xbox 360",
             "PlayStation 5" => "PS5",
             "PlayStation 4" => "PS4",
             "PlayStation 3" => "PS3",
             "PlayStation 2" => "PS2",
-            "PlayStation Vita" => "PS Vita",
-            "PlayStation Portable" => "PSP",
             "Nintendo Switch" => "Switch",
-            _ => p
+            "" => "Unknown",
+            _ => platform
         };
     }
-
 }
