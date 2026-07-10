@@ -22,6 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const tab = url.searchParams.get('tab')?.toLowerCase();
+
+            // Lists does not have a real data model yet, so it is not exposed as
+            // an active profile destination until the feature is implemented.
+            if (tab === 'lists') {
+                link.remove();
+                return;
+            }
+
             const route = tab ? dedicatedRoutes[tab] : null;
             if (!route) return;
 
@@ -34,6 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // open the matching tab inside the profile instead of a parallel layout.
     document.querySelectorAll('.gf-profile-menu a[href]').forEach(link => {
         const href = link.getAttribute('href') || '';
+
+        if (/\/u\/[^/]+\/(lists|journal)\/?$/i.test(href)) {
+            link.remove();
+            return;
+        }
+
         const match = href.match(/^\/u\/([^/]+)\/(activity|reviews)\/?$/i);
         if (!match) return;
 
