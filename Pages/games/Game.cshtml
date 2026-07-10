@@ -82,7 +82,7 @@
     AddUniverseSection("Remakes", Model.Game?.Remakes);
     AddUniverseSection("Remasters", Model.Game?.Remasters);
 
-    var universeCount = universeSections.Sum(section => section.Games.Count);
+    var universeCount = universeSections.Sum(universeGroup => universeGroup.Games.Count);
 }
 
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
@@ -132,16 +132,16 @@
             </div>
 
             <div class="gf-universe-drawer__body">
-                @foreach (var section in universeSections)
+                @foreach (var universeSection in universeSections)
                 {
-                    <section class="gf-universe-section">
+                    <div class="gf-universe-section">
                         <div class="gf-universe-section__head">
-                            <h3 class="gf-universe-section__title">@section.Title</h3>
-                            <span class="gf-universe-section__count">@section.Games.Count</span>
+                            <h3 class="gf-universe-section__title">@universeSection.Title</h3>
+                            <span class="gf-universe-section__count">@universeSection.Games.Count</span>
                         </div>
 
                         <div class="gf-universe-list">
-                            @foreach (var relatedGame in section.Games)
+                            @foreach (var relatedGame in universeSection.Games)
                             {
                                 <a class="gf-universe-game"
                                    href="/games/@relatedGame.Id"
@@ -172,7 +172,7 @@
                                 </a>
                             }
                         </div>
-                    </section>
+                    </div>
                 }
             </div>
         </aside>
@@ -365,7 +365,7 @@
 
                 @if (hasMedia)
                 {
-                    <section class="gf-media-room" data-media-room>
+                    <div class="gf-media-room" data-media-room>
                         <div class="gf-media-room__head">
                             <div>
                                 <h2>Media Room</h2>
@@ -428,7 +428,7 @@
                                 </button>
                             }
                         </div>
-                    </section>
+                    </div>
 
                     <div class="gf-media-lightbox"
                          data-media-lightbox
