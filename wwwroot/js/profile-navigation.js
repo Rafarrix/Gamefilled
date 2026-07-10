@@ -1,9 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
+    if (!document.querySelector('link[data-notification-bell]')) {
+        const stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = '/css/notification-bell.css';
+        stylesheet.dataset.notificationBell = 'true';
+        document.head.appendChild(stylesheet);
+    }
+
     const bell = document.getElementById('nav-notification-bell');
     const bellItem = bell?.closest('.nav-item');
     const indicator = bell?.querySelector('.notification-indicator');
 
     if (bell && bellItem && indicator) {
+        bellItem.hidden = true;
+        indicator.hidden = true;
+
         fetch('/api/notifications/unread', {
             credentials: 'same-origin',
             headers: { 'Accept': 'application/json' }
@@ -22,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (!data) return;
 
+                bellItem.hidden = false;
                 const count = Number(data.count) || 0;
                 if (count <= 0) {
                     indicator.hidden = true;
@@ -35,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 bell.setAttribute('aria-label', `Notifications, ${count} unread`);
             })
             .catch(() => {
+                bellItem.hidden = false;
                 indicator.hidden = true;
                 indicator.textContent = '';
             });
