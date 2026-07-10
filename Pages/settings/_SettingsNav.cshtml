@@ -1,53 +1,19 @@
 @{
     var active = (ViewData["ActiveSettings"] as string) ?? "Overview";
 }
-
 <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/settings-v2.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/audit-hotfix.css" asp-append-version="true" />
-
 <aside class="settings-nav" aria-label="Settings navigation">
-    <div class="settings-nav-title">
-        <h3>Settings</h3>
-        <p>Profile and account controls.</p>
-    </div>
-
+    <div class="settings-nav-title"><h3>Settings</h3><p>Profile and account controls.</p></div>
     <nav class="settings-nav-list">
         <div class="settings-nav-group-label">Profile</div>
-
-        <a class="settings-link @(active == "Overview" ? "active" : string.Empty)" href="/Settings">
-            <span class="settings-link__icon"><i class="fas fa-table-cells-large" aria-hidden="true"></i></span>
-            <span class="settings-link__copy"><strong>Overview</strong><small>Settings home</small></span>
-        </a>
-
-        <a class="settings-link @(active == "Profile" ? "active" : string.Empty)" href="/Settings/Profile">
-            <span class="settings-link__icon"><i class="fas fa-user-pen" aria-hidden="true"></i></span>
-            <span class="settings-link__copy"><strong>Profile</strong><small>Name, bio and media</small></span>
-        </a>
-
-        <a class="settings-link @(active == "FavoriteGames" ? "active" : string.Empty)" href="/Settings/FavoriteGames">
-            <span class="settings-link__icon"><i class="fas fa-crown" aria-hidden="true"></i></span>
-            <span class="settings-link__copy"><strong>Favorite games</strong><small>Featured shelf</small></span>
-        </a>
-
+        <a class="settings-link @(active == "Overview" ? "active" : string.Empty)" href="/Settings"><span class="settings-link__icon"><i class="fas fa-table-cells-large" aria-hidden="true"></i></span><span class="settings-link__copy"><strong>Overview</strong><small>Settings home</small></span></a>
+        <a class="settings-link @(active == "Profile" ? "active" : string.Empty)" href="/Settings/Profile"><span class="settings-link__icon"><i class="fas fa-user-pen" aria-hidden="true"></i></span><span class="settings-link__copy"><strong>Profile</strong><small>Name, bio and media</small></span></a>
+        <a class="settings-link @(active == "FavoriteGames" ? "active" : string.Empty)" href="/Settings/FavoriteGames"><span class="settings-link__icon"><i class="fas fa-crown" aria-hidden="true"></i></span><span class="settings-link__copy"><strong>Favorite games</strong><small>Featured shelf</small></span></a>
         <div class="settings-nav-group-label">Account</div>
-
-        <a class="settings-link @(active == "Account" ? "active" : string.Empty)" href="/Settings/Account">
-            <span class="settings-link__icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
-            <span class="settings-link__copy"><strong>Account & security</strong><small>Email and password</small></span>
-            <span class="settings-link__badge">Live</span>
-        </a>
-
-        <a class="settings-link @(active == "Notifications" ? "active" : string.Empty)" href="/Settings/Notifications">
-            <span class="settings-link__icon"><i class="fas fa-bell" aria-hidden="true"></i></span>
-            <span class="settings-link__copy"><strong>Notifications</strong><small>Alert preferences</small></span>
-            <span class="settings-link__badge">Planned</span>
-        </a>
-
-        <a class="settings-link @(active == "Integrations" ? "active" : string.Empty)" href="/Settings/Integrations">
-            <span class="settings-link__icon"><i class="fas fa-plug" aria-hidden="true"></i></span>
-            <span class="settings-link__copy"><strong>Integrations</strong><small>Steam and services</small></span>
-            <span class="settings-link__badge">Planned</span>
-        </a>
+        <a class="settings-link @(active == "Account" ? "active" : string.Empty)" href="/Settings/Account"><span class="settings-link__icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span><span class="settings-link__copy"><strong>Account & security</strong><small>Email and password</small></span><span class="settings-link__badge">Live</span></a>
+        <a class="settings-link @(active == "Notifications" ? "active" : string.Empty)" href="/Settings/Notifications"><span class="settings-link__icon"><i class="fas fa-bell" aria-hidden="true"></i></span><span class="settings-link__copy"><strong>Notifications</strong><small>Alert preferences</small></span><span class="settings-link__badge">Planned</span></a>
+        <a class="settings-link @(active == "Integrations" ? "active" : string.Empty)" href="/Settings/Integrations"><span class="settings-link__icon"><i class="fas fa-plug" aria-hidden="true"></i></span><span class="settings-link__copy"><strong>Integrations</strong><small>Steam and services</small></span><span class="settings-link__badge">Planned</span></a>
     </nav>
 </aside>
