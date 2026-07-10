@@ -9,84 +9,39 @@
 <div class="gf-settings-page">
     <div class="gf-settings-shell">
         <header class="gf-settings-heading">
-            <div>
-                <span class="gf-eyebrow">Account</span>
-                <h1>Account & security</h1>
-                <p>Update your email or password.</p>
-            </div>
+            <div><span class="gf-eyebrow">Account</span><h1>Account & security</h1><p>Update your email or password.</p></div>
         </header>
-
         <div class="gf-settings-layout">
             <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
-
             <main class="gf-settings-content">
                 <div class="gf-settings-account-meta" aria-label="Account summary">
                     <div><span>Username</span><strong>@@@Model.Username</strong></div>
                     <div><span>Email</span><strong>@Model.Email</strong></div>
                     <div><span>Member since</span><strong>@Model.CreatedAt.ToString("MMM yyyy")</strong></div>
                 </div>
-
                 <div class="gf-settings-account-grid">
                     <section class="gf-panel">
-                        <div class="gf-panel__header">
-                            <div><h2>Change email</h2><p>Confirm the change with your password.</p></div>
-                        </div>
+                        <div class="gf-panel__header"><div><h2>Change email</h2><p>Confirm the change with your password.</p></div></div>
                         <div class="gf-panel__body">
-                            @if (!string.IsNullOrWhiteSpace(Model.EmailSuccess))
-                            {
-                                <div class="gf-alert gf-alert--success" role="status">@Model.EmailSuccess</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(Model.EmailError))
-                            {
-                                <div class="gf-alert gf-alert--danger" role="alert">@Model.EmailError</div>
-                            }
-
+                            @if (!string.IsNullOrWhiteSpace(Model.EmailSuccess)) { <div class="gf-alert gf-alert--success" role="status">@Model.EmailSuccess</div> }
+                            @if (!string.IsNullOrWhiteSpace(Model.EmailError)) { <div class="gf-alert gf-alert--danger" role="alert">@Model.EmailError</div> }
                             <form method="post" asp-page-handler="Email">
-                                <div class="gf-field">
-                                    <label class="gf-label" asp-for="Email">Email</label>
-                                    <input class="gf-input" asp-for="Email" type="email" autocomplete="email" />
-                                </div>
-                                <div class="gf-field">
-                                    <label class="gf-label" asp-for="EmailCurrentPassword">Current password</label>
-                                    <input class="gf-input" asp-for="EmailCurrentPassword" type="password" autocomplete="current-password" />
-                                </div>
-                                <div class="gf-settings-actions">
-                                    <button type="submit" class="gf-btn gf-btn--primary"><i class="fas fa-envelope" aria-hidden="true"></i>Update email</button>
-                                </div>
+                                <div class="gf-field"><label class="gf-label" asp-for="Email">Email</label><input class="gf-input" asp-for="Email" type="email" autocomplete="email" /></div>
+                                <div class="gf-field"><label class="gf-label" asp-for="EmailCurrentPassword">Current password</label><input class="gf-input" asp-for="EmailCurrentPassword" type="password" autocomplete="current-password" /></div>
+                                <div class="gf-settings-actions"><button type="submit" class="gf-btn gf-btn--primary"><i class="fas fa-envelope" aria-hidden="true"></i>Update email</button></div>
                             </form>
                         </div>
                     </section>
-
                     <section class="gf-panel">
-                        <div class="gf-panel__header">
-                            <div><h2>Change password</h2><p>Use at least eight characters with a letter and number.</p></div>
-                        </div>
+                        <div class="gf-panel__header"><div><h2>Change password</h2><p>Use at least eight characters with a letter and number.</p></div></div>
                         <div class="gf-panel__body">
-                            @if (!string.IsNullOrWhiteSpace(Model.PasswordSuccess))
-                            {
-                                <div class="gf-alert gf-alert--success" role="status">@Model.PasswordSuccess</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(Model.PasswordError))
-                            {
-                                <div class="gf-alert gf-alert--danger" role="alert">@Model.PasswordError</div>
-                            }
-
+                            @if (!string.IsNullOrWhiteSpace(Model.PasswordSuccess)) { <div class="gf-alert gf-alert--success" role="status">@Model.PasswordSuccess</div> }
+                            @if (!string.IsNullOrWhiteSpace(Model.PasswordError)) { <div class="gf-alert gf-alert--danger" role="alert">@Model.PasswordError</div> }
                             <form method="post" asp-page-handler="Password">
-                                <div class="gf-field">
-                                    <label class="gf-label" asp-for="PasswordCurrentPassword">Current password</label>
-                                    <input class="gf-input" asp-for="PasswordCurrentPassword" type="password" autocomplete="current-password" />
-                                </div>
-                                <div class="gf-field">
-                                    <label class="gf-label" asp-for="NewPassword">New password</label>
-                                    <input class="gf-input" asp-for="NewPassword" type="password" autocomplete="new-password" />
-                                </div>
-                                <div class="gf-field">
-                                    <label class="gf-label" asp-for="ConfirmNewPassword">Confirm new password</label>
-                                    <input class="gf-input" asp-for="ConfirmNewPassword" type="password" autocomplete="new-password" />
-                                </div>
-                                <div class="gf-settings-actions">
-                                    <button type="submit" class="gf-btn gf-btn--primary"><i class="fas fa-key" aria-hidden="true"></i>Update password</button>
-                                </div>
+                                <div class="gf-field"><label class="gf-label" asp-for="PasswordCurrentPassword">Current password</label><input class="gf-input" asp-for="PasswordCurrentPassword" type="password" autocomplete="current-password" /></div>
+                                <div class="gf-field"><label class="gf-label" asp-for="NewPassword">New password</label><input class="gf-input" asp-for="NewPassword" type="password" autocomplete="new-password" /></div>
+                                <div class="gf-field"><label class="gf-label" asp-for="ConfirmNewPassword">Confirm new password</label><input class="gf-input" asp-for="ConfirmNewPassword" type="password" autocomplete="new-password" /></div>
+                                <div class="gf-settings-actions"><button type="submit" class="gf-btn gf-btn--primary"><i class="fas fa-key" aria-hidden="true"></i>Update password</button></div>
                             </form>
                         </div>
                     </section>
