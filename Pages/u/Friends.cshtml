@@ -1,4 +1,4 @@
-﻿@page "/u/{username}/friends"
+@page "/u/{username}/friends"
 @model Gamefilled.Pages.u.FriendsModel
 @{
     ViewData["Title"] = $"{Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username} - Friends";
@@ -16,8 +16,8 @@
                 @foreach (var user in Model.Friends)
                 {
                     var avatar = string.IsNullOrWhiteSpace(user.AvatarUrl)
-                    ? "/lib/imgs/defaultavatar.png"
-                    : user.AvatarUrl;
+                        ? "/lib/imgs/defaultavatar.png"
+                        : user.AvatarUrl;
 
                     var displayName = user.DisplayName ?? user.Username ?? "User";
 
@@ -30,7 +30,7 @@
 
                             <div class="gf-profile-userlist__status @(user.IsOnlineNow ? "is-online" : "is-offline")">
                                 <span class="gf-profile-userlist__status-dot"></span>
-                                <span>@(user.IsOnlineNow ? "Online" : "Offline")</span>
+                                <span>@user.PresenceText</span>
                             </div>
                         </div>
                     </a>
@@ -40,7 +40,7 @@
         else
         {
             <div class="gf-profile-empty-state">
-                No friends yet.
+                No mutual connections yet.
             </div>
         }
     </div>
