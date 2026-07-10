@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Gamefilled.Application.Social;
 using Gamefilled.Data;
 using Gamefilled.Infrastructure;
 using Gamefilled.Models;
@@ -7,92 +9,95 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gamefilled.Pages.u
 {
-    /// <summary>
-    /// Página principal de perfil de utilizador.
-    ///
-    /// Responsabilidades:
-    /// - carregar utilizador do perfil
-    /// - calcular followers/following
-    /// - detetar se é o próprio perfil
-    /// - carregar favoritos, atividade, seguidores e following
-    /// - preparar estado dos tabs
-    /// </summary>
     public class ProfileModel : PageModel
     {
         private readonly AppDbContext _db;
         private readonly IgdbClient _igdb;
+        private readonly SocialGraphService _socialGraph;
 
-        public ProfileModel(AppDbContext db, IgdbClient igdb)
+        private SocialGraphSnapshot _profileGraph = SocialGraphSnapshot.Empty;
+
+        public ProfileModel(AppDbContext db, IgdbClient igdb, SocialGraphService socialGraph)
         {
             _db = db;
             _igdb = igdb;
+            _socialGraph = socialGraph;
         }
 
         public User ProfileUser { get; set; } = default!;
-
         public int FollowersCount { get; set; }
         public int FollowingCount { get; set; }
-
+        public int MutualConnectionsCount { get; set; }
         public bool IsOwnProfile { get; set; }
         public bool IsFollowing { get; set; }
-
+        public bool IsMutualWithViewer { get; set; }
         public string ActiveTab { get; set; } = "profile";
-
-        public string MemberSinceText { get; set; } = "";
+        public string MemberSinceText { get; set; } = string.Empty;
         public bool IsOnlineNow { get; set; }
-        public string OnlineStatusText { get; set; } = "";
+        public string OnlineStatusText { get; set; } = "Offline";
+
+        public int TotalTrackedGames { get; set; }
+        public int ReviewCount { get; set; }
+        public double? AverageRating { get; set; }
+        public IReadOnlyDictionary<string, int> LibraryCounts { get; private set; } =
+            new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         public List<ProfileFavoriteGameViewModel> FavoriteGames { get; set; } = new();
         public List<ProfileFollowUserViewModel> FollowersUsers { get; set; } = new();
         public List<ProfileFollowUserViewModel> FollowingUsers { get; set; } = new();
         public List<ProfileActivityItemViewModel> ActivityItems { get; set; } = new();
+        public List<ProfileGameEntryViewModel> RecentGames { get; set; } = new();
+        public List<ProfileGameEntryViewModel> RecentReviews { get; set; } = new();
+
+        public int LibraryCount(string status) =>
+            LibraryCounts.TryGetValue(status, out var count) ? count : 0;
 
         public async Task<IActionResult> OnGetAsync(string username, string? tab, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(username))
                 return NotFound();
 
-            // Carrega o utilizador do perfil.
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username, ct);
+            var user = await _db.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item => item.Username == username, ct);
+
             if (user == null)
                 return NotFound();
 
             ProfileUser = user;
-
-            // Normaliza o tab ativo.
             ActiveTab = NormalizeTab(tab);
 
-            // Deteta se o perfil aberto é o próprio.
             var currentUsername = HttpContext.Session.GetString("username");
-            IsOwnProfile = currentUsername == username;
+            IsOwnProfile = string.Equals(currentUsername, username, StringComparison.OrdinalIgnoreCase);
 
-            // Conta followers e following.
-            FollowersCount = await _db.Follows.CountAsync(f => f.FollowingId == ProfileUser.Id, ct);
-            FollowingCount = await _db.Follows.CountAsync(f => f.FollowerId == ProfileUser.Id, ct);
+            _profileGraph = await _socialGraph.GetSnapshotAsync(ProfileUser.Id, ct);
+            FollowersCount = _profileGraph.FollowerIds.Count;
+            FollowingCount = _profileGraph.FollowingIds.Count;
+            MutualConnectionsCount = _profileGraph.MutualIds.Count;
 
-            // Se existir utilizador autenticado e não for o próprio perfil,
-            // verifica se já segue este utilizador.
             if (!string.IsNullOrWhiteSpace(currentUsername) && !IsOwnProfile)
             {
-                var currentUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == currentUsername, ct);
+                var currentUser = await _db.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(item => item.Username == currentUsername, ct);
 
                 if (currentUser != null)
                 {
-                    IsFollowing = await _db.Follows.AnyAsync(f =>
-                        f.FollowerId == currentUser.Id &&
-                        f.FollowingId == ProfileUser.Id, ct);
+                    var viewerGraph = await _socialGraph.GetSnapshotAsync(currentUser.Id, ct);
+                    IsFollowing = viewerGraph.FollowingIds.Contains(ProfileUser.Id);
+                    IsMutualWithViewer = viewerGraph.MutualIds.Contains(ProfileUser.Id);
                 }
             }
 
-            // Informação adicional do perfil.
-            MemberSinceText = ProfileUser.CreatedAt.ToString("MM/yyyy");
-            BuildOnlineStatus(ProfileUser.LastSeenAt);
+            MemberSinceText = ProfileUser.CreatedAt.ToString("MMMM yyyy");
+            var utcNow = DateTime.UtcNow;
+            IsOnlineNow = UserPresence.IsOnline(ProfileUser.LastSeenAt, utcNow);
+            OnlineStatusText = UserPresence.Describe(ProfileUser.LastSeenAt, utcNow);
 
-            // Dados comuns à página principal do perfil.
             await LoadFavoriteGamesAsync(ct);
+            await LoadLibraryAsync(ct);
             await LoadActivityAsync(ct);
 
-            // Só carrega listas detalhadas se o tab pedir.
             if (ActiveTab == "followers")
                 await LoadFollowersAsync(ct);
 
@@ -102,138 +107,220 @@ namespace Gamefilled.Pages.u
             return Page();
         }
 
-        /* =====================================================================
-           FAVORITE GAMES
-           ===================================================================== */
-
         private async Task LoadFavoriteGamesAsync(CancellationToken ct)
         {
             var favoriteRows = await _db.UserFavoriteGames
-                .Where(x => x.UserId == ProfileUser.Id)
-                .OrderBy(x => x.SortOrder)
+                .AsNoTracking()
+                .Where(item => item.UserId == ProfileUser.Id)
+                .OrderBy(item => item.SortOrder)
                 .ToListAsync(ct);
 
-            var gameIds = favoriteRows
-                .Select(x => x.GameId)
-                .ToList();
-
-            // Usa o serviço IGDB já existente no projeto.
+            var gameIds = favoriteRows.Select(item => item.GameId).ToList();
             var igdbGames = await _igdb.GetGamesByIdsAsync(gameIds, ct);
-            var byId = igdbGames.ToDictionary(x => x.Id, x => x);
+            var byId = igdbGames.ToDictionary(item => item.Id, item => item);
 
             FavoriteGames = favoriteRows
-                .Select(x =>
+                .Select(item =>
                 {
-                    byId.TryGetValue(x.GameId, out var game);
-
+                    byId.TryGetValue(item.GameId, out var game);
                     return new ProfileFavoriteGameViewModel
                     {
-                        GameId = x.GameId,
-                        SortOrder = x.SortOrder,
-                        IsPrimary = x.IsPrimary,
+                        GameId = item.GameId,
+                        SortOrder = item.SortOrder,
+                        IsPrimary = item.IsPrimary,
                         Name = game?.Name,
-                        CoverUrl = string.IsNullOrWhiteSpace(game?.Cover?.ImageId)
-                            ? null
-                            : $"https://images.igdb.com/igdb/image/upload/t_cover_big/{game.Cover.ImageId}.jpg"
+                        CoverUrl = BuildCoverUrl(game?.Cover?.ImageId)
                     };
                 })
-                .OrderBy(x => x.SortOrder)
+                .OrderBy(item => item.SortOrder)
                 .ToList();
         }
 
-        /* =====================================================================
-           FOLLOWERS
-           ===================================================================== */
+        private async Task LoadLibraryAsync(CancellationToken ct)
+        {
+            var entries = await _db.UserGameEntries
+                .AsNoTracking()
+                .Where(item => item.UserId == ProfileUser.Id)
+                .OrderByDescending(item => item.UpdatedAt)
+                .ToListAsync(ct);
+
+            TotalTrackedGames = entries.Count;
+            ReviewCount = entries.Count(item => !string.IsNullOrWhiteSpace(item.ReviewText));
+            AverageRating = entries.Where(item => item.Rating.HasValue)
+                .Select(item => (double?)item.Rating)
+                .Average();
+
+            LibraryCounts = entries
+                .GroupBy(item => item.Status, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+
+            var recentRows = entries.Take(8).ToList();
+            var reviewRows = entries
+                .Where(item => !string.IsNullOrWhiteSpace(item.ReviewText))
+                .Take(12)
+                .ToList();
+
+            var gameIds = recentRows
+                .Concat(reviewRows)
+                .Select(item => item.GameId)
+                .Distinct()
+                .ToArray();
+
+            var games = await _igdb.GetGamesByIdsAsync(gameIds, ct);
+            var gamesById = games.ToDictionary(item => item.Id, item => item);
+
+            RecentGames = recentRows
+                .Select(item => MapGameEntry(item, gamesById))
+                .ToList();
+
+            RecentReviews = reviewRows
+                .Select(item => MapGameEntry(item, gamesById))
+                .ToList();
+        }
 
         private async Task LoadFollowersAsync(CancellationToken ct)
         {
-            // IDs que o utilizador segue, para saber quem é amigo mútuo.
-            var profileFollowingIds = (await _db.Follows
-                .Where(f => f.FollowerId == ProfileUser.Id)
-                .Select(f => f.FollowingId)
-                .ToListAsync(ct))
-                .ToHashSet();
-
-            var followers = await _db.Follows
-                .Where(f => f.FollowingId == ProfileUser.Id)
-                .Include(f => f.Follower)
-                .OrderByDescending(f => f.CreatedAt)
-                .Select(f => f.Follower!)
+            var users = await _db.Users
+                .AsNoTracking()
+                .Where(user => _profileGraph.FollowerIds.Contains(user.Id))
                 .ToListAsync(ct);
 
-            FollowersUsers = followers
-                .Select(u => new ProfileFollowUserViewModel
-                {
-                    Username = u.Username,
-                    DisplayName = u.DisplayName,
-                    AvatarUrl = u.AvatarUrl,
-                    IsOnlineNow = IsUserOnline(u.LastSeenAt),
-                    StatusText = IsUserOnline(u.LastSeenAt) ? "Online" : "Offline",
-                    IsFriend = profileFollowingIds.Contains(u.Id)
-                })
-                .ToList();
+            FollowersUsers = BuildFollowUsers(users);
         }
-
-        /* =====================================================================
-           FOLLOWING
-           ===================================================================== */
 
         private async Task LoadFollowingAsync(CancellationToken ct)
         {
-            // IDs que seguem o utilizador, para marcar amizade mútua.
-            var profileFollowerIds = (await _db.Follows
-                .Where(f => f.FollowingId == ProfileUser.Id)
-                .Select(f => f.FollowerId)
-                .ToListAsync(ct))
-                .ToHashSet();
-
-            var following = await _db.Follows
-                .Where(f => f.FollowerId == ProfileUser.Id)
-                .Include(f => f.Following)
-                .OrderByDescending(f => f.CreatedAt)
-                .Select(f => f.Following!)
+            var users = await _db.Users
+                .AsNoTracking()
+                .Where(user => _profileGraph.FollowingIds.Contains(user.Id))
                 .ToListAsync(ct);
 
-            FollowingUsers = following
-                .Select(u => new ProfileFollowUserViewModel
-                {
-                    Username = u.Username,
-                    DisplayName = u.DisplayName,
-                    AvatarUrl = u.AvatarUrl,
-                    IsOnlineNow = IsUserOnline(u.LastSeenAt),
-                    StatusText = IsUserOnline(u.LastSeenAt) ? "Online" : "Offline",
-                    IsFriend = profileFollowerIds.Contains(u.Id)
-                })
-                .ToList();
+            FollowingUsers = BuildFollowUsers(users);
         }
 
-        /* =====================================================================
-           ACTIVITY
-           ===================================================================== */
+        private List<ProfileFollowUserViewModel> BuildFollowUsers(IEnumerable<User> users)
+        {
+            var utcNow = DateTime.UtcNow;
+
+            return users
+                .Select(user => new ProfileFollowUserViewModel
+                {
+                    Username = user.Username,
+                    DisplayName = user.DisplayName,
+                    AvatarUrl = user.AvatarUrl,
+                    IsOnlineNow = UserPresence.IsOnline(user.LastSeenAt, utcNow),
+                    StatusText = UserPresence.Describe(user.LastSeenAt, utcNow),
+                    IsFriend = _profileGraph.MutualIds.Contains(user.Id)
+                })
+                .OrderByDescending(user => user.IsOnlineNow)
+                .ThenBy(user => user.DisplayName ?? user.Username)
+                .ToList();
+        }
 
         private async Task LoadActivityAsync(CancellationToken ct)
         {
             var activities = await _db.UserActivities
-                .Where(x => x.UserId == ProfileUser.Id)
-                .Include(x => x.TargetUser)
-                .OrderByDescending(x => x.CreatedAt)
-                .Take(20)
+                .AsNoTracking()
+                .Where(item => item.UserId == ProfileUser.Id)
+                .Include(item => item.TargetUser)
+                .OrderByDescending(item => item.CreatedAt)
+                .Take(30)
                 .ToListAsync(ct);
 
+            var gameIds = activities
+                .Where(item => item.GameId.HasValue)
+                .Select(item => item.GameId!.Value)
+                .Distinct()
+                .ToArray();
+
+            var games = await _igdb.GetGamesByIdsAsync(gameIds, ct);
+            var gamesById = games.ToDictionary(item => item.Id, item => item);
+
             ActivityItems = activities
-                .Select(x => new ProfileActivityItemViewModel
+                .Select(item =>
                 {
-                    Type = x.Type,
-                    CreatedAt = x.CreatedAt,
-                    TargetUsername = x.TargetUser?.Username,
-                    TargetDisplayName = x.TargetUser?.DisplayName
+                    IgdbGameDto? game = null;
+                    if (item.GameId.HasValue)
+                        gamesById.TryGetValue(item.GameId.Value, out game);
+
+                    return new ProfileActivityItemViewModel
+                    {
+                        Type = item.Type,
+                        CreatedAt = item.CreatedAt,
+                        TargetUsername = item.TargetUser?.Username,
+                        TargetDisplayName = item.TargetUser?.DisplayName,
+                        GameId = item.GameId,
+                        GameName = game?.Name,
+                        GameCoverUrl = BuildCoverUrl(game?.Cover?.ImageId),
+                        Status = ReadMetaString(item.MetaJson, "status"),
+                        Rating = ReadMetaInt(item.MetaJson, "rating")
+                    };
                 })
                 .ToList();
         }
 
-        /* =====================================================================
-           HELPERS
-           ===================================================================== */
+        private static ProfileGameEntryViewModel MapGameEntry(
+            UserGameEntry entry,
+            IReadOnlyDictionary<int, IgdbGameDto> gamesById)
+        {
+            gamesById.TryGetValue(entry.GameId, out var game);
+
+            return new ProfileGameEntryViewModel
+            {
+                GameId = entry.GameId,
+                Name = game?.Name ?? $"Game {entry.GameId}",
+                CoverUrl = BuildCoverUrl(game?.Cover?.ImageId),
+                Status = entry.Status,
+                Rating = entry.Rating,
+                ReviewText = entry.ReviewText,
+                ContainsSpoilers = entry.ContainsSpoilers,
+                UpdatedAt = entry.UpdatedAt
+            };
+        }
+
+        private static string? BuildCoverUrl(string? imageId) =>
+            string.IsNullOrWhiteSpace(imageId)
+                ? null
+                : $"https://images.igdb.com/igdb/image/upload/t_cover_big/{imageId}.jpg";
+
+        private static string? ReadMetaString(string? json, string property)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                return document.RootElement.TryGetProperty(property, out var value) &&
+                       value.ValueKind == JsonValueKind.String
+                    ? value.GetString()
+                    : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private static int? ReadMetaInt(string? json, string property)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                return document.RootElement.TryGetProperty(property, out var value) &&
+                       value.ValueKind == JsonValueKind.Number &&
+                       value.TryGetInt32(out var result)
+                    ? result
+                    : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
 
         private static string NormalizeTab(string? tab)
         {
@@ -250,61 +337,40 @@ namespace Gamefilled.Pages.u
                 _ => "profile"
             };
         }
-
-        private void BuildOnlineStatus(DateTime? lastSeenAt)
-        {
-            if (lastSeenAt == null)
-            {
-                IsOnlineNow = false;
-                OnlineStatusText = "Offline";
-                return;
-            }
-
-            var now = DateTime.UtcNow;
-            var diff = now - lastSeenAt.Value;
-
-            if (diff <= TimeSpan.FromMinutes(5))
-            {
-                IsOnlineNow = true;
-                OnlineStatusText = "Online";
-                return;
-            }
-
-            IsOnlineNow = false;
-            OnlineStatusText = "Offline";
-        }
-
-        private static bool IsUserOnline(DateTime? lastSeenAt)
-        {
-            if (lastSeenAt == null) return false;
-            return (DateTime.UtcNow - lastSeenAt.Value) <= TimeSpan.FromMinutes(5);
-        }
     }
 
-    /// <summary>
-    /// ViewModel para followers/following no perfil.
-    /// </summary>
     public class ProfileFollowUserViewModel
     {
         public string? Username { get; set; }
         public string? DisplayName { get; set; }
         public string? AvatarUrl { get; set; }
-
         public bool IsOnlineNow { get; set; }
         public string StatusText { get; set; } = "Offline";
-
         public bool IsFriend { get; set; }
     }
 
-    /// <summary>
-    /// ViewModel para itens de atividade do perfil.
-    /// </summary>
     public class ProfileActivityItemViewModel
     {
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
-
         public string? TargetUsername { get; set; }
         public string? TargetDisplayName { get; set; }
+        public int? GameId { get; set; }
+        public string? GameName { get; set; }
+        public string? GameCoverUrl { get; set; }
+        public string? Status { get; set; }
+        public int? Rating { get; set; }
+    }
+
+    public class ProfileGameEntryViewModel
+    {
+        public int GameId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? CoverUrl { get; set; }
+        public string Status { get; set; } = GameLibraryStatus.Backlog;
+        public int? Rating { get; set; }
+        public string? ReviewText { get; set; }
+        public bool ContainsSpoilers { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

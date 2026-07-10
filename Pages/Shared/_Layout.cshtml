@@ -27,6 +27,7 @@
     var registerActive = currentPath == "/users/register";
     var loginActive = currentPath == "/users/login";
     var gamesActive = currentPath == "/games" || currentPath.StartsWith("/games/");
+    var peopleActive = currentPath == "/people" || currentPath.StartsWith("/people/");
     var companiesActive = currentPath == "/company" || currentPath.StartsWith("/company/");
     var notificationsActive = currentPath == "/notifications" || currentPath.StartsWith("/notifications/");
     var profileActive = !string.IsNullOrWhiteSpace(username) &&
@@ -217,6 +218,10 @@
                         <li class="nav-item mr-1">
                             <a class="nav-link @(gamesActive ? "is-active" : string.Empty)"
                                href="/games">Games</a>
+                        </li>
+                        <li class="nav-item mr-1">
+                            <a class="nav-link @(peopleActive ? "is-active" : string.Empty)"
+                               href="/people">People</a>
                         </li>
                         <li class="nav-item mr-2">
                             <a class="nav-link @(companiesActive ? "is-active" : string.Empty)"

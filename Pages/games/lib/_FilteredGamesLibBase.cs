@@ -53,10 +53,10 @@ public abstract class _FilteredGamesLibBase : _GamesLibBase, IAsyncPageFilter
         MinimumRating.HasValue ||
         !string.IsNullOrWhiteSpace(ReleaseStatus);
 
-    public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) =>
+    public override Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) =>
         Task.CompletedTask;
 
-    public async Task OnPageHandlerExecutionAsync(
+    public override async Task OnPageHandlerExecutionAsync(
         PageHandlerExecutingContext context,
         PageHandlerExecutionDelegate next)
     {

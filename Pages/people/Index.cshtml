@@ -1,0 +1,252 @@
+@page "/people"
+@model Gamefilled.Pages.people.IndexModel
+@{
+    ViewData["Title"] = "People";
+    ViewData["FullBleed"] = true;
+
+    var returnUrl = $"{HttpContext.Request.Path}{HttpContext.Request.QueryString}";
+    var shownFrom = Model.TotalUsers == 0 ? 0 : ((Model.PageNumber - 1) * 18) + 1;
+    var shownTo = Math.Min(Model.PageNumber * 18, Model.TotalUsers);
+
+    string FilterClass(string filter) => Model.Filter == filter ? "is-active" : string.Empty;
+}
+
+<link rel="stylesheet" href="~/css/people.css" asp-append-version="true" />
+
+<div class="gf-people-page">
+    <section class="gf-people-hero">
+        <div class="gf-people-hero__glow gf-people-hero__glow--one"></div>
+        <div class="gf-people-hero__glow gf-people-hero__glow--two"></div>
+
+        <div class="container gf-people-hero__inner">
+            <div class="gf-people-hero__copy">
+                <div class="gf-people-eyebrow">Gamefilled community</div>
+                <h1>Find people who play like you.</h1>
+                <p>
+                    Discover profiles, follow players, compare libraries and build the social side of your backlog.
+                </p>
+            </div>
+
+            <div class="gf-people-hero__stats" aria-label="Community overview">
+                <div>
+                    <strong>@Model.TotalUsers</strong>
+                    <span>matching people</span>
+                </div>
+                <div>
+                    <strong>@Model.OnlineUsers</strong>
+                    <span>online now</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="container gf-people-shell">
+        <section class="gf-people-toolbar" aria-label="People search and filters">
+            <form method="get" class="gf-people-search">
+                @if (Model.Filter != "all")
+                {
+                    <input type="hidden" name="filter" value="@Model.Filter" />
+                }
+
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search"
+                       name="q"
+                       value="@Model.Query"
+                       placeholder="Search by username or display name"
+                       autocomplete="off"
+                       aria-label="Search people" />
+                <button type="submit">Search</button>
+            </form>
+
+            <nav class="gf-people-filters" aria-label="People filters">
+                <a class="@FilterClass("all")" href="@Model.FilterUrl("all")">All</a>
+                <a class="@FilterClass("online")" href="@Model.FilterUrl("online")">
+                    <span class="gf-presence-dot is-online" aria-hidden="true"></span>
+                    Online
+                </a>
+                <a class="@FilterClass("following")" href="@Model.FilterUrl("following")">Following</a>
+                <a class="@FilterClass("mutual")" href="@Model.FilterUrl("mutual")">Mutuals</a>
+            </nav>
+        </section>
+
+        <div class="gf-people-results-head">
+            <div>
+                <h2>
+                    @if (!string.IsNullOrWhiteSpace(Model.Query))
+                    {
+                        <text>Results for “@Model.Query”</text>
+                    }
+                    else
+                    {
+                        <text>Discover people</text>
+                    }
+                </h2>
+                <p>
+                    @if (Model.TotalUsers > 0)
+                    {
+                        <text>Showing @shownFrom–@shownTo of @Model.TotalUsers profiles.</text>
+                    }
+                    else
+                    {
+                        <text>No profiles match the current search.</text>
+                    }
+                </p>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Query) || Model.Filter != "all")
+            {
+                <a class="gf-people-clear" href="/people">
+                    <i class="fas fa-xmark" aria-hidden="true"></i>
+                    Clear
+                </a>
+            }
+        </div>
+
+        @if (Model.People.Count > 0)
+        {
+            <section class="gf-people-grid" aria-label="People results">
+                @foreach (var person in Model.People)
+                {
+                    var avatar = string.IsNullOrWhiteSpace(person.AvatarUrl)
+                        ? "/lib/imgs/defaultavatar.png"
+                        : person.AvatarUrl;
+
+                    <article class="gf-person-card">
+                        <a class="gf-person-card__identity" href="/u/@person.Username">
+                            <span class="gf-person-card__avatar-wrap">
+                                <img class="gf-person-card__avatar" src="@avatar" alt="@person.DisplayName avatar" loading="lazy" />
+                                <span class="gf-presence-dot @(person.IsOnline ? "is-online" : string.Empty)"
+                                      title="@person.PresenceText"
+                                      aria-label="@person.PresenceText"></span>
+                            </span>
+
+                            <span class="gf-person-card__names">
+                                <strong>@person.DisplayName</strong>
+                                <small>@@@person.Username</small>
+                            </span>
+                        </a>
+
+                        <div class="gf-person-card__badges">
+                            @if (person.IsCurrentUser)
+                            {
+                                <span class="gf-social-badge is-you">You</span>
+                            }
+                            else if (person.IsMutual)
+                            {
+                                <span class="gf-social-badge is-mutual">
+                                    <i class="fas fa-user-group" aria-hidden="true"></i>
+                                    Mutual
+                                </span>
+                            }
+                            else if (person.IsFollowing)
+                            {
+                                <span class="gf-social-badge">Following</span>
+                            }
+
+                            <span class="gf-person-card__presence">@person.PresenceText</span>
+                        </div>
+
+                        <p class="gf-person-card__bio">
+                            @(string.IsNullOrWhiteSpace(person.Bio)
+                                ? $"Gamefilled member since {person.MemberSinceYear}."
+                                : person.Bio)
+                        </p>
+
+                        <div class="gf-person-card__stats">
+                            <a href="/u/@person.Username?tab=followers">
+                                <strong>@person.FollowersCount</strong>
+                                <span>Followers</span>
+                            </a>
+                            <a href="/u/@person.Username?tab=following">
+                                <strong>@person.FollowingCount</strong>
+                                <span>Following</span>
+                            </a>
+                            <a href="/u/@person.Username/games/">
+                                <strong>@person.GamesCount</strong>
+                                <span>Games</span>
+                            </a>
+                        </div>
+
+                        <div class="gf-person-card__actions">
+                            <a class="gf-person-card__profile" href="/u/@person.Username">View profile</a>
+
+                            @if (!person.IsCurrentUser)
+                            {
+                                @if (Model.IsAuthenticated)
+                                {
+                                    <form method="post" asp-page="/users/Follow">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="username" value="@person.Username" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="gf-person-card__follow @(person.IsFollowing ? "is-following" : string.Empty)">
+                                            @if (person.IsFollowing)
+                                            {
+                                                <i class="fas fa-check" aria-hidden="true"></i>
+                                                <span>Following</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                                <span>Follow</span>
+                                            }
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <a class="gf-person-card__follow" href="/users/Login?returnUrl=@Uri.EscapeDataString(returnUrl)">
+                                        <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                        <span>Follow</span>
+                                    </a>
+                                }
+                            }
+                        </div>
+                    </article>
+                }
+            </section>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="gf-people-pagination" aria-label="People pagination">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a href="@Model.PageUrl(Model.PageNumber - 1)" aria-label="Previous page">
+                            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="is-disabled"><i class="fas fa-chevron-left" aria-hidden="true"></i></span>
+                    }
+
+                    @for (var pageIndex = Math.Max(1, Model.PageNumber - 2); pageIndex <= Math.Min(Model.TotalPages, Model.PageNumber + 2); pageIndex++)
+                    {
+                        <a class="@(pageIndex == Model.PageNumber ? "is-active" : string.Empty)"
+                           href="@Model.PageUrl(pageIndex)"
+                           aria-current="@(pageIndex == Model.PageNumber ? "page" : null)">@pageIndex</a>
+                    }
+
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a href="@Model.PageUrl(Model.PageNumber + 1)" aria-label="Next page">
+                            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="is-disabled"><i class="fas fa-chevron-right" aria-hidden="true"></i></span>
+                    }
+                </nav>
+            }
+        }
+        else
+        {
+            <section class="gf-people-empty">
+                <span class="gf-people-empty__icon"><i class="fas fa-user-group" aria-hidden="true"></i></span>
+                <h2>No people found</h2>
+                <p>Try another username, display name or community filter.</p>
+                <a href="/people">Explore everyone</a>
+            </section>
+        }
+    </main>
+</div>
