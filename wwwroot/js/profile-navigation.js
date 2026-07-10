@@ -1,7 +1,44 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // The notification inbox is not implemented yet. Do not expose a broken
-    // destination in the global navigation; the bell returns with the real feature.
-    document.getElementById('nav-notification-bell')?.closest('.nav-item')?.remove();
+    const bell = document.getElementById('nav-notification-bell');
+    const bellItem = bell?.closest('.nav-item');
+    const indicator = bell?.querySelector('.notification-indicator');
+
+    if (bell && bellItem && indicator) {
+        fetch('/api/notifications/unread', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    bellItem.remove();
+                    return null;
+                }
+
+                if (!response.ok)
+                    throw new Error('Notification count unavailable.');
+
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return;
+
+                const count = Number(data.count) || 0;
+                if (count <= 0) {
+                    indicator.hidden = true;
+                    indicator.textContent = '';
+                    bell.setAttribute('aria-label', 'Notifications');
+                    return;
+                }
+
+                indicator.hidden = false;
+                indicator.textContent = count > 99 ? '99+' : String(count);
+                bell.setAttribute('aria-label', `Notifications, ${count} unread`);
+            })
+            .catch(() => {
+                indicator.hidden = true;
+                indicator.textContent = '';
+            });
+    }
 
     const profileRoute = window.location.pathname.match(/^\/u\/([^/]+)\/?$/i);
 
@@ -27,8 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const tab = url.searchParams.get('tab')?.toLowerCase();
 
-            // Lists does not have a real data model yet, so it is not exposed as
-            // an active profile destination until the feature is implemented.
             if (tab === 'lists') {
                 link.remove();
                 return;
