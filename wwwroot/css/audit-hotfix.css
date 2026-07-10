@@ -2,7 +2,7 @@
     width: 100%;
     min-height: calc(100vh - 58px);
     padding: clamp(96px, 8vw, 132px) 0 88px;
-    background: var(--gf-bg) !important;
+    background: #0e1015 !important;
 }
 
 .gf-settings-shell {
@@ -35,6 +35,7 @@
 .gf-settings-overview-card {
     min-height: 205px !important;
     padding: 25px !important;
+    background: #171b23 !important;
 }
 
 .gf-settings-overview-card h2 {
@@ -84,6 +85,34 @@
     overflow-wrap: anywhere;
 }
 
+/* Settings actions use the same restrained surface language as the rest of the site. */
+.gf-settings-page .gf-btn--primary {
+    border-color: rgba(74, 222, 128, .28);
+    background: rgba(0, 176, 32, .09);
+    color: #86efac;
+    box-shadow: none;
+}
+
+.gf-settings-page .gf-btn--primary:hover,
+.gf-settings-page .gf-btn--primary:focus-visible {
+    border-color: rgba(74, 222, 128, .42);
+    background: rgba(0, 176, 32, .16);
+    color: #dcfce7;
+}
+
+.gf-settings-page .gf-btn--secondary {
+    border-color: rgba(255,255,255,.10);
+    background: #171b23;
+    color: rgba(243,244,246,.82);
+}
+
+.gf-settings-page .gf-btn--secondary:hover,
+.gf-settings-page .gf-btn--secondary:focus-visible {
+    border-color: rgba(255,255,255,.18);
+    background: #1b2029;
+    color: #fff;
+}
+
 .gf-favorites-settings-content {
     min-width: 0;
 }
@@ -92,6 +121,36 @@
 .gf-favorites-settings-content .gf-favorites-canvas,
 .gf-favorites-settings-content .gf-edit-profile-card {
     border-color: var(--gf-border);
+}
+
+.gf-favorites-settings-content .gf-settings-account-grid {
+    grid-template-columns: 1fr;
+}
+
+.gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child .gf-panel__header {
+    border-bottom: 0;
+}
+
+.gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child .gf-panel__body {
+    padding-left: 0;
+}
+
+.gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child .gf-settings-actions {
+    margin-top: 0;
+    flex-wrap: nowrap;
+}
+
+.gf-favorite-card-editor.is-primary .gf-favorite-card-editor__btn.gf-favorite-primary-btn,
+.gf-favorite-card-editor__badge {
+    border-color: rgba(74,222,128,.30) !important;
+    background: rgba(6,78,59,.88) !important;
+    color: #bbf7d0 !important;
 }
 
 @media (max-width: 1280px) {
@@ -113,6 +172,18 @@
     .gf-settings-overview {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
+
+    .gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child {
+        grid-template-columns: 1fr;
+    }
+
+    .gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child .gf-panel__header {
+        border-bottom: 1px solid var(--gf-border);
+    }
+
+    .gf-favorites-settings-content .gf-settings-account-grid > .gf-panel:last-child .gf-panel__body {
+        padding-left: 22px;
+    }
 }
 
 @media (max-width: 650px) {
@@ -132,5 +203,14 @@
     .gf-settings-overview-card {
         min-height: 176px !important;
         padding: 20px !important;
+    }
+
+    .gf-favorites-settings-content .gf-settings-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .gf-favorites-settings-content .gf-settings-actions .gf-btn {
+        width: 100%;
     }
 }
