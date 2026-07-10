@@ -1,3 +1,4 @@
+using Gamefilled.Application.Social;
 using Gamefilled.Data;
 using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +10,14 @@ namespace Gamefilled.Pages.people;
 public sealed class IndexModel : PageModel
 {
     private const int PageSize = 18;
-    private static readonly TimeSpan OnlineWindow = TimeSpan.FromMinutes(5);
 
     private readonly AppDbContext _db;
+    private readonly SocialGraphService _socialGraph;
 
-    public IndexModel(AppDbContext db)
+    public IndexModel(AppDbContext db, SocialGraphService socialGraph)
     {
         _db = db;
+        _socialGraph = socialGraph;
     }
 
     [BindProperty(SupportsGet = true, Name = "q")]
@@ -41,34 +43,19 @@ public sealed class IndexModel : PageModel
         PageNumber = Math.Max(1, PageNumber);
         CurrentUsername = HttpContext.Session.GetString("username");
 
-        var onlineSince = DateTime.UtcNow.Subtract(OnlineWindow);
+        var utcNow = DateTime.UtcNow;
+        var onlineSince = UserPresence.OnlineSince(utcNow);
+        var futureLimit = UserPresence.FutureLimit(utcNow);
+
         var currentUser = string.IsNullOrWhiteSpace(CurrentUsername)
             ? null
             : await _db.Users
                 .AsNoTracking()
                 .SingleOrDefaultAsync(user => user.Username == CurrentUsername, cancellationToken);
 
-        var followingIds = new HashSet<int>();
-        var followerIds = new HashSet<int>();
-
-        if (currentUser is not null)
-        {
-            followingIds = (await _db.Follows
-                    .AsNoTracking()
-                    .Where(follow => follow.FollowerId == currentUser.Id)
-                    .Select(follow => follow.FollowingId)
-                    .ToListAsync(cancellationToken))
-                .ToHashSet();
-
-            followerIds = (await _db.Follows
-                    .AsNoTracking()
-                    .Where(follow => follow.FollowingId == currentUser.Id)
-                    .Select(follow => follow.FollowerId)
-                    .ToListAsync(cancellationToken))
-                .ToHashSet();
-        }
-
-        var mutualIds = followingIds.Intersect(followerIds).ToHashSet();
+        var graph = currentUser is null
+            ? SocialGraphSnapshot.Empty
+            : await _socialGraph.GetSnapshotAsync(currentUser.Id, cancellationToken);
 
         IQueryable<User> peopleQuery = _db.Users
             .AsNoTracking()
@@ -84,23 +71,35 @@ public sealed class IndexModel : PageModel
 
         peopleQuery = Filter switch
         {
-            "online" => peopleQuery.Where(user => user.LastSeenAt != null && user.LastSeenAt >= onlineSince),
-            "following" when currentUser is not null => peopleQuery.Where(user => followingIds.Contains(user.Id)),
-            "mutual" when currentUser is not null => peopleQuery.Where(user => mutualIds.Contains(user.Id)),
+            "online" => peopleQuery.Where(user =>
+                user.LastSeenAt != null &&
+                user.LastSeenAt >= onlineSince &&
+                user.LastSeenAt <= futureLimit),
+            "following" when currentUser is not null =>
+                peopleQuery.Where(user => graph.FollowingIds.Contains(user.Id)),
+            "mutual" when currentUser is not null =>
+                peopleQuery.Where(user => graph.MutualIds.Contains(user.Id)),
             "following" or "mutual" => peopleQuery.Where(_ => false),
             _ => peopleQuery
         };
 
         OnlineUsers = await _db.Users
             .AsNoTracking()
-            .CountAsync(user => user.LastSeenAt != null && user.LastSeenAt >= onlineSince, cancellationToken);
+            .CountAsync(user =>
+                user.LastSeenAt != null &&
+                user.LastSeenAt >= onlineSince &&
+                user.LastSeenAt <= futureLimit,
+                cancellationToken);
 
         TotalUsers = await peopleQuery.CountAsync(cancellationToken);
         TotalPages = Math.Max(1, (int)Math.Ceiling(TotalUsers / (double)PageSize));
         PageNumber = Math.Min(PageNumber, TotalPages);
 
         var rows = await peopleQuery
-            .OrderByDescending(user => user.LastSeenAt != null && user.LastSeenAt >= onlineSince)
+            .OrderByDescending(user =>
+                user.LastSeenAt != null &&
+                user.LastSeenAt >= onlineSince &&
+                user.LastSeenAt <= futureLimit)
             .ThenBy(user => user.DisplayName ?? user.Username)
             .ThenBy(user => user.Username)
             .Skip((PageNumber - 1) * PageSize)
@@ -145,7 +144,7 @@ public sealed class IndexModel : PageModel
 
         People = rows.Select(row =>
         {
-            var isOnline = row.LastSeenAt.HasValue && row.LastSeenAt.Value >= onlineSince;
+            var isOnline = UserPresence.IsOnline(row.LastSeenAt, utcNow);
 
             return new PeopleUserCardViewModel
             {
@@ -155,13 +154,13 @@ public sealed class IndexModel : PageModel
                 Bio = row.Bio,
                 AvatarUrl = row.AvatarUrl,
                 IsOnline = isOnline,
-                PresenceText = BuildPresenceText(row.LastSeenAt, isOnline),
+                PresenceText = UserPresence.Describe(row.LastSeenAt, utcNow),
                 FollowersCount = followerCounts.GetValueOrDefault(row.Id),
                 FollowingCount = followingCounts.GetValueOrDefault(row.Id),
                 GamesCount = gameCounts.GetValueOrDefault(row.Id),
                 IsCurrentUser = currentUser?.Id == row.Id,
-                IsFollowing = followingIds.Contains(row.Id),
-                IsMutual = mutualIds.Contains(row.Id),
+                IsFollowing = graph.FollowingIds.Contains(row.Id),
+                IsMutual = graph.MutualIds.Contains(row.Id),
                 MemberSinceYear = row.CreatedAt.Year
             };
         }).ToList();
@@ -192,25 +191,6 @@ public sealed class IndexModel : PageModel
         "mutual" => "mutual",
         _ => "all"
     };
-
-    private static string BuildPresenceText(DateTime? lastSeenAt, bool isOnline)
-    {
-        if (isOnline)
-            return "Online now";
-
-        if (!lastSeenAt.HasValue)
-            return "Offline";
-
-        var elapsed = DateTime.UtcNow - lastSeenAt.Value;
-        if (elapsed < TimeSpan.FromHours(1))
-            return $"Active {Math.Max(1, (int)elapsed.TotalMinutes)}m ago";
-        if (elapsed < TimeSpan.FromDays(1))
-            return $"Active {(int)elapsed.TotalHours}h ago";
-        if (elapsed < TimeSpan.FromDays(7))
-            return $"Active {(int)elapsed.TotalDays}d ago";
-
-        return "Offline";
-    }
 
     private sealed record PeopleUserRow(
         int Id,
