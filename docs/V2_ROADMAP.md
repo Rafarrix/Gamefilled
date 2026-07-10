@@ -48,7 +48,7 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Cache platforms and genres.
 - [x] Add an accessible off-canvas filter drawer.
 - [x] Use IGDB PopScore Visits for Trending with a safe fallback.
-- [x] Link game genres and platforms directly to filtered discovery pages.
+- [x] Link game genres, platforms, release state and release year to filtered discovery pages.
 - [ ] Migrate average play-time and finish-time sorting into the V2 service.
 - [ ] Add automated query-builder tests.
 
@@ -69,8 +69,8 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [x] Add trailers when the IGDB supplies a valid YouTube ID.
 - [x] Add a unified Media Room with trailer and screenshot lightbox navigation.
 - [x] Preserve artworks, screenshots, ratings, follows, hypes and time-to-beat.
-- [ ] Build **Game Universe** for similar games, franchises and collections.
-- [ ] Add DLCs, expansions, ports, remakes and remasters to Game Universe.
+- [x] Add the first **Game Universe** drawer for parent games, DLCs, expansions, ports, remakes and remasters.
+- [ ] Extend Game Universe with franchises, collections and clearer relationship visualization.
 - [ ] Build **Release Timeline** by platform and region.
 - [ ] Build **Where to Play** with official platform/store links.
 - [ ] Add engines, multiplayer modes, perspectives and language support.
@@ -84,6 +84,8 @@ Evolve the PAP version into a production-ready gaming discovery and social platf
 - [ ] Create reusable cards, drawers, media blocks and metadata components.
 - [ ] Redesign the homepage, game page and user profile around the new system.
 - [x] Modernize the header navigation and user dropdown direction.
+- [x] Add route-aware active navigation states.
+- [x] Use profile avatars in the header menu when available.
 - [ ] Complete keyboard, contrast and reduced-motion reviews.
 
 ## Phase 5 — Authentication and security
