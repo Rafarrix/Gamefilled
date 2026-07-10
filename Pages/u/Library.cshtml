@@ -16,20 +16,23 @@
 
 <div class="gf-library-page">
     <section class="gf-library-hero">
-        <div class="gf-library-shell gf-library-hero__inner">
+        <div class="gf-library-shell gf-library-hero__inner @(Model.IsOwnProfile ? "is-own" : "is-public")">
             <div class="gf-library-title">
                 <span class="gf-eyebrow">@Model.Eyebrow</span>
                 <h1><i class="@Model.Icon" aria-hidden="true"></i>@Model.Title</h1>
                 <p>@Model.Description</p>
             </div>
 
-            <a class="gf-library-owner" href="/u/@Model.Result.Owner.Username">
-                <img src="@avatar" alt="@Model.Result.Owner.DisplayName avatar" />
-                <span>
-                    <small>@(Model.IsOwnProfile ? "Your profile" : $"@{Model.Result.Owner.Username}")</small>
-                    <strong>@Model.Result.Owner.DisplayName</strong>
-                </span>
-            </a>
+            @if (!Model.IsOwnProfile)
+            {
+                <a class="gf-library-owner" href="/u/@Model.Result.Owner.Username">
+                    <img src="@avatar" alt="@Model.Result.Owner.DisplayName avatar" />
+                    <span>
+                        <small>@@@Model.Result.Owner.Username</small>
+                        <strong>@Model.Result.Owner.DisplayName</strong>
+                    </span>
+                </a>
+            }
 
             <div class="gf-library-total">
                 <strong>@Model.Result.TotalItems</strong>
