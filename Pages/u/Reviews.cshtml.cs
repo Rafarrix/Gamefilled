@@ -84,8 +84,8 @@ public sealed class ReviewsModel : PageModel
                     GameId = entry.GameId,
                     GameName = game?.Name ?? $"Game {entry.GameId}",
                     CoverUrl = BuildCoverUrl(game?.Cover?.ImageId),
-                    ReleaseYear = game?.FirstReleaseDate.HasValue == true
-                        ? DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDate.Value).Year
+                    ReleaseYear = game?.FirstReleaseDateUnix.HasValue == true
+                        ? DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDateUnix.Value).Year
                         : null,
                     Status = entry.Status,
                     Rating = entry.Rating,
