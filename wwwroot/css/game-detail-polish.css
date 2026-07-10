@@ -90,28 +90,10 @@
     color: rgba(229, 231, 235, .28);
 }
 
+/* The release date intentionally inherits the same .bl-chip and
+   .gf-game-filter-chip styles used by genre and company metadata. */
 .gf-game-release-date {
-    display: inline-flex;
-    align-items: center;
-    min-height: 30px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, .10);
-    background: rgba(255, 255, 255, .055);
-    color: rgba(243, 244, 246, .90);
-    font-size: .78rem;
-    font-weight: 700;
-    transition: transform .15s ease, border-color .15s ease, background .15s ease, color .15s ease;
-}
-
-.gf-game-release-date:hover,
-.gf-game-release-date:focus-visible {
-    transform: translateY(-1px);
-    border-color: rgba(74, 222, 128, .34);
-    background: rgba(0, 176, 32, .13);
-    color: #dcfce7;
-    text-decoration: none;
-    outline: none;
+    font-weight: inherit;
 }
 
 .gf-universe-tab {

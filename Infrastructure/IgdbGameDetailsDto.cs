@@ -2,9 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace Gamefilled.Infrastructure;
 
-/// <summary>
-/// Full game-detail DTO used by /games/{id}.
-/// </summary>
 public class IgdbGameDetailsDto
 {
     [JsonPropertyName("id")]
@@ -42,6 +39,15 @@ public class IgdbGameDetailsDto
 
     [JsonPropertyName("involved_companies")]
     public List<IgdbInvolvedCompanyDto>? InvolvedCompanies { get; set; }
+
+    [JsonPropertyName("release_dates")]
+    public List<IgdbReleaseDateDto>? ReleaseDates { get; set; }
+
+    [JsonPropertyName("websites")]
+    public List<IgdbWebsiteDto>? Websites { get; set; }
+
+    [JsonPropertyName("external_games")]
+    public List<IgdbExternalGameDto>? ExternalGames { get; set; }
 
     [JsonPropertyName("parent_game")]
     public IgdbRelatedGameDto? ParentGame { get; set; }
@@ -120,6 +126,72 @@ public class IgdbNamedDto
 
     [JsonPropertyName("slug")]
     public string? Slug { get; set; }
+}
+
+public class IgdbReleaseDateDto
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("date")]
+    public long? DateUnix { get; set; }
+
+    [JsonPropertyName("human")]
+    public string? Human { get; set; }
+
+    [JsonPropertyName("y")]
+    public int? Year { get; set; }
+
+    [JsonPropertyName("m")]
+    public int? Month { get; set; }
+
+    [JsonPropertyName("d")]
+    public int? Day { get; set; }
+
+    [JsonPropertyName("platform")]
+    public IgdbNamedDto? Platform { get; set; }
+}
+
+public class IgdbWebsiteDto
+{
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
+
+    [JsonPropertyName("trusted")]
+    public bool Trusted { get; set; }
+
+    [JsonPropertyName("type")]
+    public IgdbWebsiteTypeDto? Type { get; set; }
+}
+
+public class IgdbWebsiteTypeDto
+{
+    [JsonPropertyName("type")]
+    public string? Name { get; set; }
+}
+
+public class IgdbExternalGameDto
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("url")]
+    public string? Url { get; set; }
+
+    [JsonPropertyName("uid")]
+    public string? Uid { get; set; }
+
+    [JsonPropertyName("platform")]
+    public IgdbNamedDto? Platform { get; set; }
+
+    [JsonPropertyName("external_game_source")]
+    public IgdbExternalGameSourceDto? Source { get; set; }
+}
+
+public class IgdbExternalGameSourceDto
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
 }
 
 public class IgdbRelatedGameDto

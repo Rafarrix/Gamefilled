@@ -5,9 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace Gamefilled.Infrastructure;
 
-/// <summary>
-/// Domain client for the IGDB game requests used by the current pages.
-/// </summary>
 public sealed class IgdbClient
 {
     private readonly HttpClient _http;
@@ -66,6 +63,13 @@ public sealed class IgdbClient
                 videos.name,videos.video_id,
                 genres.id,genres.name,genres.slug,
                 platforms.id,platforms.name,platforms.slug,
+                release_dates.id,release_dates.date,release_dates.human,
+                release_dates.y,release_dates.m,release_dates.d,
+                release_dates.platform.id,release_dates.platform.name,release_dates.platform.slug,
+                websites.url,websites.trusted,websites.type.type,
+                external_games.name,external_games.url,external_games.uid,
+                external_games.platform.id,external_games.platform.name,external_games.platform.slug,
+                external_games.external_game_source.name,
                 involved_companies.company.id,
                 involved_companies.company.name,
                 involved_companies.company.slug,
