@@ -1,4 +1,14 @@
 (() => {
+    const loadSearchEnhancement = () => {
+        if (document.querySelector('script[data-gf-header-search]')) return;
+
+        const script = document.createElement('script');
+        script.src = '/js/header-search-v2.js';
+        script.defer = true;
+        script.dataset.gfHeaderSearch = 'true';
+        document.head.appendChild(script);
+    };
+
     const trimProfileHeroStats = () => {
         const heroStats = document.querySelector('.gf-profile-v2__hero-stats');
         if (!heroStats) return;
@@ -7,6 +17,7 @@
     };
 
     const init = () => {
+        loadSearchEnhancement();
         trimProfileHeroStats();
 
         const profile = document.getElementById('profile-li');
