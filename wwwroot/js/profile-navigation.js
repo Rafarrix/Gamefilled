@@ -1,30 +1,44 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const match = window.location.pathname.match(/^\/u\/([^/]+)\/?$/i);
-    if (!match) return;
+    const profileRoute = window.location.pathname.match(/^\/u\/([^/]+)\/?$/i);
 
-    const username = decodeURIComponent(match[1]);
-    const base = `/u/${encodeURIComponent(username)}`;
-    const routes = {
-        followers: 'followers',
-        following: 'following',
-        activity: 'activity',
-        reviews: 'reviews'
-    };
+    // Large social lists remain dedicated routes, but the profile content tabs
+    // (Activity and Reviews) stay inside the profile shell.
+    if (profileRoute) {
+        const username = decodeURIComponent(profileRoute[1]);
+        const base = `/u/${encodeURIComponent(username)}`;
 
-    document.querySelectorAll('a[href*="?tab="]').forEach(link => {
-        let url;
+        const dedicatedRoutes = {
+            followers: 'followers',
+            following: 'following'
+        };
 
-        try {
-            url = new URL(link.href, window.location.origin);
-        } catch {
-            return;
-        }
+        document.querySelectorAll('a[href*="?tab="]').forEach(link => {
+            let url;
 
-        const tab = url.searchParams.get('tab')?.toLowerCase();
-        const route = tab ? routes[tab] : null;
-        if (!route) return;
+            try {
+                url = new URL(link.href, window.location.origin);
+            } catch {
+                return;
+            }
 
-        link.setAttribute('href', `${base}/${route}`);
-        link.classList.add('gf-profile-direct-link');
+            const tab = url.searchParams.get('tab')?.toLowerCase();
+            const route = tab ? dedicatedRoutes[tab] : null;
+            if (!route) return;
+
+            link.setAttribute('href', `${base}/${route}`);
+            link.classList.add('gf-profile-direct-link');
+        });
+    }
+
+    // Keep the user dropdown consistent on every page: Activity and Reviews
+    // open the matching tab inside the profile instead of a parallel layout.
+    document.querySelectorAll('.gf-profile-menu a[href]').forEach(link => {
+        const href = link.getAttribute('href') || '';
+        const match = href.match(/^\/u\/([^/]+)\/(activity|reviews)\/?$/i);
+        if (!match) return;
+
+        const username = match[1];
+        const tab = match[2].toLowerCase();
+        link.setAttribute('href', `/u/${username}?tab=${tab}`);
     });
 });
