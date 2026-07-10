@@ -1,137 +1,173 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.FavoriteGamesModel
 @{
-    ViewData["Title"] = "Edit Favorite Games";
+    ViewData["Title"] = "Favorite games";
+    ViewData["ActiveSettings"] = "FavoriteGames";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container py-4 gf-edit-profile-page gf-favorites-page">
-    <div class="gf-edit-profile-head">
-        <div>
-            <h1>Edit Favorite Games</h1>
-            <p class="subtitle-text mb-0">Build your favorites shelf and highlight one as your top game.</p>
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
-        {
-            <a class="btn btn-outline-light" href="/u/@Model.CurrentUsername">Back to Profile</a>
-        }
-    </div>
-
-    <form method="post" id="favorite-games-form">
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-        <input type="hidden" asp-for="PayloadJson" id="favorite-games-payload" />
-
-        <div class="gf-favorites-toolbar">
-            <button type="button" class="btn btn-main" id="gf-add-favorite-btn">
-                <i class="fas fa-plus mr-2"></i>Add game
-            </button>
-
-            <div class="gf-favorites-toolbar__hint">
-                Up to 5 games. Drag cards to reorder. One can be highlighted with a crown.
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div>
+                <span class="gf-eyebrow">Taste profile</span>
+                <h1>Favorite games</h1>
+                <p>Build the shelf displayed on your public profile and choose one game as your main favorite.</p>
             </div>
-        </div>
-
-        <div class="gf-favorite-picker d-none" id="gf-favorite-picker">
-            <div class="gf-favorite-picker__box">
-                <div class="gf-favorite-picker__head">
-                    <h3>Search game</h3>
-                    <button type="button" class="gf-favorite-picker__close" id="gf-favorite-picker-close">&times;</button>
-                </div>
-
-                <input type="text"
-                       class="form-control"
-                       id="gf-favorite-picker-input"
-                       placeholder="Search game..."
-                       autocomplete="off" />
-
-                <div class="gf-favorite-picker__results d-none" id="gf-favorite-picker-results"></div>
-            </div>
-        </div>
-
-        <div class="gf-favorites-canvas">
-            <div class="gf-favorites-empty @(Model.FavoriteGames.Any() ? "d-none" : "")" id="gf-favorites-empty">
-                <div class="gf-favorites-empty__title">No favorite games yet.</div>
-                <div class="gf-favorites-empty__text">Add games to build your favorites shelf.</div>
-            </div>
-
-            <div class="gf-favorites-cards" id="gf-favorites-cards">
-                @foreach (var game in Model.FavoriteGames.OrderBy(x => x.SortOrder))
-                {
-                    <div class="gf-favorite-card-editor @(game.IsPrimary ? "is-primary" : "")"
-                         data-game-id="@game.GameId"
-                         data-is-primary="@(game.IsPrimary ? "true" : "false")"
-                         draggable="true">
-
-                        <div class="gf-favorite-card-editor__media">
-                            @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
-                            {
-                                <img src="@game.CoverUrl" alt="@game.Name" />
-                            }
-                            else
-                            {
-                                <div class="gf-favorite-card-editor__fallback"></div>
-                            }
-
-                            <div class="gf-favorite-card-editor__actions">
-                                <button type="button"
-                                        class="gf-favorite-card-editor__btn gf-favorite-primary-btn"
-                                        title="Highlight as top favorite">
-                                    <i class="fas fa-crown"></i>
-                                </button>
-
-                                <button type="button"
-                                        class="gf-favorite-card-editor__btn gf-favorite-remove-btn"
-                                        title="Remove game">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-
-                            <div class="gf-favorite-card-editor__badge">Top Favorite</div>
-                        </div>
-
-                        <div class="gf-favorite-card-editor__meta">
-                            <div class="gf-favorite-card-editor__title">@game.Name</div>
-                            <div class="gf-favorite-card-editor__sub">
-                                @if (game.Year != null)
-                                {
-                                    <span>@game.Year</span>
-                                }
-                                else
-                                {
-                                    <span>IGDB ID @game.GameId</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <div class="gf-edit-profile-card mt-4">
-            <h3 class="gf-edit-profile-side-title">How it works</h3>
-
-            <div class="gf-edit-profile-tip">
-                Add games one by one using search.
-            </div>
-
-            <div class="gf-edit-profile-tip">
-                Hover a card to remove it or mark it as your top favorite.
-            </div>
-
-            <div class="gf-edit-profile-tip">
-                Drag and drop cards to change the order before saving.
-            </div>
-        </div>
-
-        <div class="gf-edit-profile-actions">
-            <button type="submit" class="btn btn-main btn-block">Save Favorite Games</button>
 
             @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
             {
-                <a class="btn btn-outline-light btn-block" href="/u/@Model.CurrentUsername">Cancel</a>
+                <a class="gf-btn gf-btn--secondary" href="/u/@Model.CurrentUsername">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    View profile
+                </a>
             }
+        </header>
+
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+
+            <main class="gf-settings-content gf-favorites-settings-content">
+                <form method="post" id="favorite-games-form">
+                    <div asp-validation-summary="ModelOnly" class="gf-alert gf-alert--danger"></div>
+                    <input type="hidden" asp-for="PayloadJson" id="favorite-games-payload" />
+
+                    <section class="gf-panel">
+                        <div class="gf-panel__header">
+                            <div>
+                                <h2>Featured shelf</h2>
+                                <p>Add up to five games, drag them into order and crown one as your top favorite.</p>
+                            </div>
+                            <span class="gf-chip"><i class="fas fa-crown" aria-hidden="true"></i> Live on profile</span>
+                        </div>
+
+                        <div class="gf-panel__body">
+                            <div class="gf-favorites-toolbar">
+                                <button type="button" class="gf-btn gf-btn--primary" id="gf-add-favorite-btn">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                    Add game
+                                </button>
+
+                                <div class="gf-favorites-toolbar__hint">
+                                    Drag cards to reorder. Hover a card to remove it or make it the main favorite.
+                                </div>
+                            </div>
+
+                            <div class="gf-favorite-picker d-none" id="gf-favorite-picker">
+                                <div class="gf-favorite-picker__box">
+                                    <div class="gf-favorite-picker__head">
+                                        <h3>Search game</h3>
+                                        <button type="button" class="gf-favorite-picker__close" id="gf-favorite-picker-close" aria-label="Close game search">&times;</button>
+                                    </div>
+
+                                    <input type="text"
+                                           class="gf-input"
+                                           id="gf-favorite-picker-input"
+                                           placeholder="Search games..."
+                                           autocomplete="off" />
+
+                                    <div class="gf-favorite-picker__results d-none" id="gf-favorite-picker-results"></div>
+                                </div>
+                            </div>
+
+                            <div class="gf-favorites-canvas">
+                                <div class="gf-favorites-empty @(Model.FavoriteGames.Any() ? "d-none" : "")" id="gf-favorites-empty">
+                                    <div class="gf-favorites-empty__title">No favorite games yet.</div>
+                                    <div class="gf-favorites-empty__text">Add games to build the featured shelf on your profile.</div>
+                                </div>
+
+                                <div class="gf-favorites-cards" id="gf-favorites-cards">
+                                    @foreach (var game in Model.FavoriteGames.OrderBy(x => x.SortOrder))
+                                    {
+                                        <div class="gf-favorite-card-editor @(game.IsPrimary ? "is-primary" : "")"
+                                             data-game-id="@game.GameId"
+                                             data-is-primary="@(game.IsPrimary ? "true" : "false")"
+                                             draggable="true">
+
+                                            <div class="gf-favorite-card-editor__media">
+                                                @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
+                                                {
+                                                    <img src="@game.CoverUrl" alt="@game.Name" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="gf-favorite-card-editor__fallback"></div>
+                                                }
+
+                                                <div class="gf-favorite-card-editor__actions">
+                                                    <button type="button"
+                                                            class="gf-favorite-card-editor__btn gf-favorite-primary-btn"
+                                                            title="Highlight as top favorite">
+                                                        <i class="fas fa-crown"></i>
+                                                    </button>
+
+                                                    <button type="button"
+                                                            class="gf-favorite-card-editor__btn gf-favorite-remove-btn"
+                                                            title="Remove game">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+
+                                                <div class="gf-favorite-card-editor__badge">Top Favorite</div>
+                                            </div>
+
+                                            <div class="gf-favorite-card-editor__meta">
+                                                <div class="gf-favorite-card-editor__title">@game.Name</div>
+                                                <div class="gf-favorite-card-editor__sub">
+                                                    @if (game.Year != null)
+                                                    {
+                                                        <span>@game.Year</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>IGDB ID @game.GameId</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="gf-settings-account-grid mt-3">
+                        <section class="gf-panel">
+                            <div class="gf-panel__header">
+                                <div>
+                                    <h2>How it works</h2>
+                                    <p>Your order and main favorite are reflected on the public profile.</p>
+                                </div>
+                            </div>
+                            <div class="gf-panel__body gf-settings-tips">
+                                <div class="gf-settings-tip"><i class="fas fa-search" aria-hidden="true"></i><span>Add games one by one using IGDB search.</span></div>
+                                <div class="gf-settings-tip"><i class="fas fa-arrows-up-down-left-right" aria-hidden="true"></i><span>Drag and drop cards to change the order.</span></div>
+                                <div class="gf-settings-tip"><i class="fas fa-crown" aria-hidden="true"></i><span>Use the crown to choose the game highlighted first.</span></div>
+                            </div>
+                        </section>
+
+                        <section class="gf-panel">
+                            <div class="gf-panel__header">
+                                <div>
+                                    <h2>Save shelf</h2>
+                                    <p>Changes only become public after saving.</p>
+                                </div>
+                            </div>
+                            <div class="gf-panel__body">
+                                <div class="gf-settings-actions">
+                                    <a class="gf-btn gf-btn--secondary" href="/Settings">Back to settings</a>
+                                    <button type="submit" class="gf-btn gf-btn--primary">
+                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                        Save favorite games
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </form>
+            </main>
         </div>
-    </form>
+    </div>
 </div>
 
 <script>
@@ -389,8 +425,7 @@
                     const year = yearFromUnix(item.firstReleaseDate ?? item.first_release_date);
 
                     return `
-                        <button type="button" class="gf-favorite-search__item"
-                                data-id="${item.id}">
+                        <button type="button" class="gf-favorite-search__item" data-id="${item.id}">
                             <div class="gf-favorite-search__thumb">
                                 ${img ? `<img src="${img}" alt="${escapeHtml(item.name ?? "")}" />` : `<div class="gf-favorite-search__thumb-empty"></div>`}
                             </div>
