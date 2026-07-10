@@ -59,7 +59,7 @@ public sealed class IgdbClient
 
         var query = $"""
             fields
-                id,name,slug,summary,storyline,first_release_date,
+                id,name,slug,summary,first_release_date,
                 cover.image_id,
                 artworks.image_id,
                 screenshots.image_id,
@@ -74,6 +74,21 @@ public sealed class IgdbClient
                 involved_companies.publisher,
                 involved_companies.porting,
                 involved_companies.supporting,
+                parent_game.id,parent_game.name,parent_game.slug,
+                parent_game.first_release_date,parent_game.cover.image_id,
+                dlcs.id,dlcs.name,dlcs.slug,dlcs.first_release_date,dlcs.cover.image_id,
+                expansions.id,expansions.name,expansions.slug,
+                expansions.first_release_date,expansions.cover.image_id,
+                standalone_expansions.id,standalone_expansions.name,standalone_expansions.slug,
+                standalone_expansions.first_release_date,standalone_expansions.cover.image_id,
+                expanded_games.id,expanded_games.name,expanded_games.slug,
+                expanded_games.first_release_date,expanded_games.cover.image_id,
+                ports.id,ports.name,ports.slug,ports.first_release_date,ports.cover.image_id,
+                remakes.id,remakes.name,remakes.slug,remakes.first_release_date,remakes.cover.image_id,
+                remasters.id,remasters.name,remasters.slug,
+                remasters.first_release_date,remasters.cover.image_id,
+                similar_games.id,similar_games.name,similar_games.slug,
+                similar_games.first_release_date,similar_games.cover.image_id,
                 aggregated_rating,aggregated_rating_count,
                 rating,rating_count,
                 hypes,follows;
