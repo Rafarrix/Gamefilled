@@ -60,16 +60,24 @@ public sealed class NotificationService
         });
     }
 
-    public async Task MarkReadAsync(int userId, int notificationId, CancellationToken ct = default)
+    public async Task<string?> MarkReadAndGetTargetAsync(
+        int userId,
+        int notificationId,
+        CancellationToken ct = default)
     {
         var notification = await _db.UserNotifications
             .FirstOrDefaultAsync(x => x.Id == notificationId && x.UserId == userId, ct);
 
-        if (notification == null || notification.ReadAt.HasValue)
-            return;
+        if (notification == null)
+            return null;
 
-        notification.ReadAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
+        if (!notification.ReadAt.HasValue)
+        {
+            notification.ReadAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return notification.TargetUrl;
     }
 
     public async Task MarkAllReadAsync(int userId, CancellationToken ct = default)
