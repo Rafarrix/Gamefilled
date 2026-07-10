@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Edit profile";
     ViewData["ActiveSettings"] = "Profile";
+    ViewData["FullBleed"] = true;
 
     var avatarPreview = string.IsNullOrWhiteSpace(Model.AvatarUrl)
         ? "/lib/imgs/defaultavatar.png"
