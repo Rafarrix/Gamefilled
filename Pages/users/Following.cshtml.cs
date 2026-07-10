@@ -20,6 +20,7 @@ public sealed class FollowingModel : PageModel
 
     public User ProfileUser { get; private set; } = default!;
     public IReadOnlyList<SocialListUserCard> Users { get; private set; } = [];
+    public bool IsOwnProfile { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(string username, CancellationToken cancellationToken)
     {
@@ -35,6 +36,11 @@ public sealed class FollowingModel : PageModel
 
         ProfileUser = profileUser;
         Users = await _socialLists.GetFollowingAsync(profileUser.Id, cancellationToken);
+
+        var currentUsername = HttpContext.Session.GetString("username");
+        IsOwnProfile = !string.IsNullOrWhiteSpace(currentUsername) &&
+            string.Equals(currentUsername, profileUser.Username, StringComparison.OrdinalIgnoreCase);
+
         return Page();
     }
 }
