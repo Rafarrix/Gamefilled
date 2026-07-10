@@ -11,6 +11,7 @@ This document is the working checklist for the full visual and interaction audit
 - Desktop, ultrawide, tablet and mobile must each be reviewed before a route is marked complete.
 - Empty, loading, partial-data and error states must use shared components.
 - Page-specific CSS should not redefine global colors, button styles or content widths.
+- A redesign is not automatically an improvement. Preserve an existing composition when it is clearer or more distinctive.
 
 ## Review states
 
@@ -29,7 +30,7 @@ This document is the working checklist for the full visual and interaction audit
 | People | `/people` | Stable / recheck | Recheck filters and cards on narrow screens. |
 | Profiles | `/u/{username}` | Stable / recheck | Recheck empty libraries, reviews and long bios. |
 | Social lists | followers, following, friends | In audit | Reuse People/Friends card language everywhere. |
-| Authentication | Login, Register, Logout | In audit | Restore established composition and remove unnecessary copy. |
+| Authentication | Login, Register, Logout | In audit | Established composition restored; concise copy only. |
 | Settings | Overview, Profile, Favorite Games, Account | In audit | Uniform background, widths and action components. |
 | Planned settings | Notifications, Integrations, Privacy | In audit | Clearly planned; no fake save controls. |
 | Search | `/Search` and header autocomplete | Pending | Standardize results, no-results and service failure states. |
