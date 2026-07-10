@@ -22,6 +22,7 @@ public sealed class UserGameEntry
     public int? Rating { get; set; }
 
     [MaxLength(5000)]
+    [Column(TypeName = "nvarchar(max)")]
     public string? ReviewText { get; set; }
 
     public bool ContainsSpoilers { get; set; }
