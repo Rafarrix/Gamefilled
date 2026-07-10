@@ -30,6 +30,7 @@ public sealed class LibraryModel : PageModel
     public string Eyebrow { get; private set; } = "Completed library";
     public string Description { get; private set; } = "Games this player has finished or marked as played.";
     public string Icon { get; private set; } = "fas fa-circle-check";
+    public bool IsOwnProfile { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(
         string username,
@@ -56,6 +57,12 @@ public sealed class LibraryModel : PageModel
 
         Result = result;
         PageNumber = result.PageNumber;
+
+        var currentUsername = HttpContext.Session.GetString("username");
+        IsOwnProfile = !string.IsNullOrWhiteSpace(currentUsername) &&
+            string.Equals(currentUsername, Result.Owner.Username, StringComparison.OrdinalIgnoreCase);
+
+        ApplyPersonalCopy();
         return Page();
     }
 
@@ -92,6 +99,21 @@ public sealed class LibraryModel : PageModel
     }
 
     public int Count(string status) => Result.Counts.TryGetValue(status, out var count) ? count : 0;
+
+    private void ApplyPersonalCopy()
+    {
+        if (!IsOwnProfile)
+            return;
+
+        (Eyebrow, Description) = Section switch
+        {
+            "games" => ("Your completed library", "Games you've finished or marked as played."),
+            "playing" => ("Your current rotation", "Games you're playing right now."),
+            "backlog" => ("Your backlog", "Games you've saved for later."),
+            "wishlist" => ("Your wishlist", "Games you want to pick up."),
+            _ => (Eyebrow, Description)
+        };
+    }
 
     private bool TryConfigureSection(string? section)
     {
