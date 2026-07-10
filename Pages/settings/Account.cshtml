@@ -3,7 +3,12 @@
 @{
     ViewData["Title"] = "Account & security";
     ViewData["ActiveSettings"] = "Account";
+    ViewData["FullBleed"] = true;
 }
+
+<link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/settings-v2.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/audit-hotfix.css" asp-append-version="true" />
 
 <div class="gf-settings-page">
     <div class="gf-settings-shell">
@@ -11,7 +16,7 @@
             <div>
                 <span class="gf-eyebrow">Account protection</span>
                 <h1>Account & security</h1>
-                <p>This area will bring together password, email and active session controls.</p>
+                <p>Update the credentials used to access Gamefilled. Email confirmation and multi-factor authentication remain part of the production security sprint.</p>
             </div>
         </header>
 
@@ -19,32 +24,104 @@
             <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
 
             <main class="gf-settings-content">
-                <section class="gf-panel">
+                <section class="gf-settings-account-meta" aria-label="Account overview">
+                    <div><span>Username</span><strong>@@@Model.Username</strong></div>
+                    <div><span>Role</span><strong>@Model.Role</strong></div>
+                    <div><span>Member since</span><strong>@Model.CreatedAt.ToString("MMM yyyy")</strong></div>
+                </section>
+
+                <div class="gf-settings-account-grid">
+                    <section class="gf-panel">
+                        <div class="gf-panel__header">
+                            <div>
+                                <h2>Email address</h2>
+                                <p>Change the email used to sign in. Your current password is required.</p>
+                            </div>
+                            <span class="gf-chip"><i class="fas fa-envelope" aria-hidden="true"></i> Functional</span>
+                        </div>
+
+                        <div class="gf-panel__body">
+                            @if (!string.IsNullOrWhiteSpace(Model.EmailSuccess))
+                            {
+                                <div class="gf-alert gf-alert--success" role="status">@Model.EmailSuccess</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.EmailError))
+                            {
+                                <div class="gf-alert gf-alert--danger" role="alert">@Model.EmailError</div>
+                            }
+
+                            <form method="post" asp-page-handler="Email">
+                                <div class="gf-field">
+                                    <label asp-for="Email" class="gf-label">New email</label>
+                                    <input asp-for="Email" class="gf-input" type="email" autocomplete="email" />
+                                </div>
+
+                                <div class="gf-field">
+                                    <label asp-for="EmailCurrentPassword" class="gf-label">Current password</label>
+                                    <input asp-for="EmailCurrentPassword" class="gf-input" type="password" autocomplete="current-password" />
+                                </div>
+
+                                <div class="gf-settings-actions">
+                                    <button type="submit" class="gf-btn gf-btn--primary">Update email</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <section class="gf-panel">
+                        <div class="gf-panel__header">
+                            <div>
+                                <h2>Password</h2>
+                                <p>Use at least eight characters with a letter and a number.</p>
+                            </div>
+                            <span class="gf-chip"><i class="fas fa-key" aria-hidden="true"></i> Functional</span>
+                        </div>
+
+                        <div class="gf-panel__body">
+                            @if (!string.IsNullOrWhiteSpace(Model.PasswordSuccess))
+                            {
+                                <div class="gf-alert gf-alert--success" role="status">@Model.PasswordSuccess</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.PasswordError))
+                            {
+                                <div class="gf-alert gf-alert--danger" role="alert">@Model.PasswordError</div>
+                            }
+
+                            <form method="post" asp-page-handler="Password">
+                                <div class="gf-field">
+                                    <label asp-for="PasswordCurrentPassword" class="gf-label">Current password</label>
+                                    <input asp-for="PasswordCurrentPassword" class="gf-input" type="password" autocomplete="current-password" />
+                                </div>
+
+                                <div class="gf-field">
+                                    <label asp-for="NewPassword" class="gf-label">New password</label>
+                                    <input asp-for="NewPassword" class="gf-input" type="password" autocomplete="new-password" />
+                                </div>
+
+                                <div class="gf-field">
+                                    <label asp-for="ConfirmNewPassword" class="gf-label">Confirm new password</label>
+                                    <input asp-for="ConfirmNewPassword" class="gf-input" type="password" autocomplete="new-password" />
+                                </div>
+
+                                <div class="gf-settings-actions">
+                                    <button type="submit" class="gf-btn gf-btn--primary">Update password</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="gf-panel mt-3">
                     <div class="gf-panel__header">
                         <div>
-                            <h2>Security roadmap</h2>
-                            <p>These controls will be enabled during the dedicated production security sprint.</p>
+                            <h2>Next security controls</h2>
+                            <p>These require the production authentication and session hardening sprint.</p>
                         </div>
                         <span class="gf-chip"><i class="fas fa-clock" aria-hidden="true"></i> Planned</span>
                     </div>
-
                     <div class="gf-panel__body gf-settings-tips">
-                        <div class="gf-settings-tip">
-                            <i class="fas fa-key" aria-hidden="true"></i>
-                            <span>Change password with current-password verification and strong validation.</span>
-                        </div>
-                        <div class="gf-settings-tip">
-                            <i class="fas fa-envelope" aria-hidden="true"></i>
-                            <span>Change email through a verified confirmation flow.</span>
-                        </div>
-                        <div class="gf-settings-tip">
-                            <i class="fas fa-laptop" aria-hidden="true"></i>
-                            <span>Review and revoke active sessions across devices.</span>
-                        </div>
-                        <div class="gf-settings-tip">
-                            <i class="fas fa-shield-halved" aria-hidden="true"></i>
-                            <span>Add recovery, rate limiting and optional multi-factor authentication.</span>
-                        </div>
+                        <div class="gf-settings-tip"><i class="fas fa-laptop" aria-hidden="true"></i><span>Review and revoke active sessions across devices.</span></div>
+                        <div class="gf-settings-tip"><i class="fas fa-shield-halved" aria-hidden="true"></i><span>Email verification, account recovery and optional multi-factor authentication.</span></div>
                     </div>
                 </section>
             </main>
