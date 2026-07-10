@@ -28,12 +28,156 @@
         .Take(8)
         .ToList();
     var hasMedia = trailer != null || screenshots.Count > 0;
+
+    var platforms = (Model.Game?.Platforms ?? new List<Gamefilled.Infrastructure.IgdbNamedDto>())
+        .Where(platform => platform.Id > 0 && !string.IsNullOrWhiteSpace(platform.Name))
+        .OrderBy(platform => PlatformSortKey(platform.Name))
+        .ThenBy(platform => platform.Name, StringComparer.OrdinalIgnoreCase)
+        .Take(16)
+        .ToList();
+
+    DateTimeOffset? releaseDate = null;
+    if (Model.Game?.FirstReleaseDateUnix is > 0)
+    {
+        try
+        {
+            releaseDate = DateTimeOffset.FromUnixTimeSeconds(Model.Game.FirstReleaseDateUnix.Value);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            releaseDate = null;
+        }
+    }
+
+    var releaseYear = releaseDate?.Year;
+    var releaseStatus = releaseDate.HasValue && releaseDate.Value <= DateTimeOffset.UtcNow
+        ? "released"
+        : "upcoming";
+    var releaseLabel = releaseStatus == "released" ? "Released" : "Upcoming";
+
+    var universeSections = new List<(string Title, IReadOnlyList<Gamefilled.Infrastructure.IgdbRelatedGameDto> Games)>();
+
+    void AddUniverseSection(string title, IEnumerable<Gamefilled.Infrastructure.IgdbRelatedGameDto>? source)
+    {
+        var games = (source ?? Array.Empty<Gamefilled.Infrastructure.IgdbRelatedGameDto>())
+            .Where(game => game.Id > 0 && !string.IsNullOrWhiteSpace(game.Name))
+            .GroupBy(game => game.Id)
+            .Select(group => group.First())
+            .OrderBy(game => game.ReleaseYear ?? int.MaxValue)
+            .ThenBy(game => game.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (games.Count > 0)
+            universeSections.Add((title, games));
+    }
+
+    if (Model.Game?.ParentGame is { Id: > 0 } parentGame)
+        AddUniverseSection("Parent game", new[] { parentGame });
+
+    AddUniverseSection("DLC", Model.Game?.Dlcs);
+    AddUniverseSection("Expansions", Model.Game?.Expansions);
+    AddUniverseSection("Standalone expansions", Model.Game?.StandaloneExpansions);
+    AddUniverseSection("Expanded games", Model.Game?.ExpandedGames);
+    AddUniverseSection("Ports", Model.Game?.Ports);
+    AddUniverseSection("Remakes", Model.Game?.Remakes);
+    AddUniverseSection("Remasters", Model.Game?.Remasters);
+
+    var universeCount = universeSections.Sum(section => section.Games.Count);
 }
 
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/game-v2.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/game-universe.css" asp-append-version="true" />
 
 <div class="gf-game-page">
+    @if (universeCount > 0)
+    {
+        <button type="button"
+                class="gf-universe-tab"
+                data-universe-open
+                aria-controls="game-universe-drawer"
+                aria-expanded="false"
+                title="Abrir Game Universe">
+            <i class="fas fa-diagram-project" aria-hidden="true"></i>
+            <span class="gf-universe-tab__label">Universe</span>
+            <span class="gf-universe-tab__count" aria-label="@universeCount relações">@universeCount</span>
+        </button>
+
+        <div class="gf-universe-overlay"
+             data-universe-overlay
+             aria-hidden="true"></div>
+
+        <aside id="game-universe-drawer"
+               class="gf-universe-drawer"
+               data-universe-drawer
+               role="dialog"
+               aria-modal="true"
+               aria-labelledby="game-universe-title"
+               aria-hidden="true">
+            <div class="gf-universe-drawer__header">
+                <div>
+                    <div class="gf-universe-drawer__eyebrow">Gamefilled connections</div>
+                    <h2 id="game-universe-title" class="gf-universe-drawer__title">Game Universe</h2>
+                    <p class="gf-universe-drawer__subtitle">
+                        Expansões, DLC, ports, remakes e outras versões ligadas a este jogo.
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="gf-universe-drawer__close"
+                        data-universe-close
+                        aria-label="Fechar Game Universe">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="gf-universe-drawer__body">
+                @foreach (var section in universeSections)
+                {
+                    <section class="gf-universe-section">
+                        <div class="gf-universe-section__head">
+                            <h3 class="gf-universe-section__title">@section.Title</h3>
+                            <span class="gf-universe-section__count">@section.Games.Count</span>
+                        </div>
+
+                        <div class="gf-universe-list">
+                            @foreach (var relatedGame in section.Games)
+                            {
+                                <a class="gf-universe-game"
+                                   href="/games/@relatedGame.Id"
+                                   title="Abrir @relatedGame.Name">
+                                    <div class="gf-universe-game__cover">
+                                        @if (!string.IsNullOrWhiteSpace(relatedGame.CoverUrl))
+                                        {
+                                            <img src="@relatedGame.CoverUrl"
+                                                 alt="@relatedGame.Name"
+                                                 loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <div class="gf-universe-game__fallback">
+                                                <i class="fas fa-gamepad" aria-hidden="true"></i>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="gf-universe-game__content">
+                                        <div class="gf-universe-game__name">@relatedGame.Name</div>
+                                        <div class="gf-universe-game__year">
+                                            @(relatedGame.ReleaseYear?.ToString() ?? "Release unknown")
+                                        </div>
+                                    </div>
+
+                                    <i class="fas fa-chevron-right gf-universe-game__arrow" aria-hidden="true"></i>
+                                </a>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+        </aside>
+    }
+
     <div class="gf-cover-art" id="game-cover-art">
         <div id="gradient"></div>
 
@@ -73,11 +217,23 @@
                         }
                     </div>
 
-                    @if (Model.Game?.FirstReleaseDateUnix != null)
+                    @if (releaseDate.HasValue)
                     {
                         <div class="bl-release">
-                            <span class="pill pill-muted">Released</span>
-                            <span class="pill">@UnixToDate(Model.Game.FirstReleaseDateUnix.Value)</span>
+                            <a class="pill pill-muted gf-game-release-link"
+                               href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseStatus=@releaseStatus"
+                               title="Ver jogos com estado @releaseLabel">
+                                @releaseLabel
+                            </a>
+
+                            @if (releaseYear.HasValue)
+                            {
+                                <a class="pill gf-game-release-link"
+                                   href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseYear=@releaseYear"
+                                   title="Ver jogos lançados em @releaseYear">
+                                    @UnixToDate(releaseDate.Value.ToUnixTimeSeconds())
+                                </a>
+                            }
                         </div>
                     }
                 </div>
@@ -108,25 +264,22 @@
                         </div>
                     }
 
-                    @if (Model.Game?.Platforms?.Any() == true)
+                    @if (platforms.Count > 0)
                     {
                         <div class="bl-row">
                             <div class="bl-row__label">PLATFORMS</div>
                             <div class="bl-row__value">
-                                @foreach (var platform in Model.Game.Platforms.Take(12))
+                                @foreach (var platform in platforms)
                                 {
-                                    if (platform.Id > 0 && !string.IsNullOrWhiteSpace(platform.Name))
-                                    {
-                                        <a class="gf-platform-pill gf-game-platform-link @PlatformClass(platform.Name)"
-                                           href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&PlatformId=@platform.Id"
-                                           data-platform="@PlatformLabel(platform.Name)"
-                                           title="Ver jogos para @PlatformLabel(platform.Name)"
-                                           aria-label="Ver jogos para @PlatformLabel(platform.Name)">
-                                            <span class="gf-platform-pill__icon">
-                                                <i class="@PlatformIcon(platform.Name)" aria-hidden="true"></i>
-                                            </span>
-                                        </a>
-                                    }
+                                    <a class="gf-platform-pill gf-game-platform-link @PlatformClass(platform.Name)"
+                                       href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&PlatformId=@platform.Id"
+                                       data-platform="@PlatformLabel(platform.Name)"
+                                       title="Ver jogos para @PlatformLabel(platform.Name)"
+                                       aria-label="Ver jogos para @PlatformLabel(platform.Name)">
+                                        <span class="gf-platform-pill__icon">
+                                            <i class="@PlatformIcon(platform.Name)" aria-hidden="true"></i>
+                                        </span>
+                                    </a>
                                 }
                             </div>
                         </div>
@@ -209,14 +362,6 @@
                         </div>
                     </div>
                 </div>
-
-                @if (!string.IsNullOrWhiteSpace(Model.Game?.Storyline))
-                {
-                    <div class="gf-game-storyline">
-                        <strong>Storyline</strong><br />
-                        @Model.Game.Storyline
-                    </div>
-                }
 
                 @if (hasMedia)
                 {
@@ -336,6 +481,7 @@
 </div>
 
 <script src="~/js/game-media-room.js" asp-append-version="true" defer></script>
+<script src="~/js/game-universe.js" asp-append-version="true" defer></script>
 
 @functions {
     static string UnixToDate(long unix)
@@ -359,6 +505,48 @@
 
     static int? MasterLike(int? completelySeconds) =>
         completelySeconds == null ? null : (int)(completelySeconds.Value * 2.2);
+
+    static int PlatformSortKey(string? platformName)
+    {
+        var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (platform.Contains("playstation 2")) return 1002;
+        if (platform.Contains("playstation 3")) return 1003;
+        if (platform.Contains("playstation 4")) return 1004;
+        if (platform.Contains("playstation 5")) return 1005;
+        if (platform == "playstation" || platform.Contains("playstation 1")) return 1001;
+        if (platform.Contains("psp")) return 1010;
+        if (platform.Contains("vita")) return 1011;
+        if (platform.Contains("playstation") || platform.StartsWith("ps")) return 1090;
+
+        if (platform == "xbox") return 2001;
+        if (platform.Contains("xbox 360")) return 2002;
+        if (platform.Contains("xbox one")) return 2003;
+        if (platform.Contains("xbox series")) return 2004;
+        if (platform.Contains("xbox")) return 2090;
+
+        if (platform.Contains("nintendo entertainment system") || platform == "nes") return 3001;
+        if (platform.Contains("super nintendo") || platform == "snes") return 3002;
+        if (platform.Contains("nintendo 64")) return 3003;
+        if (platform.Contains("gamecube")) return 3004;
+        if (platform == "wii") return 3005;
+        if (platform.Contains("wii u")) return 3006;
+        if (platform.Contains("switch")) return 3007;
+        if (platform.Contains("game boy")) return 3010;
+        if (platform.Contains("nintendo ds")) return 3011;
+        if (platform.Contains("3ds")) return 3012;
+        if (platform.Contains("nintendo")) return 3090;
+
+        if (platform.Contains("pc") || platform.Contains("windows") || platform.Contains("dos")) return 4000;
+        if (platform.Contains("mac")) return 4010;
+        if (platform.Contains("linux") || platform.Contains("ubuntu")) return 4020;
+        if (platform.Contains("android")) return 5000;
+        if (platform.Contains("ios") || platform.Contains("iphone") || platform.Contains("ipad")) return 5010;
+        if (platform.Contains("browser") || platform.Contains("web")) return 6000;
+        if (platform.Contains("cloud")) return 6010;
+
+        return 9000;
+    }
 
     static string PlatformClass(string? platformName)
     {
@@ -404,6 +592,7 @@
             "PlayStation 5" => "PS5",
             "PlayStation 4" => "PS4",
             "PlayStation 3" => "PS3",
+            "PlayStation 2" => "PS2",
             "Nintendo Switch" => "Switch",
             "" => "Unknown",
             _ => platform
