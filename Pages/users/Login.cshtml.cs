@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace Gamefilled.Pages.Users
 {
     /// <summary>
-    /// Página de login do utilizador.
+    /// User login page.
     /// </summary>
     public class LoginModel : PageModel
     {
@@ -58,21 +58,21 @@ namespace Gamefilled.Pages.Users
                     var remaining = lockUntilUtc.Value - nowUtc;
                     var mins = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
 
-                    Error = $"Demasiadas tentativas. Tenta novamente daqui a {mins} minuto(s).";
+                    Error = $"Too many attempts. Try again in {mins} minute(s).";
                     return Page();
                 }
 
                 ClearFailCounterAndLock();
             }
 
-            if (string.IsNullOrWhiteSpace(EmailOrUsername) || string.IsNullOrWhiteSpace(Password))
+            if (string.IsNullOrWhiteSpace(EmailOrUsername) || string.IsNullOrEmpty(Password))
             {
-                Error = "Preenche todos os campos.";
+                Error = "Complete all fields.";
                 return Page();
             }
 
             var identifier = EmailOrUsername.Trim();
-            var password = Password.Trim();
+            var password = Password;
 
             if (identifier.Contains("@"))
                 identifier = identifier.ToLowerInvariant();
@@ -87,17 +87,10 @@ namespace Gamefilled.Pages.Users
                     (u.Username != null && u.Username == identifier) ||
                     (u.Email != null && u.Email == identifier));
 
-                if (user == null)
+                if (user == null || string.IsNullOrWhiteSpace(user.PasswordHash))
                 {
                     RegisterFailAttempt();
-                    Error = "Utilizador não encontrado.";
-                    return Page();
-                }
-
-                if (string.IsNullOrWhiteSpace(user.PasswordHash))
-                {
-                    RegisterFailAttempt();
-                    Error = "Conta sem password definida.";
+                    Error = "Invalid username, email or password.";
                     return Page();
                 }
 
@@ -105,11 +98,15 @@ namespace Gamefilled.Pages.Users
                 if (!ok)
                 {
                     RegisterFailAttempt();
-                    Error = "Password incorreta.";
+                    Error = "Invalid username, email or password.";
                     return Page();
                 }
 
                 ClearFailCounterAndLock();
+
+                var now = DateTime.UtcNow;
+                user.LastSeenAt = now;
+                await _context.SaveChangesAsync();
 
                 var usernameForSession = !string.IsNullOrWhiteSpace(user.Username)
                     ? user.Username.Trim()
@@ -123,6 +120,7 @@ namespace Gamefilled.Pages.Users
                 HttpContext.Session.SetString("username", usernameForSession);
                 HttpContext.Session.SetString("displayName", displayNameForSession);
                 HttpContext.Session.SetString("role", user.Role ?? "User");
+                HttpContext.Session.SetString("presence_last_touch_utc", now.ToString("O"));
 
                 if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
                     HttpContext.Session.SetString("avatarUrl", user.AvatarUrl.Trim());
@@ -136,8 +134,8 @@ namespace Gamefilled.Pages.Users
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, "Erro no login para {Identifier}", identifier);
-                Error = "Ocorreu um erro inesperado.";
+                _logger.LogError(exception, "Login error for {Identifier}", identifier);
+                Error = "An unexpected error occurred.";
                 return Page();
             }
         }
