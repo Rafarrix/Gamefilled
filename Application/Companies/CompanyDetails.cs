@@ -107,7 +107,7 @@ internal static class CompanyDateFormatter
         {
             return DateTimeOffset
                 .FromUnixTimeSeconds(unixSeconds.Value)
-                .ToString(format, CultureInfo.GetCultureInfo("pt-PT"));
+                .ToString(format, CultureInfo.GetCultureInfo("en-US"));
         }
         catch (ArgumentOutOfRangeException)
         {
