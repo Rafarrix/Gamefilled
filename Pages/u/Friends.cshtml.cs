@@ -23,6 +23,7 @@ namespace Gamefilled.Pages.u
 
         public Models.User ProfileUser { get; set; } = default!;
         public List<FriendUserViewModel> Friends { get; set; } = new();
+        public bool IsOwnProfile { get; private set; }
 
         public async Task<IActionResult> OnGetAsync(string username, CancellationToken ct)
         {
@@ -37,6 +38,10 @@ namespace Gamefilled.Pages.u
                 return NotFound();
 
             ProfileUser = user;
+
+            var currentUsername = HttpContext.Session.GetString("username");
+            IsOwnProfile = !string.IsNullOrWhiteSpace(currentUsername) &&
+                string.Equals(currentUsername, user.Username, StringComparison.OrdinalIgnoreCase);
 
             var graph = await _socialGraph.GetSnapshotAsync(user.Id, ct);
             if (graph.MutualIds.Count == 0)

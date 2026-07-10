@@ -1,28 +1,34 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.BlockedModel
 @{
-    ViewData["Title"] = "Blocked Users";
+    ViewData["Title"] = "Blocked users";
     ViewData["ActiveSettings"] = "Blocked";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container settings-wrap">
-    <div class="row">
-        <div class="col-lg-3 d-none d-lg-block">
-            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
-        </div>
-
-        <div class="col-lg-9">
-            <div class="settings-content">
-                <div class="settings-content-header">
-                    <h2 class="mb-0">Blocked Users</h2>
-                </div>
-
-                <p class="subtitle-text">Placeholder — mais tarde: lista de users bloqueados e botão “unblock”.</p>
-
-                <div class="alert alert-info mt-3">
-                    Ainda não implementado.
-                </div>
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div>
+                <span class="gf-eyebrow">Privacy & safety</span>
+                <h1>Blocked users</h1>
+                <p>Manage accounts you no longer want to interact with.</p>
             </div>
+        </header>
+
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+            <main class="gf-settings-content">
+                <section class="gf-panel">
+                    <div class="gf-panel__header">
+                        <div><h2>Block list</h2><p>Blocking and unblocking controls will live here.</p></div>
+                        <span class="gf-chip"><i class="fas fa-clock" aria-hidden="true"></i> Planned</span>
+                    </div>
+                    <div class="gf-panel__body">
+                        <div class="gf-empty">No block-management workflow is enabled in this development version.</div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 </div>

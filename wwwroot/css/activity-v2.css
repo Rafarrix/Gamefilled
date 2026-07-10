@@ -1,0 +1,140 @@
+.gf-activity-page {
+    min-height: calc(100vh - 58px);
+    background: #0e1015;
+    color: #f3f4f6;
+}
+
+.gf-activity-shell {
+    width: min(calc(100% - clamp(24px, 6vw, 120px)), 1180px);
+    margin-inline: auto;
+}
+
+.gf-activity-hero {
+    padding: clamp(112px, 10vw, 154px) 0 42px;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    background:
+        radial-gradient(56% 110% at 8% 30%, rgba(0,176,32,.12), transparent 68%),
+        #0e1015;
+}
+
+.gf-activity-hero__inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: end;
+}
+
+.gf-activity-hero h1 {
+    margin: 8px 0 10px;
+    font-size: clamp(2.8rem, 5vw, 5rem);
+    line-height: .95;
+    letter-spacing: -.055em;
+    font-weight: 900;
+}
+
+.gf-activity-hero p {
+    margin: 0;
+    color: #c2c8d2;
+}
+
+.gf-activity-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 13px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    background: #171b23;
+    color: #f3f4f6;
+    text-decoration: none;
+}
+
+.gf-activity-back:hover {
+    color: #86efac;
+    text-decoration: none;
+    border-color: rgba(74,222,128,.28);
+}
+
+.gf-activity-main {
+    padding-block: 32px 78px;
+}
+
+.gf-activity-list {
+    display: grid;
+    gap: 12px;
+}
+
+.gf-activity-card {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 15px;
+    background: #171b23;
+}
+
+.gf-activity-card__media {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #11151c;
+    color: #6ee7a1;
+}
+
+.gf-activity-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gf-activity-card__body {
+    min-width: 0;
+}
+
+.gf-activity-card__body p {
+    margin: 0;
+    color: #d8dde6;
+    line-height: 1.55;
+}
+
+.gf-activity-card__body a {
+    color: #86efac;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.gf-activity-card__body a:hover {
+    color: #bbf7d0;
+}
+
+.gf-activity-card__time {
+    color: #8992a3;
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+.gf-activity-empty {
+    max-width: 620px;
+    margin: 70px auto 0;
+}
+
+@media (max-width: 720px) {
+    .gf-activity-hero__inner {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .gf-activity-card {
+        grid-template-columns: 48px minmax(0, 1fr);
+    }
+
+    .gf-activity-card__time {
+        grid-column: 2;
+        white-space: normal;
+    }
+}

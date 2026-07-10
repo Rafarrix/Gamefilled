@@ -1,8 +1,45 @@
-﻿@page
+@page "/privacy"
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Privacy";
+    ViewData["FullBleed"] = true;
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<link rel="stylesheet" href="~/css/static-family-v2.css" asp-append-version="true" />
+
+<div class="gf-static-page">
+    <div class="gf-static-shell">
+        <header class="gf-static-hero">
+            <span class="gf-eyebrow">Pre-release privacy</span>
+            <h1>Your data should stay understandable.</h1>
+            <p>This notice reflects the current development version. A legally reviewed privacy policy will be completed before public launch.</p>
+        </header>
+
+        <div class="gf-static-grid">
+            <section class="gf-static-card">
+                <h2>Account information</h2>
+                <p>Gamefilled stores the account and profile information needed for login, public profiles and user settings.</p>
+            </section>
+
+            <section class="gf-static-card">
+                <h2>Gaming activity</h2>
+                <p>Library states, ratings, reviews, favourite games and social relationships are stored to provide personalised features.</p>
+            </section>
+
+            <section class="gf-static-card">
+                <h2>Sessions and presence</h2>
+                <p>Session cookies keep you signed in. Recent activity timestamps may be used to show an approximate online status.</p>
+            </section>
+
+            <section class="gf-static-card">
+                <h2>External game metadata</h2>
+                <p>Game information and imagery are retrieved from external catalogue services. Gamefilled does not send your password to those services.</p>
+            </section>
+
+            <section class="gf-static-card gf-static-card--wide">
+                <h2>Before launch</h2>
+                <p>Data export, account deletion, retention rules, consent controls and final support contacts will be implemented and documented before production.</p>
+            </section>
+        </div>
+    </div>
+</div>

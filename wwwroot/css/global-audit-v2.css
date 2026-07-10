@@ -1,0 +1,163 @@
+:root {
+    --gf-global-bg: #0e1015;
+    --gf-global-surface: #171b23;
+    --gf-global-surface-hover: #1b2029;
+    --gf-global-border: rgba(255,255,255,.08);
+    --gf-global-border-strong: rgba(255,255,255,.13);
+    --gf-global-text: #f3f4f6;
+    --gf-global-muted: rgba(229,231,235,.58);
+    --gf-global-green: #00b020;
+    --gf-global-green-soft: #86efac;
+}
+
+html,
+body {
+    background: var(--gf-global-bg);
+}
+
+body > main {
+    width: 100%;
+}
+
+/* Scale audited layouts on large and ultrawide displays without stretching copy. */
+@media (min-width: 1400px) {
+    .container {
+        max-width: min(1380px, calc(100vw - 96px));
+    }
+}
+
+/* Shared action language: rounded, compact and restrained until interaction. */
+.btn,
+.gf-btn,
+button[class*="btn-"] {
+    border-radius: 10px;
+}
+
+.btn-main,
+.btn-primary,
+.gf-btn--primary {
+    border: 1px solid rgba(74,222,128,.30) !important;
+    background: linear-gradient(180deg, rgba(0,176,32,.98), rgba(0,151,28,.98)) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    font-weight: 800;
+    transition: transform .15s ease, border-color .15s ease, filter .15s ease, background .15s ease;
+}
+
+.btn-main:hover,
+.btn-main:focus-visible,
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.gf-btn--primary:hover,
+.gf-btn--primary:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(134,239,172,.52) !important;
+    filter: brightness(1.07);
+    color: #fff !important;
+}
+
+.btn-secondary,
+.gf-btn--secondary {
+    border: 1px solid var(--gf-global-border) !important;
+    background: var(--gf-global-surface) !important;
+    color: rgba(243,244,246,.84) !important;
+    box-shadow: none !important;
+    font-weight: 760;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible,
+.gf-btn--secondary:hover,
+.gf-btn--secondary:focus-visible {
+    border-color: rgba(74,222,128,.24) !important;
+    background: var(--gf-global-surface-hover) !important;
+    color: #fff !important;
+}
+
+/* Generic interactive surfaces used by page families. */
+.gf-interactive-surface {
+    border: 1px solid var(--gf-global-border);
+    border-radius: 14px;
+    background: var(--gf-global-surface);
+    color: inherit;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.gf-interactive-surface:hover,
+.gf-interactive-surface:focus-within {
+    transform: translateY(-2px);
+    border-color: rgba(74,222,128,.23);
+    background: var(--gf-global-surface-hover);
+    box-shadow: 0 18px 44px rgba(0,0,0,.20);
+}
+
+/* Shared controls for audited pages; page-specific auth artwork remains untouched. */
+.gf-page .form-control,
+.gf-settings-page .form-control,
+.gf-profile-page .form-control,
+.gf-library-page .form-control,
+.gf-search-page .form-control,
+.gf-people-page .form-control,
+.gf-company-page .form-control,
+.gf-page select,
+.gf-settings-page select,
+.gf-profile-page select,
+.gf-library-page select,
+.gf-search-page select,
+.gf-people-page select,
+.gf-company-page select {
+    border: 1px solid var(--gf-global-border);
+    border-radius: 10px;
+    background: var(--gf-global-surface);
+    color: var(--gf-global-text);
+    box-shadow: none;
+}
+
+.gf-page .form-control:focus,
+.gf-settings-page .form-control:focus,
+.gf-profile-page .form-control:focus,
+.gf-library-page .form-control:focus,
+.gf-search-page .form-control:focus,
+.gf-people-page .form-control:focus,
+.gf-company-page .form-control:focus {
+    border-color: rgba(74,222,128,.42);
+    background: var(--gf-global-surface-hover);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(0,176,32,.10);
+}
+
+/* Prevent audited full-bleed sections from producing visible background islands. */
+.fullbleed main,
+.fullbleed .gf-page,
+.fullbleed .gf-settings-page,
+.fullbleed .gf-profile-page,
+.fullbleed .gf-library-page,
+.fullbleed .gf-search-page,
+.fullbleed .gf-company-page,
+.fullbleed .gf-people-page {
+    background-color: var(--gf-global-bg);
+}
+
+/* Consistent horizontal rhythm for headings and supporting text. */
+.gf-section-title {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.15rem, 1.7vw, 1.55rem);
+    font-weight: 850;
+    letter-spacing: -.03em;
+}
+
+.gf-section-copy {
+    margin: 6px 0 0;
+    color: var(--gf-global-muted);
+    font-size: .82rem;
+    line-height: 1.65;
+}
+
+@media (max-width: 720px) {
+    .btn,
+    .gf-btn,
+    button[class*="btn-"] {
+        min-height: 42px;
+    }
+}

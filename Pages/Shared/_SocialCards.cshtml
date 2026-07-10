@@ -1,0 +1,49 @@
+@model IReadOnlyList<Gamefilled.Application.Social.SocialListUserCard>
+
+<section class="gf-people-grid" aria-label="People">
+    @foreach (var person in Model)
+    {
+        var avatar = string.IsNullOrWhiteSpace(person.AvatarUrl)
+            ? "/lib/imgs/defaultavatar.png"
+            : person.AvatarUrl;
+
+        <article class="gf-person-card">
+            <a class="gf-person-card__identity" href="/u/@person.Username">
+                <span class="gf-person-card__avatar-wrap">
+                    <img class="gf-person-card__avatar"
+                         src="@avatar"
+                         alt="@person.DisplayName avatar"
+                         loading="lazy" />
+                    <span class="gf-presence-dot @(person.IsOnline ? "is-online" : string.Empty)"
+                          title="@person.PresenceText"
+                          aria-label="@person.PresenceText"></span>
+                </span>
+
+                <span class="gf-person-card__names">
+                    <strong>@person.DisplayName</strong>
+                    <small>@@@person.Username</small>
+                </span>
+            </a>
+
+            @if (!string.IsNullOrWhiteSpace(person.Bio))
+            {
+                <p class="gf-person-card__bio">@person.Bio</p>
+            }
+
+            <div class="gf-person-card__badges">
+                @if (person.IsMutual)
+                {
+                    <span class="gf-social-badge is-mutual">
+                        <i class="fas fa-user-group" aria-hidden="true"></i>
+                        Mutual
+                    </span>
+                }
+                <span class="gf-person-card__presence">@person.PresenceText</span>
+            </div>
+
+            <div class="gf-person-card__actions">
+                <a class="gf-person-card__profile" href="/u/@person.Username">View profile</a>
+            </div>
+        </article>
+    }
+</section>

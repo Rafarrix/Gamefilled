@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
 
@@ -45,7 +45,7 @@ namespace Gamefilled.Pages
                 if (!res.IsSuccessStatusCode)
                 {
                     _logger.LogWarning("Search -> /api/igdbsearch failed {Status}. Body: {Body}", res.StatusCode, json);
-                    Error = "Failed to contact IGDB. Please try again.";
+                    Error = "Search is temporarily unavailable. Please try again.";
                     return;
                 }
 
@@ -61,7 +61,7 @@ namespace Gamefilled.Pages
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in /search");
-                Error = "Failed to contact IGDB. Please try again.";
+                Error = "Search is temporarily unavailable. Please try again.";
             }
         }
 

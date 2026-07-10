@@ -1,36 +1,31 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.NotificationsModel
 @{
     ViewData["Title"] = "Notifications";
     ViewData["ActiveSettings"] = "Notifications";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container settings-wrap">
-    <div class="row">
-        <div class="col-lg-3 d-none d-lg-block">
-            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
-        </div>
-
-        <div class="col-lg-9">
-            <div class="settings-content">
-                <div class="settings-content-header">
-                    <h2 class="mb-0">Notifications</h2>
-                </div>
-
-                <p class="subtitle-text mb-3">Placeholders — mais tarde: notificações de followers, reviews, listas, etc.</p>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label class="mb-1">Email notifications</label>
-                        <select class="backloggd-field w-100">
-                            <option>Disable</option>
-                            <option>Enable</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" disabled>Save Changes</button>
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div>
+                <span class="gf-eyebrow">Notifications</span>
+                <h1>Notifications</h1>
+                <p>Choose how Gamefilled alerts you.</p>
             </div>
+        </header>
+
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+            <main class="gf-settings-content">
+                <section class="gf-panel">
+                    <div class="gf-panel__header">
+                        <div><h2>Preferences</h2><p>Social and account notification controls.</p></div>
+                        <span class="gf-chip"><i class="fas fa-clock" aria-hidden="true"></i> Planned</span>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 </div>

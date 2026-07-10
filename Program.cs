@@ -50,8 +50,10 @@ builder.Services.AddHttpClient<IgdbApiClient>(client =>
 });
 
 builder.Services.AddScoped<IGameDiscoveryService, GameDiscoveryService>();
+builder.Services.AddScoped<UserLibraryService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<SocialGraphService>();
+builder.Services.AddScoped<SocialListService>();
 
 /* ============================================================================
    CACHE + SESSION
@@ -89,6 +91,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

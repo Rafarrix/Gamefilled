@@ -1,102 +1,35 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.ProfileModel
 @{
-    ViewData["Title"] = "Edit Profile";
-
-    var avatarPreview = string.IsNullOrWhiteSpace(Model.AvatarUrl)
-        ? "/lib/imgs/defaultavatar.png"
-        : Model.AvatarUrl;
-
-    var bannerPreview = string.IsNullOrWhiteSpace(Model.BannerUrl)
-        ? "/lib/imgs/defaultbanner.jpg"
-        : Model.BannerUrl;
+    ViewData["Title"] = "Edit profile";
+    ViewData["ActiveSettings"] = "Profile";
+    ViewData["FullBleed"] = true;
+    var avatarPreview = string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "/lib/imgs/defaultavatar.png" : Model.AvatarUrl;
+    var bannerPreview = string.IsNullOrWhiteSpace(Model.BannerUrl) ? "/lib/imgs/defaultbanner.jpg" : Model.BannerUrl;
 }
-
-<div class="container py-4 gf-edit-profile-page">
-    <div class="gf-edit-profile-head">
-        <div>
-            <h1>Edit Profile</h1>
-            <p class="subtitle-text mb-0">Update your display name, bio, avatar and banner.</p>
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div><span class="gf-eyebrow">Profile</span><h1>Edit profile</h1><p>Update your public name, bio, avatar and banner.</p></div>
+            @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername)) { <a class="gf-btn gf-btn--secondary" href="/u/@Model.CurrentUsername"><i class="fas fa-arrow-left" aria-hidden="true"></i>View profile</a> }
+        </header>
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+            <main class="gf-settings-content">
+                <form method="post">
+                    <div class="gf-settings-form-grid">
+                        <div class="gf-settings-stack">
+                            <section class="gf-settings-preview" aria-label="Profile preview"><div class="gf-settings-preview__banner" style="background-image:url('@bannerPreview')"></div><div class="gf-settings-preview__fade"></div><img class="gf-settings-preview__avatar" src="@avatarPreview" alt="Current avatar preview" /></section>
+                            <section class="gf-panel"><div class="gf-panel__header"><div><h2>Profile information</h2></div></div><div class="gf-panel__body"><div class="gf-field"><label class="gf-label" asp-for="DisplayName">Display name</label><input class="gf-input" asp-for="DisplayName" maxlength="100" placeholder="Display name" /></div><div class="gf-field"><label class="gf-label" asp-for="Bio">Bio</label><textarea class="gf-textarea" asp-for="Bio" rows="6" placeholder="Tell people what you play."></textarea><span class="gf-help">Maximum 200 words.</span><span asp-validation-for="Bio" class="text-danger d-block"></span></div></div></section>
+                            <section class="gf-panel"><div class="gf-panel__header"><div><h2>Profile media</h2></div></div><div class="gf-panel__body"><div class="gf-field"><label class="gf-label" asp-for="AvatarUrl">Avatar URL</label><input class="gf-input" asp-for="AvatarUrl" type="url" placeholder="https://example.com/avatar.jpg" /><span class="gf-help">Square images work best.</span></div><div class="gf-field"><label class="gf-label" asp-for="BannerUrl">Banner URL</label><input class="gf-input" asp-for="BannerUrl" type="url" placeholder="https://example.com/banner.jpg" /><span class="gf-help">Use a wide landscape image.</span></div></div></section>
+                        </div>
+                        <aside class="gf-settings-stack">
+                            <section class="gf-panel"><div class="gf-panel__header"><div><h2>Preview tips</h2></div></div><div class="gf-panel__body gf-settings-tips"><div class="gf-settings-tip"><i class="fas fa-image" aria-hidden="true"></i><span>Use a clear square avatar.</span></div><div class="gf-settings-tip"><i class="fas fa-panorama" aria-hidden="true"></i><span>Keep banner details near the center.</span></div><div class="gf-settings-tip"><i class="fas fa-align-left" aria-hidden="true"></i><span>Keep the bio concise.</span></div></div></section>
+                            <div class="gf-settings-actions">@if (!string.IsNullOrWhiteSpace(Model.CurrentUsername)) { <a class="gf-btn gf-btn--secondary" href="/u/@Model.CurrentUsername">Cancel</a> }<button type="submit" class="gf-btn gf-btn--primary"><i class="fas fa-check" aria-hidden="true"></i>Save profile</button></div>
+                        </aside>
+                    </div>
+                </form>
+            </main>
         </div>
-
-        @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
-        {
-            <a class="btn btn-outline-light" href="/u/@Model.CurrentUsername">Back to Profile</a>
-        }
     </div>
-
-    <form method="post" class="gf-edit-profile-form">
-
-        <div class="gf-edit-profile-preview">
-            <div class="gf-edit-profile-banner-preview"
-                 style="background-image:url('@bannerPreview')">
-            </div>
-
-            <div class="gf-edit-profile-avatar-preview-wrap">
-                <img class="gf-edit-profile-avatar-preview" src="@avatarPreview" alt="Avatar preview" />
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <div class="col-lg-8">
-
-                <div class="gf-edit-profile-card">
-                    <div class="form-group">
-                        <label>Display Name</label>
-                        <input class="form-control" asp-for="DisplayName" maxlength="100" />
-                    </div>
-
-                    <div class="form-group mb-0">
-                        <label>Bio</label>
-                        <textarea class="form-control gf-edit-profile-bio" asp-for="Bio" rows="6"></textarea>
-                        <small class="form-text text-muted">Maximum: 200 words.</small>
-                        <span asp-validation-for="Bio" class="text-danger d-block mt-1"></span>
-                    </div>
-                </div>
-
-                <div class="gf-edit-profile-card">
-                    <div class="form-group">
-                        <label>Avatar URL</label>
-                        <input class="form-control" asp-for="AvatarUrl" placeholder="https://..." />
-                        <small class="form-text text-muted">Paste a direct image link for your avatar.</small>
-                    </div>
-
-                    <div class="form-group mb-0">
-                        <label>Banner URL</label>
-                        <input class="form-control" asp-for="BannerUrl" placeholder="https://..." />
-                        <small class="form-text text-muted">Paste a direct image link for your banner.</small>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="col-lg-4">
-                <div class="gf-edit-profile-card">
-                    <h3 class="gf-edit-profile-side-title">Tips</h3>
-
-                    <div class="gf-edit-profile-tip">
-                        Use a square image for the avatar.
-                    </div>
-
-                    <div class="gf-edit-profile-tip">
-                        Wide images work better for banners.
-                    </div>
-
-                    <div class="gf-edit-profile-tip">
-                        Leave avatar or banner empty to use the default image.
-                    </div>
-                </div>
-
-                <div class="gf-edit-profile-actions">
-                    <button type="submit" class="btn btn-main btn-block">Save Changes</button>
-
-                    @if (!string.IsNullOrWhiteSpace(Model.CurrentUsername))
-                    {
-                        <a class="btn btn-outline-light btn-block" href="/u/@Model.CurrentUsername">Cancel</a>
-                    }
-                </div>
-            </div>
-        </div>
-
-    </form>
 </div>
