@@ -10,7 +10,7 @@
 
 .gf-library-filter-tab {
     position: fixed;
-    left: 0;
+    left: -1px;
     top: 42%;
     z-index: 19980;
     width: 48px;
@@ -26,9 +26,22 @@
     border-radius: 0 14px 14px 0;
     background: linear-gradient(180deg, #16231b, #101712);
     color: #86efac;
-    box-shadow: 10px 14px 34px rgba(0, 0, 0, 0.38);
+    box-shadow: 9px 12px 30px rgba(0, 0, 0, 0.32);
     cursor: pointer;
+    isolation: isolate;
     transition: width .18s ease, background .18s ease, color .18s ease, opacity .18s ease;
+}
+
+/* Disfarça a pequena faixa lateral criada pelo viewport/safe area em alguns browsers. */
+.gf-library-filter-tab::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: -1px;
+    right: calc(100% - 2px);
+    bottom: -1px;
+    width: 18px;
+    background: #0e1015;
 }
 
 .gf-library-filter-tab:hover,
