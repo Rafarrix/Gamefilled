@@ -13,17 +13,20 @@ body > main {
     padding-block: 10px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto;
     align-items: center;
     gap: 18px;
 }
 
 .gf-footer-links {
     grid-column: 1;
+    grid-row: 1;
     justify-self: start;
     display: flex;
     align-items: center;
     gap: 14px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
 
 .gf-footer-meta {
@@ -32,12 +35,14 @@ body > main {
 
 .gf-footer-meta > span:first-child {
     grid-column: 3;
+    grid-row: 1;
     justify-self: end;
     white-space: nowrap;
 }
 
 .gf-footer-provider {
     grid-column: 2;
+    grid-row: 1;
     justify-self: center;
     display: inline-flex;
     align-items: center;
@@ -82,6 +87,7 @@ body > main {
 
     .gf-footer-inner {
         grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, auto);
         justify-items: center;
         gap: 10px;
         padding-block: 16px;
@@ -93,6 +99,12 @@ body > main {
     .gf-footer-meta > span:first-child {
         grid-column: 1;
         justify-self: center;
+    }
+
+    .gf-footer-links {
+        grid-row: 1;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .gf-footer-provider {
