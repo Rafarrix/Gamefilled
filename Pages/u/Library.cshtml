@@ -16,19 +16,19 @@
 <div class="gf-library-page">
     <section class="gf-library-hero">
         <div class="gf-library-shell gf-library-hero__inner">
-            <a class="gf-library-owner" href="/u/@Model.Result.Owner.Username">
-                <img src="@avatar" alt="@Model.Result.Owner.DisplayName avatar" />
-                <span>
-                    <small>@@@Model.Result.Owner.Username</small>
-                    <strong>@Model.Result.Owner.DisplayName</strong>
-                </span>
-            </a>
-
             <div class="gf-library-title">
                 <span class="gf-eyebrow">@Model.Eyebrow</span>
                 <h1><i class="@Model.Icon" aria-hidden="true"></i>@Model.Title</h1>
                 <p>@Model.Description</p>
             </div>
+
+            <a class="gf-library-owner" href="/u/@Model.Result.Owner.Username">
+                <img src="@avatar" alt="@Model.Result.Owner.DisplayName avatar" />
+                <span>
+                    <small>@(Model.IsOwnProfile ? "Your profile" : $"@{Model.Result.Owner.Username}")</small>
+                    <strong>@Model.Result.Owner.DisplayName</strong>
+                </span>
+            </a>
 
             <div class="gf-library-total">
                 <strong>@Model.Result.TotalItems</strong>
@@ -67,8 +67,8 @@
                 <input type="search"
                        name="q"
                        value="@Model.Query"
-                       placeholder="Search this library"
-                       aria-label="Search this library" />
+                       placeholder="@(Model.IsOwnProfile ? "Search your library" : "Search this library")"
+                       aria-label="@(Model.IsOwnProfile ? "Search your library" : "Search this library")" />
                 @if (Model.Sort != "recent")
                 {
                     <input type="hidden" name="sort" value="@Model.Sort" />
@@ -148,7 +148,9 @@
             <section class="gf-empty-state gf-library-empty">
                 <span class="gf-empty-state__icon"><i class="@Model.Icon" aria-hidden="true"></i></span>
                 <h2>@(string.IsNullOrWhiteSpace(Model.Query) ? $"No {Model.Title.ToLowerInvariant()} games yet" : "No matching games")</h2>
-                <p>@(string.IsNullOrWhiteSpace(Model.Query) ? "Games added from a game page will appear here." : "Try another title or clear the search.")</p>
+                <p>@(string.IsNullOrWhiteSpace(Model.Query)
+                    ? (Model.IsOwnProfile ? "Games you add from a game page will appear here." : "Games added from a game page will appear here.")
+                    : "Try another title or clear the search.")</p>
                 @if (!string.IsNullOrWhiteSpace(Model.Query))
                 {
                     <a class="gf-btn gf-btn--secondary" href="@Model.LibraryUrl(Model.Section)">Clear search</a>
