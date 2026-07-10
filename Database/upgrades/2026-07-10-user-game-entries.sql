@@ -10,7 +10,7 @@ BEGIN
         [GameId] INT NOT NULL,
         [Status] NVARCHAR(20) NOT NULL,
         [Rating] INT NULL,
-        [ReviewText] NVARCHAR(5000) NULL,
+        [ReviewText] NVARCHAR(MAX) NULL,
         [ContainsSpoilers] BIT NOT NULL CONSTRAINT [DF_UserGameEntries_ContainsSpoilers] DEFAULT 0,
         [CreatedAt] DATETIME2 NOT NULL CONSTRAINT [DF_UserGameEntries_CreatedAt] DEFAULT SYSUTCDATETIME(),
         [UpdatedAt] DATETIME2 NOT NULL CONSTRAINT [DF_UserGameEntries_UpdatedAt] DEFAULT SYSUTCDATETIME(),
@@ -22,7 +22,10 @@ BEGIN
             CHECK ([Status] IN (N'played', N'playing', N'backlog', N'wishlist')),
 
         CONSTRAINT [CK_UserGameEntries_Rating]
-            CHECK ([Rating] IS NULL OR [Rating] BETWEEN 1 AND 10)
+            CHECK ([Rating] IS NULL OR [Rating] BETWEEN 1 AND 10),
+
+        CONSTRAINT [CK_UserGameEntries_ReviewTextLength]
+            CHECK ([ReviewText] IS NULL OR LEN([ReviewText]) <= 5000)
     );
 
     CREATE UNIQUE INDEX [UX_UserGameEntries_UserId_GameId]
