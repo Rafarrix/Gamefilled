@@ -71,7 +71,7 @@
                             <span class="gf-notification-card__body">
                                 <span class="gf-notification-card__title">@item.Title</span>
                                 <span class="gf-notification-card__message">@item.Message</span>
-                                <span class="gf-notification-card__time">@NotificationsModel.RelativeTime(item.CreatedAt)</span>
+                                <span class="gf-notification-card__time">@Gamefilled.Pages.NotificationsModel.RelativeTime(item.CreatedAt)</span>
                             </span>
 
                             @if (!item.IsRead)
