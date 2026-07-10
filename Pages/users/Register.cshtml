@@ -1,13 +1,14 @@
-﻿@page
+@page
 @model RegisterModel
 @{
     ViewData["Title"] = "Create account";
     ViewData["FullBleed"] = true;
 }
 
-<div class="gf-auth-page">
+<link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/auth-v2.css" asp-append-version="true" />
 
-    <!-- Background decorativo -->
+<div class="gf-auth-page">
     <div class="gf-auth-bg" aria-hidden="true">
         <img src="/lib/imgs/indexbackground.png" alt="" />
         <div class="gf-auth-bg__overlay"></div>
@@ -15,9 +16,7 @@
 
     <div class="gf-auth-shell">
         <div class="gf-auth-card">
-
-            <!-- Lado esquerdo -->
-            <div class="gf-auth-left">
+            <section class="gf-auth-left" aria-labelledby="register-welcome">
                 <div class="gf-auth-brandmark" aria-hidden="true">
                     <img src="/lib/imgs/Gamefilled_Logo_0removebg.png" alt="" />
                 </div>
@@ -27,30 +26,28 @@
                     <span>Gamefilled</span>
                 </div>
 
-                <h1 class="gf-auth-title">Create your account</h1>
+                <h1 class="gf-auth-title" id="register-welcome">Build your gaming identity.</h1>
 
                 <p class="gf-auth-subtitle">
-                    Join the community. Track your games, showcase your favourites
-                    and build your own profile.
+                    Track what you play, discover new games, publish reviews and connect with players who share your taste.
                 </p>
 
                 <div class="gf-auth-side-link">
                     Already have an account?
-                    <a asp-page="/users/Login">Sign in</a>
+                    <a asp-page="/users/Login">Log in</a>
                 </div>
-            </div>
+            </section>
 
-            <!-- Lado direito -->
-            <div class="gf-auth-right">
+            <section class="gf-auth-right" aria-labelledby="register-form-title">
                 <div class="gf-auth-form-wrap">
                     <div class="gf-auth-form-head">
-                        <h2 class="gf-auth-form-title">Create account</h2>
-                        <p class="gf-auth-form-subtitle">Create your account to get started.</p>
+                        <h2 class="gf-auth-form-title" id="register-form-title">Create account</h2>
+                        <p class="gf-auth-form-subtitle">Start building your Gamefilled profile.</p>
                     </div>
 
                     @if (Model.Error != null)
                     {
-                        <div class="gf-auth-alert">@Model.Error</div>
+                        <div class="gf-auth-alert" role="alert">@Model.Error</div>
                     }
 
                     <form method="post" novalidate>
@@ -58,15 +55,17 @@
                             <label asp-for="Username" class="gf-auth-label">Username</label>
                             <input asp-for="Username"
                                    class="gf-auth-input"
-                                   placeholder="Username"
-                                   autocomplete="username" />
+                                   placeholder="Choose a username"
+                                   autocomplete="username"
+                                   autofocus />
                         </div>
 
                         <div class="gf-auth-field">
                             <label asp-for="Email" class="gf-auth-label">Email</label>
                             <input asp-for="Email"
                                    class="gf-auth-input"
-                                   placeholder="Email"
+                                   type="email"
+                                   placeholder="Enter your email"
                                    autocomplete="email" />
                         </div>
 
@@ -75,7 +74,7 @@
                             <input asp-for="Password"
                                    class="gf-auth-input"
                                    type="password"
-                                   placeholder="Password"
+                                   placeholder="Create a password"
                                    autocomplete="new-password" />
                         </div>
 
@@ -84,32 +83,31 @@
                             <input asp-for="ConfirmPassword"
                                    class="gf-auth-input"
                                    type="password"
-                                   placeholder="Confirm password"
+                                   placeholder="Repeat your password"
                                    autocomplete="new-password" />
                         </div>
 
                         <div class="gf-auth-check">
                             <input type="checkbox" id="terms" required />
                             <label for="terms">
-                                I agree to the <a href="#">Terms of Service</a> and
-                                <a href="#">Privacy Policy</a>
+                                I agree to the <a href="/terms">Terms of Service</a> and
+                                <a href="/privacy">Privacy Policy</a>.
                             </label>
                         </div>
 
                         <button type="submit" class="gf-auth-submit">Create account</button>
 
                         <div class="gf-auth-note">
-                            By creating an account, you can start building your profile and joining the community.
+                            You control what appears publicly on your profile and can update your preferences later.
                         </div>
 
                         <div class="gf-auth-mobile-link">
                             Already have an account?
-                            <a asp-page="/users/Login">Sign in</a>
+                            <a asp-page="/users/Login">Log in</a>
                         </div>
                     </form>
                 </div>
-            </div>
-
+            </section>
         </div>
     </div>
 </div>
