@@ -29,19 +29,23 @@
 .gf-profile-menu {
     --gf-menu-x: 50%;
     --gf-menu-y: 0%;
-    width: min(430px, calc(100vw - 24px));
+    width: min(292px, calc(100vw - 24px));
+    max-height: calc(100vh - 74px);
     margin-top: 0 !important;
     padding: 0 !important;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, .10);
     background:
         radial-gradient(circle at var(--gf-menu-x) var(--gf-menu-y), rgba(0, 176, 32, .13), transparent 29%),
         #151922;
     box-shadow: 0 28px 70px rgba(0, 0, 0, .58);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74, 222, 128, .45) transparent;
 }
 
-/* Ponte invisível entre o trigger e o menu para não perder o hover. */
+/* Invisible bridge between the trigger and menu so hover is not lost. */
 .gf-profile-menu::before {
     content: "";
     position: absolute;
@@ -123,17 +127,12 @@
     text-transform: uppercase;
 }
 
-.gf-profile-menu__grid {
-    display: grid;
-    gap: 4px;
-}
-
-.gf-profile-menu__grid--profile {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
+.gf-profile-menu__grid,
+.gf-profile-menu__grid--profile,
 .gf-profile-menu__grid--library {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3px;
 }
 
 .gf-profile-menu__item,
@@ -143,34 +142,37 @@
     border-radius: 9px;
     background: transparent;
     color: #d1d5db;
-    font-size: .72rem;
+    font-size: .76rem;
     font-weight: 700;
     transition: background .14s ease, border-color .14s ease, color .14s ease, transform .14s ease;
 }
 
 .gf-profile-menu__item {
-    min-height: 49px;
-    padding: 7px 5px;
+    min-height: 36px;
+    padding: 7px 10px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    text-align: center;
+    justify-content: flex-start;
+    gap: 10px;
+    text-align: left;
 }
 
 .gf-profile-menu__item i,
 .gf-profile-menu__action i {
+    width: 17px;
+    flex: 0 0 17px;
     color: rgba(134, 239, 172, .74);
     text-align: center;
 }
 
 .gf-profile-menu__item i {
-    font-size: .85rem;
+    font-size: .82rem;
 }
 
 .gf-profile-menu__item span,
 .gf-profile-menu__action span {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -180,7 +182,7 @@
 .gf-profile-menu__item:focus-visible,
 .gf-profile-menu__action:hover,
 .gf-profile-menu__action:focus-visible {
-    transform: translateY(-1px);
+    transform: translateX(2px);
     background: rgba(0, 176, 32, .13);
     border-color: rgba(74, 222, 128, .22);
     color: #fff;
@@ -198,8 +200,8 @@
 .gf-profile-menu__footer {
     padding: 8px 9px 10px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
+    grid-template-columns: 1fr;
+    gap: 3px;
 }
 
 .gf-profile-menu__footer form {
@@ -208,12 +210,13 @@
 
 .gf-profile-menu__action {
     width: 100%;
-    min-height: 37px;
+    min-height: 36px;
     padding: 7px 10px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 7px;
+    justify-content: flex-start;
+    gap: 10px;
+    text-align: left;
 }
 
 .gf-profile-menu__action--logout {
@@ -242,15 +245,9 @@ body.fullbleed .site-header .navbar {
     .gf-profile-menu {
         width: 100%;
         max-width: none;
+        max-height: none;
         position: static !important;
         transform: none !important;
         box-shadow: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .gf-profile-menu__grid--profile,
-    .gf-profile-menu__grid--library {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
