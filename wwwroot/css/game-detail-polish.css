@@ -90,10 +90,45 @@
     color: rgba(229, 231, 235, .28);
 }
 
-/* The release date intentionally inherits the same .bl-chip and
-   .gf-game-filter-chip styles used by genre and company metadata. */
-.gf-game-release-date {
-    font-weight: inherit;
+.gf-release-timeline-anchor {
+    line-height: 1;
+}
+
+.gf-release-timeline-anchor .gf-game-release-date,
+.gf-release-timeline-anchor .gf-game-release-date.bl-chip,
+.gf-release-timeline-anchor .gf-game-release-date.gf-game-filter-chip {
+    min-height: 32px;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .10);
+    background: rgba(0, 0, 0, .18);
+    color: rgba(229, 231, 235, .88);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: none;
+    transition: border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease;
+}
+
+.gf-release-timeline-anchor .gf-game-release-date:hover,
+.gf-release-timeline-anchor .gf-game-release-date:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(74, 222, 128, .30);
+    background: rgba(0, 176, 32, .10);
+    color: #fff;
+    outline: none;
+    text-decoration: none;
+}
+
+.gf-release-timeline-anchor .gf-game-release-date::before,
+.gf-release-timeline-anchor .gf-game-release-date::after {
+    content: none;
 }
 
 .gf-universe-tab {
