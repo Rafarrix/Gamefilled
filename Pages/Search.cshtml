@@ -1,224 +1,204 @@
-﻿@page
+@page
 @model Gamefilled.Pages.SearchModel
 @{
     ViewData["Title"] = "Search";
+    ViewData["FullBleed"] = true;
     var results = Model.Results ?? new List<Gamefilled.Pages.SearchModel.SearchGame>();
+    var term = Model.Query?.Trim() ?? string.Empty;
 }
 
-<div class="search-page mt-4">
-    <h1 class="search-title mb-4">
-        Results for <span>@(Model.Query ?? "")</span>
-    </h1>
+<link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/search-v2.css" asp-append-version="true" />
 
-    @if (!string.IsNullOrWhiteSpace(Model.Error))
-    {
-        <div class="alert alert-danger">@Model.Error</div>
-    }
-    else if (string.IsNullOrWhiteSpace(Model.Query) || (Model.Query?.Trim().Length ?? 0) < 2)
-    {
-        <div class="search-empty">Type something to search.</div>
-    }
-    else if (results.Count == 0)
-    {
-        <div class="search-empty">No results found.</div>
-    }
-    else
-    {
-        var top = results[0];
+<div class="gf-search-page">
+    <section class="gf-search-hero">
+        <div class="gf-search-shell">
+            <span class="gf-eyebrow">Game discovery</span>
+            <h1>Search games</h1>
+            <p>Find titles, editions, expansions and remasters from the IGDB catalog.</p>
 
-        <a class="search-result top-result" href="/games/@top.Id">
-            <div class="sr-cover">
-                @if (!string.IsNullOrWhiteSpace(top.CoverImageId))
-                {
-                    <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/@(top.CoverImageId).jpg"
-                         alt="@top.Name" loading="lazy" />
-                }
-                else
-                {
-                    <div class="sr-cover-fallback"></div>
-                }
-            </div>
+            <form method="get" action="/Search" class="gf-search-form">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search"
+                       name="query"
+                       value="@term"
+                       placeholder="Search by game title"
+                       minlength="2"
+                       autocomplete="off"
+                       aria-label="Search games" />
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </section>
 
-            <div class="sr-main">
-                <div class="sr-title-row">
-                    <div class="sr-title">@top.Name</div>
-                    @if (top.Year != null)
-                    {
-                        <div class="sr-year">@top.Year</div>
-                    }
-                </div>
-
-                <div class="sr-tags">
-                    @if (!string.IsNullOrWhiteSpace(top.CategoryLabel))
-                    {
-                        <span class="sr-pill sr-pill-main">@top.CategoryLabel</span>
-                    }
-
-                    @foreach (var p in (top.Platforms ?? new List<string>()))
-                    {
-                        <span class="gf-platform-pill gf-platform-pill--sm @PlatformClass(p)"
-                              data-platform="@PlatformLabel(p)"
-                              title="@PlatformLabel(p)"
-                              aria-label="@PlatformLabel(p)">
-                            <span class="gf-platform-pill__icon">
-                                <i class="@PlatformIcon(p)" aria-hidden="true"></i>
-                            </span>
-                        </span>
-                    }
-                </div>
-            </div>
-        </a>
-
-        <div class="sr-divider"></div>
-
-        @for (int i = 1; i < results.Count; i++)
+    <main class="gf-search-shell gf-search-main">
+        @if (!string.IsNullOrWhiteSpace(Model.Error))
         {
-            var g = results[i];
+            <section class="gf-search-state">
+                <span class="gf-search-state__icon is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
+                <h2>Search is temporarily unavailable</h2>
+                <p>@Model.Error</p>
+                <a class="gf-btn gf-btn--secondary" href="/Search?query=@Uri.EscapeDataString(term)">Try again</a>
+            </section>
+        }
+        else if (term.Length < 2)
+        {
+            <section class="gf-search-state">
+                <span class="gf-search-state__icon"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></span>
+                <h2>Start with a game title</h2>
+                <p>Enter at least two characters to search the catalog.</p>
+            </section>
+        }
+        else if (results.Count == 0)
+        {
+            <section class="gf-search-state">
+                <span class="gf-search-state__icon"><i class="fas fa-ghost" aria-hidden="true"></i></span>
+                <h2>No games found</h2>
+                <p>Try a shorter title, another spelling or browse the full game library.</p>
+                <a class="gf-btn gf-btn--secondary" href="/games">Browse games</a>
+            </section>
+        }
+        else
+        {
+            var top = results[0];
 
-            <a class="search-result" href="/games/@g.Id">
-                <div class="sr-cover">
-                    @if (!string.IsNullOrWhiteSpace(g.CoverImageId))
+            <div class="gf-search-results-head">
+                <div>
+                    <span class="gf-eyebrow">Results</span>
+                    <h2>Matches for “@term”</h2>
+                </div>
+                <strong>@results.Count @(results.Count == 1 ? "result" : "results")</strong>
+            </div>
+
+            <a class="gf-search-feature" href="/games/@top.Id">
+                <span class="gf-search-feature__cover">
+                    @if (!string.IsNullOrWhiteSpace(top.CoverImageId))
                     {
-                        <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/@(g.CoverImageId).jpg"
-                             alt="@g.Name" loading="lazy" />
+                        <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/@(top.CoverImageId).jpg"
+                             alt="@top.Name" loading="eager" />
                     }
                     else
                     {
-                        <div class="sr-cover-fallback"></div>
+                        <span><i class="fas fa-gamepad" aria-hidden="true"></i></span>
                     }
-                </div>
+                </span>
 
-                <div class="sr-main">
-                    <div class="sr-title-row">
-                        <div class="sr-title">@g.Name</div>
-                        @if (g.Year != null)
+                <span class="gf-search-feature__body">
+                    <small>Top match</small>
+                    <span class="gf-search-feature__title">
+                        <strong>@top.Name</strong>
+                        @if (top.Year.HasValue)
                         {
-                            <div class="sr-year">@g.Year</div>
+                            <em>@top.Year</em>
                         }
-                    </div>
+                    </span>
 
-                    <div class="sr-tags">
-                        @if (!string.IsNullOrWhiteSpace(g.CategoryLabel))
+                    <span class="gf-search-feature__meta">
+                        @if (!string.IsNullOrWhiteSpace(top.CategoryLabel))
                         {
-                            <span class="sr-pill">@g.CategoryLabel</span>
+                            <span>@top.CategoryLabel</span>
                         }
-
-                        @foreach (var p in (g.Platforms ?? new List<string>()))
+                        @foreach (var platform in top.Platforms.Take(6))
                         {
-                            <span class="gf-platform-pill gf-platform-pill--sm @PlatformClass(p)"
-                                  data-platform="@PlatformLabel(p)"
-                                  title="@PlatformLabel(p)"
-                                  aria-label="@PlatformLabel(p)">
-                                <span class="gf-platform-pill__icon">
-                                    <i class="@PlatformIcon(p)" aria-hidden="true"></i>
-                                </span>
+                            <span class="gf-platform-pill gf-platform-pill--sm @PlatformClass(platform)"
+                                  data-platform="@PlatformLabel(platform)"
+                                  title="@PlatformLabel(platform)"
+                                  aria-label="@PlatformLabel(platform)">
+                                <span class="gf-platform-pill__icon"><i class="@PlatformIcon(platform)" aria-hidden="true"></i></span>
                             </span>
                         }
-                    </div>
-                </div>
+                    </span>
+
+                    <span class="gf-search-feature__open">Open game <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                </span>
             </a>
 
-            <div class="sr-divider"></div>
+            @if (results.Count > 1)
+            {
+                <section class="gf-search-grid" aria-label="Other search results">
+                    @foreach (var game in results.Skip(1))
+                    {
+                        <a class="gf-search-card" href="/games/@game.Id">
+                            <span class="gf-search-card__cover">
+                                @if (!string.IsNullOrWhiteSpace(game.CoverImageId))
+                                {
+                                    <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/@(game.CoverImageId).jpg"
+                                         alt="@game.Name" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span><i class="fas fa-gamepad" aria-hidden="true"></i></span>
+                                }
+                            </span>
+
+                            <span class="gf-search-card__body">
+                                <span class="gf-search-card__title">
+                                    <strong>@game.Name</strong>
+                                    @if (game.Year.HasValue)
+                                    {
+                                        <em>@game.Year</em>
+                                    }
+                                </span>
+                                @if (!string.IsNullOrWhiteSpace(game.CategoryLabel))
+                                {
+                                    <small>@game.CategoryLabel</small>
+                                }
+                                <span class="gf-search-card__platforms">
+                                    @foreach (var platform in game.Platforms.Take(4))
+                                    {
+                                        <span class="gf-platform-pill gf-platform-pill--sm @PlatformClass(platform)"
+                                              data-platform="@PlatformLabel(platform)"
+                                              title="@PlatformLabel(platform)"
+                                              aria-label="@PlatformLabel(platform)">
+                                            <span class="gf-platform-pill__icon"><i class="@PlatformIcon(platform)" aria-hidden="true"></i></span>
+                                        </span>
+                                    }
+                                </span>
+                            </span>
+                        </a>
+                    }
+                </section>
+            }
         }
-    }
+    </main>
 </div>
 
 @functions {
     static string PlatformClass(string? platformName)
     {
         var p = (platformName ?? "").Trim().ToLowerInvariant();
-
-        if (string.IsNullOrWhiteSpace(p))
-            return "gf-platform-pill--generic";
-
-        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp")
-            return "gf-platform-pill--playstation";
-
-        if (p.Contains("xbox"))
-            return "gf-platform-pill--xbox";
-
-        if (p.Contains("switch"))
-            return "gf-platform-pill--switch";
-
-        if (p.Contains("nintendo") || p.Contains("game boy") || p.Contains("gameboy") || p.Contains("ds") || p.Contains("3ds") || p.Contains("wii"))
-            return "gf-platform-pill--nintendo";
-
-        if (p.Contains("pc") || p.Contains("windows") || p.Contains("dos") || p.Contains("steam"))
-            return "gf-platform-pill--pc";
-
-        if (p.Contains("mac"))
-            return "gf-platform-pill--mac";
-
-        if (p.Contains("linux") || p.Contains("ubuntu"))
-            return "gf-platform-pill--linux";
-
-        if (p.Contains("android"))
-            return "gf-platform-pill--android";
-
-        if (p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad"))
-            return "gf-platform-pill--ios";
-
-        if (p.Contains("mobile"))
-            return "gf-platform-pill--mobile";
-
-        if (p.Contains("browser") || p.Contains("web"))
-            return "gf-platform-pill--browser";
-
-        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn") || p.Contains("game gear"))
-            return "gf-platform-pill--sega";
-
-        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga"))
-            return "gf-platform-pill--retro";
-
-        if (p.Contains("cloud"))
-            return "gf-platform-pill--cloud";
-
+        if (string.IsNullOrWhiteSpace(p)) return "gf-platform-pill--generic";
+        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp") return "gf-platform-pill--playstation";
+        if (p.Contains("xbox")) return "gf-platform-pill--xbox";
+        if (p.Contains("switch")) return "gf-platform-pill--switch";
+        if (p.Contains("nintendo") || p.Contains("game boy") || p.Contains("gameboy") || p.Contains("ds") || p.Contains("3ds") || p.Contains("wii")) return "gf-platform-pill--nintendo";
+        if (p.Contains("pc") || p.Contains("windows") || p.Contains("dos") || p.Contains("steam")) return "gf-platform-pill--pc";
+        if (p.Contains("mac")) return "gf-platform-pill--mac";
+        if (p.Contains("linux") || p.Contains("ubuntu")) return "gf-platform-pill--linux";
+        if (p.Contains("android")) return "gf-platform-pill--android";
+        if (p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad")) return "gf-platform-pill--ios";
+        if (p.Contains("mobile")) return "gf-platform-pill--mobile";
+        if (p.Contains("browser") || p.Contains("web")) return "gf-platform-pill--browser";
+        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn") || p.Contains("game gear")) return "gf-platform-pill--sega";
+        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga")) return "gf-platform-pill--retro";
+        if (p.Contains("cloud")) return "gf-platform-pill--cloud";
         return "gf-platform-pill--generic";
     }
 
     static string PlatformIcon(string? platformName)
     {
         var p = (platformName ?? "").Trim().ToLowerInvariant();
-
-        if (string.IsNullOrWhiteSpace(p))
-            return "fas fa-gamepad";
-
-        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp")
-            return "fab fa-playstation";
-
-        if (p.Contains("xbox"))
-            return "fab fa-xbox";
-
-        if (p.Contains("steam"))
-            return "fab fa-steam";
-
-        if (p.Contains("windows") || p.Contains("pc") || p.Contains("dos"))
-            return "fab fa-windows";
-
-        if (p.Contains("mac") || p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad"))
-            return "fab fa-apple";
-
-        if (p.Contains("android"))
-            return "fab fa-android";
-
-        if (p.Contains("linux") || p.Contains("ubuntu"))
-            return "fab fa-linux";
-
-        if (p.Contains("browser") || p.Contains("web"))
-            return "fas fa-globe";
-
-        if (p.Contains("switch") || p.Contains("nintendo"))
-            return "fas fa-gamepad";
-
-        if (p.Contains("cloud"))
-            return "fas fa-cloud";
-
-        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn"))
-            return "fas fa-compact-disc";
-
-        if (p.Contains("atari") || p.Contains("neo geo") || p.Contains("commodore") || p.Contains("amiga"))
-            return "fas fa-joystick";
-
+        if (string.IsNullOrWhiteSpace(p)) return "fas fa-gamepad";
+        if (p.Contains("playstation") || p == "ps5" || p == "ps4" || p == "ps3" || p == "ps2" || p == "ps vita" || p == "psp") return "fab fa-playstation";
+        if (p.Contains("xbox")) return "fab fa-xbox";
+        if (p.Contains("steam")) return "fab fa-steam";
+        if (p.Contains("windows") || p.Contains("pc") || p.Contains("dos")) return "fab fa-windows";
+        if (p.Contains("mac") || p.Contains("ios") || p.Contains("iphone") || p.Contains("ipad")) return "fab fa-apple";
+        if (p.Contains("android")) return "fab fa-android";
+        if (p.Contains("linux") || p.Contains("ubuntu")) return "fab fa-linux";
+        if (p.Contains("browser") || p.Contains("web")) return "fas fa-globe";
+        if (p.Contains("cloud")) return "fas fa-cloud";
+        if (p.Contains("sega") || p.Contains("dreamcast") || p.Contains("mega drive") || p.Contains("genesis") || p.Contains("saturn")) return "fas fa-compact-disc";
         return "fas fa-gamepad";
     }
 
@@ -226,13 +206,9 @@
     {
         var p = (platformName ?? "").Trim();
         if (string.IsNullOrWhiteSpace(p)) return "Unknown";
-
         return p switch
         {
             "PC (Microsoft Windows)" => "PC",
-            "Xbox Series X|S" => "Xbox Series X|S",
-            "Xbox One" => "Xbox One",
-            "Xbox 360" => "Xbox 360",
             "PlayStation 5" => "PS5",
             "PlayStation 4" => "PS4",
             "PlayStation 3" => "PS3",
