@@ -4,6 +4,7 @@
 
 <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/settings-v2.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/audit-hotfix.css" asp-append-version="true" />
 
 <aside class="settings-nav" aria-label="Settings navigation">
     <div class="settings-nav-title">
@@ -44,9 +45,9 @@
             <span class="settings-link__icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
             <span class="settings-link__copy">
                 <strong>Account & security</strong>
-                <small>Email, password and sessions</small>
+                <small>Email and password controls</small>
             </span>
-            <span class="settings-link__badge">Planned</span>
+            <span class="settings-link__badge">Live</span>
         </a>
 
         <a class="settings-link @(active == "Notifications" ? "active" : string.Empty)" href="/Settings/Notifications">
