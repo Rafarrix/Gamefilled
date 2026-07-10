@@ -1,5 +1,19 @@
 (() => {
+    const ensurePageStyles = () => {
+        if (document.querySelector('link[data-game-page-tweaks]')) {
+            return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '/css/game-page-tweaks.css';
+        link.dataset.gamePageTweaks = 'true';
+        document.head.appendChild(link);
+    };
+
     const init = () => {
+        ensurePageStyles();
+
         const openButton = document.querySelector('[data-universe-open]');
         const drawer = document.querySelector('[data-universe-drawer]');
         const overlay = document.querySelector('[data-universe-overlay]');
