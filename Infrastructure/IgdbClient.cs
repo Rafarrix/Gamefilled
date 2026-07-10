@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace Gamefilled.Infrastructure;
 
 /// <summary>
-/// Cliente de domínio para os pedidos de jogos usados pelas páginas atuais.
+/// Domain client for the IGDB game requests used by the current pages.
 /// </summary>
 public sealed class IgdbClient
 {
@@ -61,8 +61,8 @@ public sealed class IgdbClient
             fields
                 id,name,slug,summary,first_release_date,
                 cover.image_id,
-                artworks.image_id,
-                screenshots.image_id,
+                artworks.image_id,artworks.width,artworks.height,
+                screenshots.image_id,screenshots.width,screenshots.height,
                 videos.name,videos.video_id,
                 genres.id,genres.name,genres.slug,
                 platforms.id,platforms.name,platforms.slug,
