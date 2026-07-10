@@ -1,28 +1,34 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.InfractionsModel
 @{
-    ViewData["Title"] = "Infractions";
+    ViewData["Title"] = "Account standing";
     ViewData["ActiveSettings"] = "Infractions";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container settings-wrap">
-    <div class="row">
-        <div class="col-lg-3 d-none d-lg-block">
-            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
-        </div>
-
-        <div class="col-lg-9">
-            <div class="settings-content">
-                <div class="settings-content-header">
-                    <h2 class="mb-0">Infractions</h2>
-                </div>
-
-                <p class="subtitle-text">Placeholder — no teu projeto pode ser apenas “Account status: OK”.</p>
-
-                <div class="alert alert-success mt-3">
-                    Account status: OK
-                </div>
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div>
+                <span class="gf-eyebrow">Safety</span>
+                <h1>Account standing</h1>
+                <p>Moderation history and account restrictions will be shown here.</p>
             </div>
+        </header>
+
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+            <main class="gf-settings-content">
+                <section class="gf-panel">
+                    <div class="gf-panel__header">
+                        <div><h2>Moderation status</h2><p>This area will be connected to the future reporting and moderation system.</p></div>
+                        <span class="gf-chip"><i class="fas fa-clock" aria-hidden="true"></i> Planned</span>
+                    </div>
+                    <div class="gf-panel__body">
+                        <div class="gf-empty">No moderation workflow is enabled in this development version.</div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 </div>
