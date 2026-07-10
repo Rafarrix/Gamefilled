@@ -1,4 +1,5 @@
 @page "/games/{id:int}"
+@using System.Globalization
 @model Gamefilled.Pages.games.GameModel
 @{
     ViewData["Title"] = Model.Game?.Name ?? "Game";
@@ -50,10 +51,9 @@
     }
 
     var releaseYear = releaseDate?.Year;
-    var releaseStatus = releaseDate.HasValue && releaseDate.Value <= DateTimeOffset.UtcNow
-        ? "released"
-        : "upcoming";
-    var releaseLabel = releaseStatus == "released" ? "Released" : "Upcoming";
+    var releaseLabel = releaseDate.HasValue && releaseDate.Value <= DateTimeOffset.UtcNow
+        ? "Released"
+        : "Upcoming";
 
     var universeSections = new List<(string Title, IReadOnlyList<Gamefilled.Infrastructure.IgdbRelatedGameDto> Games)>();
 
@@ -88,6 +88,7 @@
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/game-v2.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/game-universe.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/game-detail-polish.css" asp-append-version="true" />
 
 <div class="gf-game-page">
     @if (universeCount > 0)
@@ -97,10 +98,10 @@
                 data-universe-open
                 aria-controls="game-universe-drawer"
                 aria-expanded="false"
-                title="Abrir Game Universe">
+                title="Open Game Universe">
             <i class="fas fa-diagram-project" aria-hidden="true"></i>
             <span class="gf-universe-tab__label">Universe</span>
-            <span class="gf-universe-tab__count" aria-label="@universeCount relações">@universeCount</span>
+            <span class="gf-universe-tab__count" aria-label="@universeCount connections">@universeCount</span>
         </button>
 
         <div class="gf-universe-overlay"
@@ -119,14 +120,14 @@
                     <div class="gf-universe-drawer__eyebrow">Gamefilled connections</div>
                     <h2 id="game-universe-title" class="gf-universe-drawer__title">Game Universe</h2>
                     <p class="gf-universe-drawer__subtitle">
-                        Expansões, DLC, ports, remakes e outras versões ligadas a este jogo.
+                        Expansions, DLC, ports, remakes and other versions connected to this game.
                     </p>
                 </div>
 
                 <button type="button"
                         class="gf-universe-drawer__close"
                         data-universe-close
-                        aria-label="Fechar Game Universe">
+                        aria-label="Close Game Universe">
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
             </div>
@@ -145,7 +146,7 @@
                             {
                                 <a class="gf-universe-game"
                                    href="/games/@relatedGame.Id"
-                                   title="Abrir @relatedGame.Name">
+                                   title="Open @relatedGame.Name">
                                     <div class="gf-universe-game__cover">
                                         @if (!string.IsNullOrWhiteSpace(relatedGame.CoverUrl))
                                         {
@@ -216,26 +217,6 @@
                             </div>
                         }
                     </div>
-
-                    @if (releaseDate.HasValue)
-                    {
-                        <div class="bl-release">
-                            <a class="pill pill-muted gf-game-release-link"
-                               href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseStatus=@releaseStatus"
-                               title="Ver jogos com estado @releaseLabel">
-                                @releaseLabel
-                            </a>
-
-                            @if (releaseYear.HasValue)
-                            {
-                                <a class="pill gf-game-release-link"
-                                   href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseYear=@releaseYear"
-                                   title="Ver jogos lançados em @releaseYear">
-                                    @UnixToDate(releaseDate.Value.ToUnixTimeSeconds())
-                                </a>
-                            }
-                        </div>
-                    }
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(Model.Game?.Summary))
@@ -244,6 +225,25 @@
                 }
 
                 <div class="bl-rows">
+                    @if (releaseDate.HasValue)
+                    {
+                        <div class="bl-row">
+                            <div class="bl-row__label">RELEASE</div>
+                            <div class="bl-row__value gf-game-release-value">
+                                <span class="gf-game-release-state">@releaseLabel</span>
+
+                                @if (releaseYear.HasValue)
+                                {
+                                    <a class="gf-game-release-date"
+                                       href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseYear=@releaseYear"
+                                       title="View games released in @releaseYear">
+                                        @UnixToDate(releaseDate.Value.ToUnixTimeSeconds())
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+
                     @if (Model.Game?.Genres?.Any() == true)
                     {
                         <div class="bl-row">
@@ -255,7 +255,7 @@
                                     {
                                         <a class="bl-chip gf-game-filter-chip"
                                            href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&GenreId=@genre.Id"
-                                           title="Ver jogos de @genre.Name">
+                                           title="View @genre.Name games">
                                             @genre.Name
                                         </a>
                                     }
@@ -274,8 +274,8 @@
                                     <a class="gf-platform-pill gf-game-platform-link @PlatformClass(platform.Name)"
                                        href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&PlatformId=@platform.Id"
                                        data-platform="@PlatformLabel(platform.Name)"
-                                       title="Ver jogos para @PlatformLabel(platform.Name)"
-                                       aria-label="Ver jogos para @PlatformLabel(platform.Name)">
+                                       title="View games for @PlatformLabel(platform.Name)"
+                                       aria-label="View games for @PlatformLabel(platform.Name)">
                                         <span class="gf-platform-pill__icon">
                                             <i class="@PlatformIcon(platform.Name)" aria-hidden="true"></i>
                                         </span>
@@ -369,7 +369,7 @@
                         <div class="gf-media-room__head">
                             <div>
                                 <h2>Media Room</h2>
-                                <p>Trailers e screenshots numa galeria navegável.</p>
+                                <p>Browse trailers and screenshots in one gallery.</p>
                             </div>
                         </div>
 
@@ -388,7 +388,7 @@
                                         data-media-type="video"
                                         data-media-src="@trailerEmbedUrl"
                                         data-media-title="@trailerTitle"
-                                        aria-label="Abrir @trailerTitle">
+                                        aria-label="Open @trailerTitle">
                                     <img src="@trailerThumbnailUrl"
                                          alt="@trailerTitle"
                                          loading="lazy" />
@@ -416,7 +416,7 @@
                                         data-media-type="image"
                                         data-media-src="@fullUrl"
                                         data-media-title="@screenshotTitle"
-                                        aria-label="Abrir screenshot @(index + 1)">
+                                        aria-label="Open screenshot @(index + 1)">
                                     <img src="@thumbnailUrl"
                                          alt="@screenshotTitle"
                                          loading="lazy" />
@@ -440,7 +440,7 @@
                         <button type="button"
                                 class="gf-media-lightbox__backdrop"
                                 data-media-close
-                                aria-label="Fechar galeria"></button>
+                                aria-label="Close gallery"></button>
 
                         <div class="gf-media-lightbox__dialog">
                             <div class="gf-media-lightbox__toolbar">
@@ -452,7 +452,7 @@
                                 <button type="button"
                                         class="gf-media-lightbox__close"
                                         data-media-close
-                                        aria-label="Fechar galeria">
+                                        aria-label="Close gallery">
                                     <i class="fas fa-times" aria-hidden="true"></i>
                                 </button>
                             </div>
@@ -462,14 +462,14 @@
                             <button type="button"
                                     class="gf-media-lightbox__nav gf-media-lightbox__nav--previous"
                                     data-media-previous
-                                    aria-label="Media anterior">
+                                    aria-label="Previous media">
                                 <i class="fas fa-chevron-left" aria-hidden="true"></i>
                             </button>
 
                             <button type="button"
                                     class="gf-media-lightbox__nav gf-media-lightbox__nav--next"
                                     data-media-next
-                                    aria-label="Media seguinte">
+                                    aria-label="Next media">
                                 <i class="fas fa-chevron-right" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -486,15 +486,23 @@
 @functions {
     static string UnixToDate(long unix)
     {
-        try { return DateTimeOffset.FromUnixTimeSeconds(unix).ToString("MMM dd, yyyy"); }
-        catch { return string.Empty; }
+        try
+        {
+            return DateTimeOffset
+                .FromUnixTimeSeconds(unix)
+                .ToString("MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US"));
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     static string Fmt(double? value) =>
-        value == null ? "—" : Math.Round(value.Value, 1).ToString("0.0");
+        value == null ? "—" : Math.Round(value.Value, 1).ToString("0.0", CultureInfo.InvariantCulture);
 
     static string Count(int? value) =>
-        value == null ? "—" : value.Value.ToString("N0");
+        value == null ? "—" : value.Value.ToString("N0", CultureInfo.GetCultureInfo("en-US"));
 
     static string Ttb(int? seconds)
     {
@@ -510,27 +518,27 @@
     {
         var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (platform.Contains("playstation 2")) return 1002;
-        if (platform.Contains("playstation 3")) return 1003;
-        if (platform.Contains("playstation 4")) return 1004;
         if (platform.Contains("playstation 5")) return 1005;
+        if (platform.Contains("playstation 4")) return 1004;
+        if (platform.Contains("playstation 3")) return 1003;
+        if (platform.Contains("playstation 2")) return 1002;
         if (platform == "playstation" || platform.Contains("playstation 1")) return 1001;
         if (platform.Contains("psp")) return 1010;
         if (platform.Contains("vita")) return 1011;
         if (platform.Contains("playstation") || platform.StartsWith("ps")) return 1090;
 
-        if (platform == "xbox") return 2001;
-        if (platform.Contains("xbox 360")) return 2002;
-        if (platform.Contains("xbox one")) return 2003;
         if (platform.Contains("xbox series")) return 2004;
+        if (platform.Contains("xbox one")) return 2003;
+        if (platform.Contains("xbox 360")) return 2002;
+        if (platform == "xbox") return 2001;
         if (platform.Contains("xbox")) return 2090;
 
         if (platform.Contains("nintendo entertainment system") || platform == "nes") return 3001;
         if (platform.Contains("super nintendo") || platform == "snes") return 3002;
         if (platform.Contains("nintendo 64")) return 3003;
         if (platform.Contains("gamecube")) return 3004;
-        if (platform == "wii") return 3005;
         if (platform.Contains("wii u")) return 3006;
+        if (platform == "wii") return 3005;
         if (platform.Contains("switch")) return 3007;
         if (platform.Contains("game boy")) return 3010;
         if (platform.Contains("nintendo ds")) return 3011;
