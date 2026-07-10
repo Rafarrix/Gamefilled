@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // The notification inbox is not implemented yet. Do not expose a broken
+    // destination in the global navigation; the bell returns with the real feature.
+    document.getElementById('nav-notification-bell')?.closest('.nav-item')?.remove();
+
     const profileRoute = window.location.pathname.match(/^\/u\/([^/]+)\/?$/i);
 
     // Large social lists remain dedicated routes, but the profile content tabs
