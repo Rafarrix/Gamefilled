@@ -1,11 +1,13 @@
 @page "/games/{id:int}"
 @using System.Globalization
+@using Gamefilled.Models
 @model Gamefilled.Pages.games.GameModel
 @{
     ViewData["Title"] = Model.Game?.Name ?? "Game";
     ViewData["FullBleed"] = true;
 
-    var companies = (Model.Game?.InvolvedCompanies ?? new List<Gamefilled.Infrastructure.IgdbInvolvedCompanyDto>())
+    var game = Model.Game!;
+    var companies = (game.InvolvedCompanies ?? new List<Gamefilled.Infrastructure.IgdbInvolvedCompanyDto>())
         .Where(item => item.Company is { Id: > 0 } && !string.IsNullOrWhiteSpace(item.Company.Name))
         .GroupBy(item => item.Company!.Id)
         .Select(group => new
@@ -22,15 +24,14 @@
         .ToList();
 
     var primaryDeveloper = companies.FirstOrDefault(item => item.Developer)?.Company;
-    var trailer = Model.Game?.Videos?
-        .FirstOrDefault(video => !string.IsNullOrWhiteSpace(video.VideoId));
-    var screenshots = (Model.Game?.Screenshots ?? new List<Gamefilled.Infrastructure.IgdbImageDto>())
+    var trailer = game.Videos?.FirstOrDefault(video => !string.IsNullOrWhiteSpace(video.VideoId));
+    var screenshots = (game.Screenshots ?? new List<Gamefilled.Infrastructure.IgdbImageDto>())
         .Where(screenshot => !string.IsNullOrWhiteSpace(screenshot.ImageId))
         .Take(8)
         .ToList();
     var hasMedia = trailer != null || screenshots.Count > 0;
 
-    var platforms = (Model.Game?.Platforms ?? new List<Gamefilled.Infrastructure.IgdbNamedDto>())
+    var platforms = (game.Platforms ?? new List<Gamefilled.Infrastructure.IgdbNamedDto>())
         .Where(platform => platform.Id > 0 && !string.IsNullOrWhiteSpace(platform.Name))
         .OrderBy(platform => PlatformSortKey(platform.Name))
         .ThenBy(platform => platform.Name, StringComparer.OrdinalIgnoreCase)
@@ -38,11 +39,11 @@
         .ToList();
 
     DateTimeOffset? releaseDate = null;
-    if (Model.Game?.FirstReleaseDateUnix is > 0)
+    if (game.FirstReleaseDateUnix is > 0)
     {
         try
         {
-            releaseDate = DateTimeOffset.FromUnixTimeSeconds(Model.Game.FirstReleaseDateUnix.Value);
+            releaseDate = DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDateUnix.Value);
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -51,44 +52,51 @@
     }
 
     var releaseYear = releaseDate?.Year;
-    var releaseLabel = releaseDate.HasValue && releaseDate.Value <= DateTimeOffset.UtcNow
-        ? "Released"
-        : "Upcoming";
-
     var universeSections = new List<(string Title, IReadOnlyList<Gamefilled.Infrastructure.IgdbRelatedGameDto> Games)>();
 
     void AddUniverseSection(string title, IEnumerable<Gamefilled.Infrastructure.IgdbRelatedGameDto>? source)
     {
-        var games = (source ?? Array.Empty<Gamefilled.Infrastructure.IgdbRelatedGameDto>())
-            .Where(game => game.Id > 0 && !string.IsNullOrWhiteSpace(game.Name))
-            .GroupBy(game => game.Id)
+        var relatedGames = (source ?? Array.Empty<Gamefilled.Infrastructure.IgdbRelatedGameDto>())
+            .Where(item => item.Id > 0 && !string.IsNullOrWhiteSpace(item.Name))
+            .GroupBy(item => item.Id)
             .Select(group => group.First())
-            .OrderBy(game => game.ReleaseYear ?? int.MaxValue)
-            .ThenBy(game => game.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(item => item.ReleaseYear ?? int.MaxValue)
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        if (games.Count > 0)
-            universeSections.Add((title, games));
+        if (relatedGames.Count > 0)
+            universeSections.Add((title, relatedGames));
     }
 
-    if (Model.Game?.ParentGame is { Id: > 0 } parentGame)
+    if (game.ParentGame is { Id: > 0 } parentGame)
         AddUniverseSection("Parent game", new[] { parentGame });
 
-    AddUniverseSection("DLC", Model.Game?.Dlcs);
-    AddUniverseSection("Expansions", Model.Game?.Expansions);
-    AddUniverseSection("Standalone expansions", Model.Game?.StandaloneExpansions);
-    AddUniverseSection("Expanded games", Model.Game?.ExpandedGames);
-    AddUniverseSection("Ports", Model.Game?.Ports);
-    AddUniverseSection("Remakes", Model.Game?.Remakes);
-    AddUniverseSection("Remasters", Model.Game?.Remasters);
+    AddUniverseSection("DLC", game.Dlcs);
+    AddUniverseSection("Expansions", game.Expansions);
+    AddUniverseSection("Standalone expansions", game.StandaloneExpansions);
+    AddUniverseSection("Expanded games", game.ExpandedGames);
+    AddUniverseSection("Ports", game.Ports);
+    AddUniverseSection("Remakes", game.Remakes);
+    AddUniverseSection("Remasters", game.Remasters);
 
-    var universeCount = universeSections.Sum(universeGroup => universeGroup.Games.Count);
+    var universeCount = universeSections.Sum(group => group.Games.Count);
+    var ratingValue = game.AggregatedRating ?? game.Rating;
+    var ratingCount = game.AggregatedRatingCount ?? game.RatingCount;
+
+    int CommunityCount(string status) =>
+        Model.CommunityStatusCounts.TryGetValue(status, out var count) ? count : 0;
+
+    string StatusClass(string status) =>
+        string.Equals(Model.CurrentEntry?.Status, status, StringComparison.OrdinalIgnoreCase)
+            ? "is-active"
+            : string.Empty;
 }
 
 <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/game-v2.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/game-universe.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/game-detail-polish.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/game-experience.css" asp-append-version="true" />
 
 <div class="gf-game-page">
     @if (universeCount > 0)
@@ -104,9 +112,7 @@
             <span class="gf-universe-tab__count" aria-label="@universeCount connections">@universeCount</span>
         </button>
 
-        <div class="gf-universe-overlay"
-             data-universe-overlay
-             aria-hidden="true"></div>
+        <div class="gf-universe-overlay" data-universe-overlay aria-hidden="true"></div>
 
         <aside id="game-universe-drawer"
                class="gf-universe-drawer"
@@ -144,15 +150,11 @@
                         <div class="gf-universe-list">
                             @foreach (var relatedGame in universeSection.Games)
                             {
-                                <a class="gf-universe-game"
-                                   href="/games/@relatedGame.Id"
-                                   title="Open @relatedGame.Name">
+                                <a class="gf-universe-game" href="/games/@relatedGame.Id" title="Open @relatedGame.Name">
                                     <div class="gf-universe-game__cover">
                                         @if (!string.IsNullOrWhiteSpace(relatedGame.CoverUrl))
                                         {
-                                            <img src="@relatedGame.CoverUrl"
-                                                 alt="@relatedGame.Name"
-                                                 loading="lazy" />
+                                            <img src="@relatedGame.CoverUrl" alt="@relatedGame.Name" loading="lazy" />
                                         }
                                         else
                                         {
@@ -181,7 +183,6 @@
 
     <div class="gf-cover-art" id="game-cover-art">
         <div id="gradient"></div>
-
         @if (!string.IsNullOrWhiteSpace(Model.BgUrl))
         {
             <img src="@Model.BgUrl" alt="" aria-hidden="true" />
@@ -193,7 +194,7 @@
             <div class="bl-cover">
                 @if (!string.IsNullOrWhiteSpace(Model.CoverUrl))
                 {
-                    <img src="@Model.CoverUrl" alt="@Model.Game?.Name" />
+                    <img src="@Model.CoverUrl" alt="@game.Name" />
                 }
                 else
                 {
@@ -204,7 +205,7 @@
             <div class="bl-main">
                 <div class="bl-title-row">
                     <div class="bl-title-wrap">
-                        <h1 class="bl-title">@Model.Game?.Name</h1>
+                        <h1 class="bl-title">@game.Name</h1>
 
                         @if (primaryDeveloper != null)
                         {
@@ -219,37 +220,51 @@
                     </div>
                 </div>
 
-                @if (!string.IsNullOrWhiteSpace(Model.Game?.Summary))
+                @if (!string.IsNullOrWhiteSpace(game.Summary))
                 {
-                    <p class="bl-summary">@Model.Game.Summary</p>
+                    <p class="bl-summary">@game.Summary</p>
                 }
 
                 <div class="bl-rows">
-                    @if (releaseDate.HasValue)
+                    @if (releaseDate.HasValue && releaseYear.HasValue)
                     {
                         <div class="bl-row">
                             <div class="bl-row__label">RELEASE</div>
-                            <div class="bl-row__value gf-game-release-value">
-                                <span class="gf-game-release-state">@releaseLabel</span>
-
-                                @if (releaseYear.HasValue)
-                                {
-                                    <a class="gf-game-release-date"
+                            <div class="bl-row__value">
+                                <div class="gf-release-timeline-anchor">
+                                    <a class="bl-chip gf-game-filter-chip gf-game-release-date"
                                        href="/games/lib/ReleaseDate?PageNumber=1&PageSize=30&Dir=desc&ReleaseYear=@releaseYear"
                                        title="View games released in @releaseYear">
                                         @UnixToDate(releaseDate.Value.ToUnixTimeSeconds())
                                     </a>
-                                }
+
+                                    @if (Model.ReleaseTimeline.Count > 1)
+                                    {
+                                        <div class="gf-release-popover" role="tooltip">
+                                            <div class="gf-release-popover__eyebrow">Release timeline</div>
+                                            <div class="gf-release-popover__list">
+                                                @foreach (var release in Model.ReleaseTimeline.Take(12))
+                                                {
+                                                    <a class="gf-release-popover__item"
+                                                       href="/games/lib/Popular?PageNumber=1&PageSize=30&Dir=desc&PlatformId=@release.PlatformId">
+                                                        <span class="gf-release-popover__date">@release.DateText</span>
+                                                        <span class="gf-release-popover__platform">@release.PlatformName</span>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         </div>
                     }
 
-                    @if (Model.Game?.Genres?.Any() == true)
+                    @if (game.Genres?.Any() == true)
                     {
                         <div class="bl-row">
                             <div class="bl-row__label">GENRES</div>
                             <div class="bl-row__value">
-                                @foreach (var genre in Model.Game.Genres.Take(8))
+                                @foreach (var genre in game.Genres.Take(8))
                                 {
                                     if (genre.Id > 0 && !string.IsNullOrWhiteSpace(genre.Name))
                                     {
@@ -295,22 +310,18 @@
                                     <a class="bl-chip gf-game-company-chip"
                                        href="/company/@item.Company.Id/@item.Company.Slug">
                                         <span>@item.Company.Name</span>
-
                                         @if (item.Developer)
                                         {
                                             <span class="gf-game-company-role">Dev</span>
                                         }
-
                                         @if (item.Publisher)
                                         {
                                             <span class="gf-game-company-role">Publisher</span>
                                         }
-
                                         @if (item.Porting)
                                         {
                                             <span class="gf-game-company-role">Port</span>
                                         }
-
                                         @if (item.Supporting)
                                         {
                                             <span class="gf-game-company-role">Support</span>
@@ -322,54 +333,258 @@
                     }
                 </div>
 
-                <div class="bl-cards bl-cards--3">
-                    <div class="bl-card bl-card--center">
-                        <div class="bl-card__label">Avg Rating</div>
-                        <div class="bl-card__value">@Fmt(Model.Game?.AggregatedRating ?? Model.Game?.Rating)</div>
-                        <div class="bl-card__sub">@Count(Model.Game?.AggregatedRatingCount ?? Model.Game?.RatingCount) votes</div>
-                    </div>
+                @if (!string.IsNullOrWhiteSpace(Model.GameFeedback))
+                {
+                    <div class="gf-game-feedback" role="status">@Model.GameFeedback</div>
+                }
 
-                    <div class="bl-card bl-card--center">
-                        <div class="bl-card__label">Follows</div>
-                        <div class="bl-card__value">@Count(Model.Game?.Follows)</div>
-                        <div class="bl-card__sub">followers</div>
-                    </div>
-
-                    <div class="bl-card bl-card--center">
-                        <div class="bl-card__label">Hypes</div>
-                        <div class="bl-card__value">@Count(Model.Game?.Hypes)</div>
-                        <div class="bl-card__sub">hype</div>
-                    </div>
-                </div>
-
-                <div class="bl-ttb-panel">
-                    <div class="bl-ttb-panel__title">Time to beat</div>
-
-                    <div class="bl-ttb">
-                        <div class="bl-ttb__item">
-                            <div class="bl-ttb__value">@Ttb(Model.TtbNormallySeconds)</div>
-                            <div class="bl-ttb__label">average</div>
-                        </div>
-
-                        <div class="bl-ttb__item">
-                            <div class="bl-ttb__value">@Ttb(Model.TtbCompletelySeconds)</div>
-                            <div class="bl-ttb__label">to finish</div>
-                        </div>
-
-                        <div class="bl-ttb__item">
-                            <div class="bl-ttb__value">@Ttb(MasterLike(Model.TtbCompletelySeconds))</div>
-                            <div class="bl-ttb__label">to master</div>
+                <section class="gf-personal-game" aria-labelledby="personal-game-title">
+                    <div class="gf-section-heading">
+                        <div>
+                            <div class="gf-section-heading__eyebrow">Your Gamefilled</div>
+                            <h2 id="personal-game-title">Make this game yours</h2>
                         </div>
                     </div>
-                </div>
+
+                    @if (!Model.IsAuthenticated)
+                    {
+                        <div class="gf-personal-game__guest">
+                            <div>
+                                <strong>Track your progress, rate the game and write a review.</strong>
+                                <span>Your library stays connected to your public profile.</span>
+                            </div>
+                            <a class="btn btn-main" href="/users/Login?returnUrl=@Uri.EscapeDataString($"/games/{game.Id}")">Log in</a>
+                        </div>
+                    }
+                    else if (!Model.GamefilledDataAvailable)
+                    {
+                        <div class="gf-personal-game__unavailable">
+                            Personalized game data is not initialized yet. Apply the latest database upgrade and refresh.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="gf-personal-game__controls">
+                            <form method="post"
+                                  asp-page-handler="SetStatus"
+                                  asp-route-id="@game.Id"
+                                  class="gf-status-actions">
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit" name="status" value="played" class="gf-status-action @StatusClass(GameLibraryStatus.Played)">
+                                    <i class="fas fa-circle-check" aria-hidden="true"></i>
+                                    <span>Played</span>
+                                </button>
+                                <button type="submit" name="status" value="playing" class="gf-status-action @StatusClass(GameLibraryStatus.Playing)">
+                                    <i class="fas fa-gamepad" aria-hidden="true"></i>
+                                    <span>Playing</span>
+                                </button>
+                                <button type="submit" name="status" value="backlog" class="gf-status-action @StatusClass(GameLibraryStatus.Backlog)">
+                                    <i class="fas fa-layer-group" aria-hidden="true"></i>
+                                    <span>Backlog</span>
+                                </button>
+                                <button type="submit" name="status" value="wishlist" class="gf-status-action @StatusClass(GameLibraryStatus.Wishlist)">
+                                    <i class="fas fa-heart" aria-hidden="true"></i>
+                                    <span>Wishlist</span>
+                                </button>
+                            </form>
+
+                            <details class="gf-review-editor" @(Model.CurrentEntry?.Rating.HasValue == true || !string.IsNullOrWhiteSpace(Model.CurrentEntry?.ReviewText) ? "open" : null)>
+                                <summary>
+                                    <span>
+                                        <i class="fas fa-star" aria-hidden="true"></i>
+                                        @(Model.CurrentEntry?.Rating.HasValue == true ? $"Your rating: {Model.CurrentEntry.Rating}/10" : "Rate & review")
+                                    </span>
+                                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                </summary>
+
+                                <form method="post" asp-page-handler="SaveReview" asp-route-id="@game.Id" class="gf-review-form">
+                                    @Html.AntiForgeryToken()
+
+                                    <div class="gf-review-form__rating">
+                                        <label for="game-rating">Your rating</label>
+                                        <select id="game-rating" name="rating" class="form-control">
+                                            <option value="">No rating</option>
+                                            @for (var rating = 10; rating >= 1; rating--)
+                                            {
+                                                if (Model.CurrentEntry?.Rating == rating)
+                                                {
+                                                    <option value="@rating" selected>@rating / 10</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@rating">@rating / 10</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="gf-review-form__text">
+                                        <label for="game-review">Review</label>
+                                        <textarea id="game-review"
+                                                  name="reviewText"
+                                                  class="form-control"
+                                                  maxlength="5000"
+                                                  rows="4"
+                                                  placeholder="What did you think of this game?">@Model.CurrentEntry?.ReviewText</textarea>
+                                    </div>
+
+                                    <div class="gf-review-form__footer">
+                                        <label class="gf-spoiler-check">
+                                            @if (Model.CurrentEntry?.ContainsSpoilers == true)
+                                            {
+                                                <input type="checkbox" name="containsSpoilers" value="true" checked />
+                                            }
+                                            else
+                                            {
+                                                <input type="checkbox" name="containsSpoilers" value="true" />
+                                            }
+                                            <span>Contains spoilers</span>
+                                        </label>
+
+                                        <div class="gf-review-form__buttons">
+                                            @if (Model.CurrentEntry != null)
+                                            {
+                                                <button type="submit"
+                                                        class="btn btn-outline-light"
+                                                        formaction="?handler=RemoveEntry&id=@game.Id"
+                                                        formmethod="post">
+                                                    Remove
+                                                </button>
+                                            }
+                                            <button type="submit" class="btn btn-main">Save</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </details>
+                        </div>
+                    }
+                </section>
+
+                <section class="gf-game-insights" aria-label="Game insights">
+                    <article class="gf-insight-card gf-insight-card--rating">
+                        <div class="gf-insight-card__eyebrow">Critical pulse</div>
+                        <div class="gf-insight-card__rating-row">
+                            <strong>@Fmt(ratingValue)</strong>
+                            <span>/ 100</span>
+                        </div>
+                        <div class="gf-rating-track" aria-hidden="true">
+                            <span style="width:@Math.Clamp(ratingValue ?? 0, 0, 100).ToString("0.#", CultureInfo.InvariantCulture)%"></span>
+                        </div>
+                        <p>@Count(ratingCount) critic and community votes available through IGDB.</p>
+                    </article>
+
+                    <article class="gf-insight-card gf-insight-card--time">
+                        <div class="gf-insight-card__eyebrow">Time to beat</div>
+                        <div class="gf-time-grid">
+                            <div><strong>@Ttb(Model.TtbNormallySeconds)</strong><span>Main path</span></div>
+                            <div><strong>@Ttb(Model.TtbCompletelySeconds)</strong><span>Completionist</span></div>
+                            <div><strong>@Ttb(MasterLike(Model.TtbCompletelySeconds))</strong><span>Mastery</span></div>
+                        </div>
+                    </article>
+
+                    <article class="gf-insight-card gf-insight-card--pulse">
+                        <div class="gf-insight-card__eyebrow">IGDB interest</div>
+                        <div class="gf-pulse-grid">
+                            <div><strong>@Count(game.Hypes)</strong><span>Hypes</span></div>
+                            <div><strong>@Count(game.Follows)</strong><span>Follows</span></div>
+                        </div>
+                    </article>
+                </section>
+
+                @if (Model.GamefilledDataAvailable)
+                {
+                    <section class="gf-community-proof" aria-labelledby="community-proof-title">
+                        <div class="gf-section-heading">
+                            <div>
+                                <div class="gf-section-heading__eyebrow">Gamefilled community</div>
+                                <h2 id="community-proof-title">How players are tracking it</h2>
+                            </div>
+                        </div>
+
+                        <div class="gf-community-stats">
+                            <div><strong>@CommunityCount(GameLibraryStatus.Played)</strong><span>Played</span></div>
+                            <div><strong>@CommunityCount(GameLibraryStatus.Playing)</strong><span>Playing</span></div>
+                            <div><strong>@CommunityCount(GameLibraryStatus.Backlog)</strong><span>Backlog</span></div>
+                            <div><strong>@CommunityCount(GameLibraryStatus.Wishlist)</strong><span>Wishlist</span></div>
+                        </div>
+
+                        @if (Model.FriendActivity.Count > 0)
+                        {
+                            <div class="gf-friend-proof">
+                                <div class="gf-friend-proof__avatars">
+                                    @foreach (var friend in Model.FriendActivity)
+                                    {
+                                        var avatar = string.IsNullOrWhiteSpace(friend.AvatarUrl)
+                                            ? "/lib/imgs/defaultavatar.png"
+                                            : friend.AvatarUrl;
+
+                                        <a href="/u/@friend.Username"
+                                           title="@friend.DisplayName · @StatusLabel(friend.Status)@(friend.Rating.HasValue ? $" · {friend.Rating}/10" : string.Empty)">
+                                            <img src="@avatar" alt="@friend.DisplayName avatar" />
+                                        </a>
+                                    }
+                                </div>
+                                <div>
+                                    <strong>@Model.FriendActivity.Count mutual connection@(Model.FriendActivity.Count == 1 ? string.Empty : "s")</strong>
+                                    <span>have activity on this game.</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="gf-community-empty">
+                                No mutual connections have tracked this game yet.
+                            </div>
+                        }
+                    </section>
+                }
+
+                @if (Model.StoreLinks.Count > 0)
+                {
+                    <section class="gf-where-to-play" aria-labelledby="where-to-play-title">
+                        <div class="gf-section-heading">
+                            <div>
+                                <div class="gf-section-heading__eyebrow">Official destinations</div>
+                                <h2 id="where-to-play-title">Where to Play</h2>
+                            </div>
+                        </div>
+
+                        <div class="gf-store-grid">
+                            @foreach (var store in Model.StoreLinks)
+                            {
+                                <a class="gf-store-card"
+                                   href="@store.Url"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    <span class="gf-store-card__icon">
+                                        <i class="@store.Icon" aria-hidden="true"></i>
+                                    </span>
+                                    <span class="gf-store-card__content">
+                                        <strong>@store.Label</strong>
+                                        @if (!string.IsNullOrWhiteSpace(store.Platform))
+                                        {
+                                            <small>@store.Platform</small>
+                                        }
+                                        else
+                                        {
+                                            <small>Official external link</small>
+                                        }
+                                    </span>
+                                    <i class="fas fa-arrow-up-right-from-square gf-store-card__arrow" aria-hidden="true"></i>
+                                </a>
+                            }
+                        </div>
+                    </section>
+                }
 
                 @if (hasMedia)
                 {
-                    <div class="gf-media-room" data-media-room>
+                    <section class="gf-media-room" data-media-room>
                         <div class="gf-media-room__head">
                             <div>
                                 <h2>Media Room</h2>
-                                <p>Browse trailers and screenshots in one gallery.</p>
+                                <p>Trailers and screenshots in one navigable gallery.</p>
                             </div>
                         </div>
 
@@ -377,7 +592,7 @@
                             @if (trailer != null)
                             {
                                 var trailerTitle = string.IsNullOrWhiteSpace(trailer.Name)
-                                    ? $"{Model.Game?.Name} trailer"
+                                    ? $"{game.Name} trailer"
                                     : trailer.Name;
                                 var trailerEmbedUrl = $"https://www.youtube-nocookie.com/embed/{trailer.VideoId}?autoplay=1&rel=0";
                                 var trailerThumbnailUrl = $"https://i.ytimg.com/vi/{trailer.VideoId}/hqdefault.jpg";
@@ -389,12 +604,9 @@
                                         data-media-src="@trailerEmbedUrl"
                                         data-media-title="@trailerTitle"
                                         aria-label="Open @trailerTitle">
-                                    <img src="@trailerThumbnailUrl"
-                                         alt="@trailerTitle"
-                                         loading="lazy" />
+                                    <img src="@trailerThumbnailUrl" alt="@trailerTitle" loading="lazy" />
                                     <span class="gf-media-item__badge">
-                                        <i class="fas fa-film" aria-hidden="true"></i>
-                                        Trailer
+                                        <i class="fas fa-film" aria-hidden="true"></i> Trailer
                                     </span>
                                     <span class="gf-media-item__play" aria-hidden="true">
                                         <i class="fas fa-play"></i>
@@ -408,7 +620,7 @@
                                 var screenshot = screenshots[index];
                                 var thumbnailUrl = $"https://images.igdb.com/igdb/image/upload/t_screenshot_med/{screenshot.ImageId}.jpg";
                                 var fullUrl = $"https://images.igdb.com/igdb/image/upload/t_1080p/{screenshot.ImageId}.jpg";
-                                var screenshotTitle = $"{Model.Game?.Name} screenshot {index + 1}";
+                                var screenshotTitle = $"{game.Name} screenshot {index + 1}";
 
                                 <button type="button"
                                         class="gf-media-item"
@@ -417,18 +629,15 @@
                                         data-media-src="@fullUrl"
                                         data-media-title="@screenshotTitle"
                                         aria-label="Open screenshot @(index + 1)">
-                                    <img src="@thumbnailUrl"
-                                         alt="@screenshotTitle"
-                                         loading="lazy" />
+                                    <img src="@thumbnailUrl" alt="@screenshotTitle" loading="lazy" />
                                     <span class="gf-media-item__badge">
-                                        <i class="fas fa-image" aria-hidden="true"></i>
-                                        Screenshot
+                                        <i class="fas fa-image" aria-hidden="true"></i> Screenshot
                                     </span>
                                     <span class="gf-media-item__title">Screenshot @(index + 1)</span>
                                 </button>
                             }
                         </div>
-                    </div>
+                    </section>
 
                     <div class="gf-media-lightbox"
                          data-media-lightbox
@@ -448,7 +657,6 @@
                                     <span class="gf-media-lightbox__title" data-media-title></span>
                                     <span class="gf-media-lightbox__counter" data-media-counter></span>
                                 </div>
-
                                 <button type="button"
                                         class="gf-media-lightbox__close"
                                         data-media-close
@@ -465,7 +673,6 @@
                                     aria-label="Previous media">
                                 <i class="fas fa-chevron-left" aria-hidden="true"></i>
                             </button>
-
                             <button type="button"
                                     class="gf-media-lightbox__nav gf-media-lightbox__nav--next"
                                     data-media-next
@@ -490,7 +697,7 @@
         {
             return DateTimeOffset
                 .FromUnixTimeSeconds(unix)
-                .ToString("MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US"));
+                .ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
         }
         catch
         {
@@ -502,7 +709,7 @@
         value == null ? "—" : Math.Round(value.Value, 1).ToString("0.0", CultureInfo.InvariantCulture);
 
     static string Count(int? value) =>
-        value == null ? "—" : value.Value.ToString("N0", CultureInfo.GetCultureInfo("en-US"));
+        value == null ? "—" : value.Value.ToString("N0", CultureInfo.InvariantCulture);
 
     static string Ttb(int? seconds)
     {
@@ -514,31 +721,39 @@
     static int? MasterLike(int? completelySeconds) =>
         completelySeconds == null ? null : (int)(completelySeconds.Value * 2.2);
 
+    static string StatusLabel(string status) => status switch
+    {
+        GameLibraryStatus.Played => "Played",
+        GameLibraryStatus.Playing => "Playing",
+        GameLibraryStatus.Wishlist => "Wishlist",
+        _ => "Backlog"
+    };
+
     static int PlatformSortKey(string? platformName)
     {
         var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (platform.Contains("playstation 5")) return 1005;
-        if (platform.Contains("playstation 4")) return 1004;
-        if (platform.Contains("playstation 3")) return 1003;
         if (platform.Contains("playstation 2")) return 1002;
+        if (platform.Contains("playstation 3")) return 1003;
+        if (platform.Contains("playstation 4")) return 1004;
+        if (platform.Contains("playstation 5")) return 1005;
         if (platform == "playstation" || platform.Contains("playstation 1")) return 1001;
         if (platform.Contains("psp")) return 1010;
         if (platform.Contains("vita")) return 1011;
         if (platform.Contains("playstation") || platform.StartsWith("ps")) return 1090;
 
-        if (platform.Contains("xbox series")) return 2004;
-        if (platform.Contains("xbox one")) return 2003;
-        if (platform.Contains("xbox 360")) return 2002;
         if (platform == "xbox") return 2001;
+        if (platform.Contains("xbox 360")) return 2002;
+        if (platform.Contains("xbox one")) return 2003;
+        if (platform.Contains("xbox series")) return 2004;
         if (platform.Contains("xbox")) return 2090;
 
         if (platform.Contains("nintendo entertainment system") || platform == "nes") return 3001;
         if (platform.Contains("super nintendo") || platform == "snes") return 3002;
         if (platform.Contains("nintendo 64")) return 3003;
         if (platform.Contains("gamecube")) return 3004;
-        if (platform.Contains("wii u")) return 3006;
         if (platform == "wii") return 3005;
+        if (platform.Contains("wii u")) return 3006;
         if (platform.Contains("switch")) return 3007;
         if (platform.Contains("game boy")) return 3010;
         if (platform.Contains("nintendo ds")) return 3011;
@@ -552,14 +767,12 @@
         if (platform.Contains("ios") || platform.Contains("iphone") || platform.Contains("ipad")) return 5010;
         if (platform.Contains("browser") || platform.Contains("web")) return 6000;
         if (platform.Contains("cloud")) return 6010;
-
         return 9000;
     }
 
     static string PlatformClass(string? platformName)
     {
         var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
-
         if (platform.Contains("playstation") || platform.StartsWith("ps")) return "gf-platform-pill--playstation";
         if (platform.Contains("xbox")) return "gf-platform-pill--xbox";
         if (platform.Contains("switch")) return "gf-platform-pill--switch";
@@ -577,7 +790,6 @@
     static string PlatformIcon(string? platformName)
     {
         var platform = (platformName ?? string.Empty).Trim().ToLowerInvariant();
-
         if (platform.Contains("playstation") || platform.StartsWith("ps")) return "fab fa-playstation";
         if (platform.Contains("xbox")) return "fab fa-xbox";
         if (platform.Contains("steam")) return "fab fa-steam";
@@ -593,7 +805,6 @@
     static string PlatformLabel(string? platformName)
     {
         var platform = (platformName ?? string.Empty).Trim();
-
         return platform switch
         {
             "PC (Microsoft Windows)" => "PC",
