@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Settings";
     ViewData["ActiveSettings"] = "Overview";
+    ViewData["FullBleed"] = true;
 }
 
 <div class="gf-settings-page">
@@ -11,7 +12,7 @@
             <div>
                 <span class="gf-eyebrow">Your Gamefilled</span>
                 <h1>Settings</h1>
-                <p>Shape your public profile and prepare the account for upcoming social integrations.</p>
+                <p>Manage the parts of your profile and account that are already live, while keeping upcoming privacy and integration controls visible.</p>
             </div>
         </header>
 
@@ -42,19 +43,37 @@
                         <span class="gf-settings-overview-card__icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
                         <div>
                             <h2>Account & security</h2>
-                            <p>Password, email, active sessions and stronger account protection will live here.</p>
+                            <p>Change the email and password used to access your Gamefilled account.</p>
                         </div>
-                        <footer><span>Planned for security sprint</span><i class="fas fa-clock" aria-hidden="true"></i></footer>
+                        <footer><span>Manage credentials</span><i class="fas fa-arrow-right" aria-hidden="true"></i></footer>
+                    </a>
+
+                    <a class="gf-settings-overview-card" href="/Settings/Notifications">
+                        <span class="gf-settings-overview-card__icon"><i class="fas fa-bell" aria-hidden="true"></i></span>
+                        <div>
+                            <h2>Notifications</h2>
+                            <p>Follower, friend, review and list notification controls will be managed here.</p>
+                        </div>
+                        <footer><span>Planned</span><i class="fas fa-clock" aria-hidden="true"></i></footer>
                     </a>
 
                     <a class="gf-settings-overview-card" href="/Settings/Integrations">
                         <span class="gf-settings-overview-card__icon"><i class="fas fa-plug" aria-hidden="true"></i></span>
                         <div>
                             <h2>Integrations</h2>
-                            <p>Steam library sync, playtime and achievements will be connected from this area later.</p>
+                            <p>Steam library sync, playtime and achievements will be connected from this area.</p>
                         </div>
-                        <footer><span>Planned integration</span><i class="fas fa-clock" aria-hidden="true"></i></footer>
+                        <footer><span>Planned</span><i class="fas fa-clock" aria-hidden="true"></i></footer>
                     </a>
+
+                    <div class="gf-settings-overview-card is-planned" aria-label="Privacy and presence controls planned">
+                        <span class="gf-settings-overview-card__icon"><i class="fas fa-user-shield" aria-hidden="true"></i></span>
+                        <div>
+                            <h2>Privacy & presence</h2>
+                            <p>Control online status, public activity and profile discoverability during the next social privacy sprint.</p>
+                        </div>
+                        <footer><span>Next functional setting</span><i class="fas fa-road" aria-hidden="true"></i></footer>
+                    </div>
                 </section>
             </main>
         </div>
