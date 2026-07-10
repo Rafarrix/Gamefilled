@@ -1,59 +1,123 @@
-﻿@page "/u/{username}/activity"
+@page "/u/{username}/activity"
+@using Gamefilled.Models
 @model Gamefilled.Pages.u.ActivityModel
 @{
-    ViewData["Title"] = $"{Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username} - Activity";
-
     var displayName = Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username ?? "User";
-    var username = Model.ProfileUser.Username ?? "";
+    var username = Model.ProfileUser.Username ?? string.Empty;
+
+    ViewData["Title"] = $"{displayName} · Activity";
+    ViewData["FullBleed"] = true;
+
+    string StatusLabel(string? status) => status switch
+    {
+        GameLibraryStatus.Played => "Played",
+        GameLibraryStatus.Playing => "Playing",
+        GameLibraryStatus.Wishlist => "Wishlist",
+        _ => "Backlog"
+    };
 }
 
-<div class="container py-4">
-    <div class="gf-profile-panel">
-        <div class="gf-profile-panel__head">
-            <h2>Activity</h2>
-            <a href="/u/@username">Back to Profile</a>
-        </div>
+<link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/activity-v2.css" asp-append-version="true" />
 
+<div class="gf-activity-page">
+    <section class="gf-activity-hero">
+        <div class="gf-activity-shell gf-activity-hero__inner">
+            <div>
+                <span class="gf-eyebrow">@(Model.IsOwnProfile ? "Your timeline" : "Player timeline")</span>
+                <h1>@(Model.IsOwnProfile ? "Your activity" : $"{displayName}'s activity")</h1>
+                <p>@(Model.IsOwnProfile ? "Your latest Gamefilled moments, in one place." : $"Recent moments from {displayName} on Gamefilled.")</p>
+            </div>
+
+            <a class="gf-activity-back" href="/u/@username">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Back to profile
+            </a>
+        </div>
+    </section>
+
+    <main class="gf-activity-shell gf-activity-main">
         @if (Model.ActivityItems.Any())
         {
-            <div class="gf-activity-list">
+            <section class="gf-activity-list" aria-label="Activity timeline">
                 @foreach (var item in Model.ActivityItems)
                 {
-                    <div class="gf-activity-item">
-                        <div class="gf-activity-item__text">
-                            @if (item.Type == "followed_user")
+                    <article class="gf-activity-card">
+                        <div class="gf-activity-card__media" aria-hidden="true">
+                            @if (!string.IsNullOrWhiteSpace(item.GameCoverUrl))
                             {
-                                <span>
-                                    <strong>@displayName</strong> followed
-                                    <a href="/u/@item.TargetUsername">@(item.TargetDisplayName ?? item.TargetUsername)</a>
-                                </span>
-                            }
-                            else if (item.Type == "updated_favorites")
-                            {
-                                <span>
-                                    <strong>@displayName</strong> updated favorite games
-                                </span>
+                                <img src="@item.GameCoverUrl" alt="" loading="lazy" />
                             }
                             else
                             {
-                                <span>
-                                    <strong>@displayName</strong> did something
-                                </span>
+                                <i class="@(item.Type == "followed_user" ? "fas fa-user-plus" : item.GameId.HasValue ? "fas fa-gamepad" : "fas fa-bolt")"></i>
                             }
                         </div>
 
-                        <div class="gf-activity-item__time">
-                            @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        <div class="gf-activity-card__body">
+                            <p>
+                                @if (item.Type == "followed_user")
+                                {
+                                    @if (Model.IsOwnProfile)
+                                    {
+                                        <text>You followed <a href="/u/@item.TargetUsername">@(item.TargetDisplayName ?? item.TargetUsername)</a>.</text>
+                                    }
+                                    else
+                                    {
+                                        <text><strong>@displayName</strong> followed <a href="/u/@item.TargetUsername">@(item.TargetDisplayName ?? item.TargetUsername)</a>.</text>
+                                    }
+                                }
+                                else if (item.Type == "updated_favorites")
+                                {
+                                    <text>@(Model.IsOwnProfile ? "You updated your favorite games." : $"{displayName} updated their favorite games.")</text>
+                                }
+                                else if (item.Type == "game_status_changed")
+                                {
+                                    <text>
+                                        @(Model.IsOwnProfile ? "You added" : $"{displayName} added")
+                                        <a href="/games/@item.GameId">@(item.GameName ?? "a game")</a>
+                                        to @StatusLabel(item.Status).
+                                    </text>
+                                }
+                                else if (item.Type == "rated_game")
+                                {
+                                    <text>
+                                        @(Model.IsOwnProfile ? "You rated" : $"{displayName} rated")
+                                        <a href="/games/@item.GameId">@(item.GameName ?? "a game")</a>@(item.Rating.HasValue ? $" {item.Rating}/10" : string.Empty).
+                                    </text>
+                                }
+                                else if (item.Type == "reviewed_game")
+                                {
+                                    <text>
+                                        @(Model.IsOwnProfile ? "You reviewed" : $"{displayName} reviewed")
+                                        <a href="/games/@item.GameId">@(item.GameName ?? "a game")</a>.
+                                    </text>
+                                }
+                                else
+                                {
+                                    <text>@(Model.IsOwnProfile ? "You updated your profile." : $"{displayName} updated their profile.")</text>
+                                }
+                            </p>
                         </div>
-                    </div>
+
+                        <time class="gf-activity-card__time" datetime="@item.CreatedAt.ToString("O")">
+                            @item.CreatedAt.ToLocalTime().ToString("MMM d, yyyy · HH:mm")
+                        </time>
+                    </article>
                 }
-            </div>
+            </section>
         }
         else
         {
-            <div class="gf-profile-empty-state">
-                No activity yet.
-            </div>
+            <section class="gf-empty-state gf-activity-empty">
+                <span class="gf-empty-state__icon"><i class="fas fa-bolt" aria-hidden="true"></i></span>
+                <h2>@(Model.IsOwnProfile ? "Your timeline is quiet" : "No activity yet")</h2>
+                <p>@(Model.IsOwnProfile ? "Track games, rate titles and connect with people to build your timeline." : "New Gamefilled activity will appear here.")</p>
+                @if (Model.IsOwnProfile)
+                {
+                    <a class="gf-btn gf-btn--secondary" href="/games">Discover games</a>
+                }
+            </section>
         }
-    </div>
+    </main>
 </div>
