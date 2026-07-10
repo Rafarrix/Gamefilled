@@ -42,10 +42,18 @@ public sealed class GameModel : PageModel
 
             await LoadTimeToBeatAsync(id, cancellationToken);
 
-            var backgroundImageId =
-                Game.Artworks?.FirstOrDefault()?.ImageId ??
-                Game.Screenshots?.FirstOrDefault()?.ImageId ??
-                Game.Cover?.ImageId;
+            var backgroundImage = (Game.Artworks ?? [])
+                .Concat(Game.Screenshots ?? [])
+                .Where(image => !string.IsNullOrWhiteSpace(image.ImageId))
+                .OrderByDescending(image =>
+                    image.Width.HasValue &&
+                    image.Height.HasValue &&
+                    image.Width.Value >= image.Height.Value)
+                .ThenByDescending(image =>
+                    (long)(image.Width ?? 0) * (image.Height ?? 0))
+                .FirstOrDefault();
+
+            var backgroundImageId = backgroundImage?.ImageId ?? Game.Cover?.ImageId;
 
             BgUrl = BuildIgdbImage(backgroundImageId, "t_1080p_2x", "webp");
             CoverUrl = BuildIgdbImage(Game.Cover?.ImageId, "t_cover_big", "jpg");
