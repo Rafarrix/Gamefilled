@@ -17,13 +17,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
+          cache: true
+          cache-dependency-path: Gamefilled.csproj
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore --locked-mode false
 
       - name: Build
         shell: bash
@@ -31,10 +33,18 @@ jobs:
           set -o pipefail
           dotnet build --configuration Release --no-restore 2>&1 | tee build.log
 
-      - name: Upload build log
+      - name: Publish
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet publish --configuration Release --no-build --output ./artifacts/publish 2>&1 | tee publish.log
+
+      - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
+          name: build-logs
+          path: |
+            build.log
+            publish.log
           if-no-files-found: warn
