@@ -22,32 +22,48 @@ jobs:
         with:
           dotnet-version: "10.0.x"
           cache: true
-          cache-dependency-path: Gamefilled.csproj
+          cache-dependency-path: |
+            Gamefilled.csproj
+            tests/Gamefilled.Tests/Gamefilled.Tests.csproj
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore Gamefilled.sln
 
       - name: Build
         shell: bash
         run: |
           set -o pipefail
-          dotnet build --configuration Release --no-restore 2>&1 | tee build.log
+          dotnet build Gamefilled.sln --configuration Release --no-restore 2>&1 | tee build.log
+
+      - name: Test
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet test tests/Gamefilled.Tests/Gamefilled.Tests.csproj \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" 2>&1 | tee test.log
 
       - name: Publish
         shell: bash
         run: |
           set -o pipefail
-          dotnet publish --configuration Release --no-build --output ./artifacts/publish 2>&1 | tee publish.log
+          dotnet publish Gamefilled.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./artifacts/publish 2>&1 | tee publish.log
 
       - name: Build production container
         run: docker build --tag gamefilled:ci .
 
-      - name: Upload build logs
+      - name: Upload build and test logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
+          name: build-test-logs
           path: |
             build.log
+            test.log
             publish.log
+            tests/Gamefilled.Tests/TestResults/**/*.trx
           if-no-files-found: warn
