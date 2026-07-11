@@ -68,8 +68,11 @@ IF NOT EXISTS
       AND [object_id] = OBJECT_ID(N'dbo.Follows')
 )
 BEGIN
-    CREATE INDEX [IX_Follows_FollowingId]
-        ON [dbo].[Follows] ([FollowingId]);
+    EXEC
+    (
+        N'CREATE INDEX [IX_Follows_FollowingId]
+          ON [dbo].[Follows] ([FollowingId]);'
+    );
 END;
 
 IF NOT EXISTS
@@ -80,8 +83,11 @@ IF NOT EXISTS
       AND [object_id] = OBJECT_ID(N'dbo.UserActivities')
 )
 BEGIN
-    CREATE INDEX [IX_UserActivities_TargetUserId]
-        ON [dbo].[UserActivities] ([TargetUserId]);
+    EXEC
+    (
+        N'CREATE INDEX [IX_UserActivities_TargetUserId]
+          ON [dbo].[UserActivities] ([TargetUserId]);'
+    );
 END;
 
 IF NOT EXISTS
@@ -92,11 +98,66 @@ IF NOT EXISTS
       AND [object_id] = OBJECT_ID(N'dbo.UserNotifications')
 )
 BEGIN
-    CREATE INDEX [IX_UserNotifications_ActorUserId]
-        ON [dbo].[UserNotifications] ([ActorUserId]);
+    EXEC
+    (
+        N'CREATE INDEX [IX_UserNotifications_ActorUserId]
+          ON [dbo].[UserNotifications] ([ActorUserId]);'
+    );
 END;
 
 COMMIT TRANSACTION;
+
+DECLARE @MissingIndexes TABLE
+(
+    [TableName] SYSNAME NOT NULL,
+    [IndexName] SYSNAME NOT NULL
+);
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE [name] = N'IX_Follows_FollowingId'
+      AND [object_id] = OBJECT_ID(N'dbo.Follows')
+)
+BEGIN
+    INSERT INTO @MissingIndexes VALUES (N'Follows', N'IX_Follows_FollowingId');
+END;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE [name] = N'IX_UserActivities_TargetUserId'
+      AND [object_id] = OBJECT_ID(N'dbo.UserActivities')
+)
+BEGIN
+    INSERT INTO @MissingIndexes VALUES (N'UserActivities', N'IX_UserActivities_TargetUserId');
+END;
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE [name] = N'IX_UserNotifications_ActorUserId'
+      AND [object_id] = OBJECT_ID(N'dbo.UserNotifications')
+)
+BEGIN
+    INSERT INTO @MissingIndexes VALUES (N'UserNotifications', N'IX_UserNotifications_ActorUserId');
+END;
+
+IF EXISTS (SELECT 1 FROM @MissingIndexes)
+BEGIN
+    SELECT
+        N'FAILED' AS [SupportIndexes],
+        [TableName],
+        [IndexName]
+    FROM @MissingIndexes
+    ORDER BY [TableName], [IndexName];
+
+    RAISERROR(N'One or more EF baseline support indexes are still missing after the upgrade.', 16, 1);
+    RETURN;
+END;
 
 SELECT
     N'PASS' AS [SupportIndexes],
