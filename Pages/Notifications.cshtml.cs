@@ -79,6 +79,22 @@ public sealed class NotificationsModel : ProtectedPageModel
         return Page();
     }
 
+    public async Task<IActionResult> OnGetOpenAsync(int id, CancellationToken ct)
+    {
+        var loginResult = RequireLogin();
+        if (loginResult != null)
+            return loginResult;
+
+        var target = await _notifications.MarkReadAndGetTargetAsync(
+            CurrentUserId!.Value,
+            id,
+            ct);
+
+        return !string.IsNullOrWhiteSpace(target) && Url.IsLocalUrl(target)
+            ? LocalRedirect(target)
+            : RedirectToPage("/Notifications");
+    }
+
     public async Task<IActionResult> OnPostOpenAsync(int id, CancellationToken ct)
     {
         var loginResult = RequireLogin();
