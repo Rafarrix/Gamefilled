@@ -81,6 +81,13 @@
     color: #ecfdf5 !important;
 }
 
+.gf-notification-card,
+.gf-notification-card:hover,
+.gf-notification-card:focus-visible {
+    color: inherit;
+    text-decoration: none !important;
+}
+
 /* Opt-in treatment for actions that permanently commit user data. */
 .gf-btn--commit {
     border: 1px solid #16c43a !important;
