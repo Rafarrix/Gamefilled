@@ -128,12 +128,15 @@ VALUES
     (N'Users', N'UX_Users_Email'),
     (N'Users', N'IX_Users_LastSeenAt'),
     (N'Follows', N'UX_Follows_FollowerId_FollowingId'),
+    (N'Follows', N'IX_Follows_FollowingId'),
     (N'UserFavoriteGames', N'UX_UserFavoriteGames_UserId_GameId'),
     (N'UserFavoriteGames', N'UX_UserFavoriteGames_UserId_SortOrder'),
     (N'UserActivities', N'IX_UserActivities_UserId_CreatedAt'),
+    (N'UserActivities', N'IX_UserActivities_TargetUserId'),
     (N'UserGameEntries', N'UX_UserGameEntries_UserId_GameId'),
     (N'UserGameEntries', N'IX_UserGameEntries_GameId_Status'),
     (N'UserGameEntries', N'IX_UserGameEntries_UserId_UpdatedAt'),
+    (N'UserNotifications', N'IX_UserNotifications_ActorUserId'),
     (N'UserNotifications', N'IX_UserNotifications_UserId_ReadAt_CreatedAt'),
     (N'UserNotifications', N'IX_UserNotifications_UserId_ActorUserId_Type_CreatedAt');
 
