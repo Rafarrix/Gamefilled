@@ -21,13 +21,13 @@ ENV ASPNETCORE_ENVIRONMENT=ContainerBuild \
     ConnectionStrings__DefaultConnection="Server=127.0.0.1,1;Database=GamefilledBundleBuild;User Id=sa;Password=BuildOnly_123!;Encrypt=False;Connect Timeout=1"
 
 RUN dotnet tool restore
-RUN dotnet ef migrations bundle \
-    --project Gamefilled.csproj \
-    --startup-project Gamefilled.csproj \
-    --configuration ${BUILD_CONFIGURATION} \
-    --no-build \
-    --self-contained false \
-    --output /app/migrations/efbundle
+RUN mkdir -p /app/migrations && \
+    dotnet tool run dotnet-ef migrations bundle \
+      --project Gamefilled.csproj \
+      --startup-project Gamefilled.csproj \
+      --configuration ${BUILD_CONFIGURATION} \
+      --no-build \
+      --output /app/migrations/efbundle
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrator
 WORKDIR /app
