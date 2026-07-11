@@ -61,7 +61,7 @@ jobs:
         run: docker build --tag gamefilled:ci .
 
       - name: Generate EF baseline candidate
-        if: github.ref == 'refs/heads/feature/production-foundation'
+        if: github.ref == 'refs/heads/feature/production-foundation' || github.head_ref == 'feature/production-foundation'
         env:
           ASPNETCORE_ENVIRONMENT: Testing
           ConnectionStrings__DefaultConnection: Server=127.0.0.1,1;Database=GamefilledBaseline;User Id=sa;Password=NotUsed_TestOnly_123!;Encrypt=False;Connect Timeout=1
@@ -75,7 +75,7 @@ jobs:
             --no-build
 
       - name: Upload EF baseline candidate
-        if: github.ref == 'refs/heads/feature/production-foundation'
+        if: github.ref == 'refs/heads/feature/production-foundation' || github.head_ref == 'feature/production-foundation'
         uses: actions/upload-artifact@v4
         with:
           name: ef-baseline-candidate
