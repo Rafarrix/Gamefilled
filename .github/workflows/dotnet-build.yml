@@ -39,6 +39,9 @@ jobs:
           set -o pipefail
           dotnet publish --configuration Release --no-build --output ./artifacts/publish 2>&1 | tee publish.log
 
+      - name: Build production container
+        run: docker build --tag gamefilled:ci .
+
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
