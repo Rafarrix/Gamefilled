@@ -67,12 +67,15 @@ jobs:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1,1;Database=GamefilledBaseline;User Id=sa;Password=NotUsed_TestOnly_123!;Encrypt=False;Connect Timeout=1
           IGDB__ClientId: baseline-generation-client
           IGDB__ClientSecret: baseline-generation-secret
+        shell: bash
         run: |
+          set -o pipefail
           dotnet tool run dotnet-ef migrations add InitialBaseline \
             --project Gamefilled.csproj \
             --startup-project Gamefilled.csproj \
             --output-dir Data/Migrations \
-            --no-build
+            --configuration Release \
+            --no-build 2>&1 | tee ef-baseline.log
 
       - name: Upload EF baseline candidate
         if: github.ref == 'refs/heads/feature/production-foundation' || github.head_ref == 'feature/production-foundation'
@@ -91,5 +94,6 @@ jobs:
             build.log
             test.log
             publish.log
+            ef-baseline.log
             tests/Gamefilled.Tests/TestResults/**/*.trx
           if-no-files-found: warn
