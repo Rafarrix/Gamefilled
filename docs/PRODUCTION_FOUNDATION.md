@@ -5,6 +5,7 @@ This document describes the first infrastructure baseline. It deliberately does 
 ## Requirements
 
 - .NET 10 SDK. `global.json` allows supported .NET 10 feature-band roll-forward.
+- Visual Studio 2026 18.0+ when using Visual Studio.
 - SQL Server reachable by the application.
 - Twitch/IGDB client credentials.
 - Docker only when building or running the production image.
@@ -13,11 +14,15 @@ This document describes the first infrastructure baseline. It deliberately does 
 
 Keep real credentials outside Git.
 
-Choose one approach:
+Preferred for local development: ASP.NET Core User Secrets.
 
-1. Copy `appsettings.example.json` to an ignored `appsettings.Development.json` and replace the placeholders.
-2. Use ASP.NET Core user secrets.
-3. Set environment variables:
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "<connection-string>"
+dotnet user-secrets set "IGDB:ClientId" "<client-id>"
+dotnet user-secrets set "IGDB:ClientSecret" "<client-secret>"
+```
+
+Equivalent environment variable names are:
 
 ```text
 ConnectionStrings__DefaultConnection
@@ -25,16 +30,29 @@ IGDB__ClientId
 IGDB__ClientSecret
 ```
 
-The application now fails at startup with a clear message when required configuration is absent.
+`appsettings.example.json` and `.env.example` contain placeholders only. Real values must never be committed.
 
-## Local build
+The application fails at startup with a clear message when required configuration is absent.
+
+## Local build and tests
 
 ```bash
 dotnet --info
-dotnet restore
-dotnet build
-dotnet run
+dotnet restore Gamefilled.sln
+dotnet build Gamefilled.sln
+dotnet test tests/Gamefilled.Tests/Gamefilled.Tests.csproj
+dotnet run --project Gamefilled.csproj
 ```
+
+The test project uses isolated test-only configuration and does not read the developer's User Secrets.
+
+Current smoke-test contracts:
+
+- the liveness endpoint returns the expected service contract;
+- baseline security headers are present;
+- an anonymous visitor cannot open the notification inbox.
+
+These tests are intentionally small. They establish the pipeline before database-backed login, follow, library and notification tests are added.
 
 ## Health endpoints
 
@@ -68,15 +86,17 @@ The final image runs as the non-root `app` user and listens on port `8080`.
 
 Every feature branch and pull request must complete:
 
-1. NuGet restore;
-2. Release build;
-3. Release publish;
-4. production Docker image build.
+1. NuGet restore for the solution;
+2. Release build for application and tests;
+3. automated smoke tests;
+4. Release publish for the web application;
+5. production Docker image build.
 
-Tests and security scans are added in subsequent slices of issue #10.
+The build and test logs are uploaded as workflow artifacts for diagnosis.
 
 ## Deferred intentionally
 
+- database-backed integration tests;
 - ASP.NET Core Identity migration;
 - EF Core migration baseline;
 - persistent Data Protection keys;
@@ -84,6 +104,6 @@ Tests and security scans are added in subsequent slices of issue #10.
 - deployment workflow;
 - production secrets integration;
 - CSP and stricter browser isolation headers;
-- automated tests and security scanning.
+- dependency, CodeQL and secret scanning.
 
 These are kept separate so failures can be diagnosed and rolled back without mixing authentication, schema and runtime changes.
