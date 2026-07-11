@@ -1,6 +1,6 @@
 # Gamefilled production foundation
 
-This document describes the first infrastructure baseline. It deliberately does not migrate authentication or modify the database schema.
+This document describes the first infrastructure baseline. It preserves existing product behavior and never modifies an existing database automatically.
 
 ## Requirements
 
@@ -38,6 +38,7 @@ The application fails at startup with a clear message when required configuratio
 
 ```bash
 dotnet --info
+dotnet tool restore
 dotnet restore Gamefilled.sln
 dotnet build Gamefilled.sln
 dotnet test tests/Gamefilled.Tests/Gamefilled.Tests.csproj
@@ -53,6 +54,34 @@ Current smoke-test contracts:
 - an anonymous visitor cannot open the notification inbox.
 
 These tests are intentionally small. They establish the pipeline before database-backed login, follow, library and notification tests are added.
+
+## EF Core baseline
+
+The canonical initial migration is stored in `Data/Migrations` and represents the existing Gamefilled schema through Notifications V1.
+
+For a brand-new empty database, migrations can eventually create the schema normally.
+
+For an existing database that already contains Gamefilled tables and data, never run `dotnet ef database update` until the database has been audited and adopted into migration history.
+
+Use this sequence:
+
+1. Back up the database.
+2. Run `Database/schema-audit.sql` in SSMS.
+3. When the audit reports known differences, run the dedicated idempotent reconciliation script rather than editing data manually.
+4. Run `Database/schema-audit.sql` again and require `PASS`.
+5. Run `Database/upgrades/2026-07-11-ef-baseline-support-indexes.sql`.
+6. Only after a complete `PASS`, register the existing schema as the initial migration baseline using the protected adoption script prepared for that migration ID.
+7. From then on, future schema changes use normal reviewed EF Core migrations.
+
+The current reconciliation script is:
+
+```text
+Database/upgrades/2026-07-11-reconcile-ef-baseline-schema.sql
+```
+
+It converts the legacy `Users.CreatedAt` column to `datetime2` and creates required unique indexes. It first detects duplicate usernames, follow pairs and favorite-game positions. When duplicates exist, it stops before any schema change and reports the conflicting keys; it never deletes or merges rows automatically.
+
+The CI runs `dotnet ef migrations has-pending-model-changes`. A model change without a corresponding migration therefore fails the pipeline.
 
 ## Health endpoints
 
@@ -86,11 +115,13 @@ The final image runs as the non-root `app` user and listens on port `8080`.
 
 Every feature branch and pull request must complete:
 
-1. NuGet restore for the solution;
-2. Release build for application and tests;
-3. automated smoke tests;
-4. Release publish for the web application;
-5. production Docker image build.
+1. local .NET tool restore;
+2. NuGet restore for the solution;
+3. Release build for application and tests;
+4. automated smoke tests;
+5. EF migration snapshot consistency check;
+6. Release publish for the web application;
+7. production Docker image build.
 
 The build and test logs are uploaded as workflow artifacts for diagnosis.
 
@@ -98,7 +129,6 @@ The build and test logs are uploaded as workflow artifacts for diagnosis.
 
 - database-backed integration tests;
 - ASP.NET Core Identity migration;
-- EF Core migration baseline;
 - persistent Data Protection keys;
 - Docker Compose database bootstrap;
 - deployment workflow;
