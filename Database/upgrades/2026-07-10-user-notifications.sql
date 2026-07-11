@@ -70,8 +70,11 @@ IF NOT EXISTS
       AND [object_id] = OBJECT_ID(N'dbo.UserNotifications')
 )
 BEGIN
-    CREATE INDEX [IX_UserNotifications_UserId_ReadAt_CreatedAt]
-        ON [dbo].[UserNotifications] ([UserId], [ReadAt], [CreatedAt] DESC);
+    EXEC
+    (
+        N'CREATE INDEX [IX_UserNotifications_UserId_ReadAt_CreatedAt]
+          ON [dbo].[UserNotifications] ([UserId], [ReadAt], [CreatedAt] DESC);'
+    );
 END;
 GO
 
@@ -83,8 +86,11 @@ IF NOT EXISTS
       AND [object_id] = OBJECT_ID(N'dbo.UserNotifications')
 )
 BEGIN
-    CREATE INDEX [IX_UserNotifications_UserId_ActorUserId_Type_CreatedAt]
-        ON [dbo].[UserNotifications] ([UserId], [ActorUserId], [Type], [CreatedAt] DESC);
+    EXEC
+    (
+        N'CREATE INDEX [IX_UserNotifications_UserId_ActorUserId_Type_CreatedAt]
+          ON [dbo].[UserNotifications] ([UserId], [ActorUserId], [Type], [CreatedAt] DESC);'
+    );
 END;
 GO
 
