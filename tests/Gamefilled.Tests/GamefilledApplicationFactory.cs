@@ -15,6 +15,19 @@ public sealed class GamefilledApplicationFactory : WebApplicationFactory<Program
             ["IGDB:ClientSecret"] = "integration-test-secret"
         };
 
+    private readonly Dictionary<string, string?> _previousEnvironmentValues = new();
+
+    public GamefilledApplicationFactory()
+    {
+        // Program validates essential settings immediately after CreateBuilder. Process-level
+        // environment values must therefore exist before WebApplicationFactory starts the host.
+        SetEnvironmentValue(
+            "ConnectionStrings__DefaultConnection",
+            TestConfiguration["ConnectionStrings:DefaultConnection"]);
+        SetEnvironmentValue("IGDB__ClientId", TestConfiguration["IGDB:ClientId"]);
+        SetEnvironmentValue("IGDB__ClientSecret", TestConfiguration["IGDB:ClientSecret"]);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -30,4 +43,18 @@ public sealed class GamefilledApplicationFactory : WebApplicationFactory<Program
             BaseAddress = new Uri("https://localhost"),
             AllowAutoRedirect = allowAutoRedirect
         });
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        foreach (var pair in _previousEnvironmentValues)
+            Environment.SetEnvironmentVariable(pair.Key, pair.Value);
+    }
+
+    private void SetEnvironmentValue(string key, string? value)
+    {
+        _previousEnvironmentValues[key] = Environment.GetEnvironmentVariable(key);
+        Environment.SetEnvironmentVariable(key, value);
+    }
 }
