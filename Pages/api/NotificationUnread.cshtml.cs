@@ -1,4 +1,5 @@
 using Gamefilled.Application.Notifications;
+using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -20,7 +21,30 @@ public sealed class NotificationUnreadModel : PageModel
         if (!userId.HasValue)
             return Unauthorized();
 
-        var count = await _notifications.GetUnreadCountAsync(userId.Value, ct);
-        return new JsonResult(new { count });
+        var preview = await _notifications.GetPreviewAsync(userId.Value, 5, ct);
+        var items = preview.Items.Select(item =>
+        {
+            var isMutual = item.Type == UserNotificationType.MutualConnection;
+
+            return new
+            {
+                id = item.Id,
+                isRead = item.IsRead,
+                title = isMutual ? "New mutual connection" : "New follower",
+                message = isMutual
+                    ? $"You and {item.ActorName} now follow each other."
+                    : $"{item.ActorName} started following you.",
+                actorName = item.ActorName,
+                avatarUrl = item.ActorAvatarUrl,
+                createdAt = DateTime.SpecifyKind(item.CreatedAt, DateTimeKind.Utc),
+                openUrl = $"/notifications?handler=Open&id={item.Id}"
+            };
+        });
+
+        return new JsonResult(new
+        {
+            count = preview.UnreadCount,
+            items
+        });
     }
 }
