@@ -75,8 +75,14 @@ jobs:
             --no-build \
             --output ./artifacts/publish 2>&1 | tee publish.log
 
+      - name: Validate Docker Compose
+        run: docker compose --env-file .env.example config --quiet
+
+      - name: Build migration container
+        run: docker build --target migrator --tag gamefilled-migrator:ci .
+
       - name: Build production container
-        run: docker build --tag gamefilled:ci .
+        run: docker build --target runtime --tag gamefilled:ci .
 
       - name: Upload build and test logs
         if: always()
