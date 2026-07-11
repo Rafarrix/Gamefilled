@@ -46,17 +46,19 @@ WHERE OBJECT_ID(N'dbo.' + QUOTENAME(e.[TableName]), N'U') IS NULL;
 
 IF OBJECT_ID(N'dbo.Users', N'U') IS NOT NULL
 BEGIN
-    INSERT INTO @Issues ([Area], [ObjectName], [Problem])
-    SELECT N'Column', N'Users.CreatedAt', N'Expected DATETIME2 NOT NULL.'
-    FROM sys.columns c
-    WHERE c.[object_id] = OBJECT_ID(N'dbo.Users')
-      AND c.[name] = N'CreatedAt'
-      AND (TYPE_NAME(c.[user_type_id]) <> N'datetime2' OR c.[is_nullable] <> 0);
-
     IF COL_LENGTH(N'dbo.Users', N'CreatedAt') IS NULL
     BEGIN
         INSERT INTO @Issues ([Area], [ObjectName], [Problem])
         VALUES (N'Column', N'Users.CreatedAt', N'Missing required column.');
+    END
+    ELSE
+    BEGIN
+        INSERT INTO @Issues ([Area], [ObjectName], [Problem])
+        SELECT N'Column', N'Users.CreatedAt', N'Expected DATETIME2 NOT NULL.'
+        FROM sys.columns c
+        WHERE c.[object_id] = OBJECT_ID(N'dbo.Users')
+          AND c.[name] = N'CreatedAt'
+          AND (TYPE_NAME(c.[user_type_id]) <> N'datetime2' OR c.[is_nullable] <> 0);
     END;
 END;
 
@@ -123,6 +125,21 @@ LEFT JOIN sys.check_constraints c
    AND c.[name] = e.[ConstraintName]
 WHERE c.[object_id] IS NULL;
 
+IF OBJECT_ID(N'dbo.__EFMigrationsHistory', N'U') IS NOT NULL
+BEGIN
+    IF COL_LENGTH(N'dbo.__EFMigrationsHistory', N'MigrationId') IS NULL
+    BEGIN
+        INSERT INTO @Issues VALUES
+            (N'History', N'__EFMigrationsHistory.MigrationId', N'Existing history table has an invalid structure.');
+    END;
+
+    IF COL_LENGTH(N'dbo.__EFMigrationsHistory', N'ProductVersion') IS NULL
+    BEGIN
+        INSERT INTO @Issues VALUES
+            (N'History', N'__EFMigrationsHistory.ProductVersion', N'Existing history table has an invalid structure.');
+    END;
+END;
+
 IF EXISTS (SELECT 1 FROM @Issues)
 BEGIN
     SELECT
@@ -137,37 +154,36 @@ BEGIN
     RETURN;
 END;
 
+DECLARE @ExistingProductVersion NVARCHAR(32);
+DECLARE @AlreadyAdopted BIT;
+SET @ExistingProductVersion = NULL;
+SET @AlreadyAdopted = 0;
+
 IF OBJECT_ID(N'dbo.__EFMigrationsHistory', N'U') IS NOT NULL
-   AND EXISTS
-   (
-       SELECT 1
-       FROM [dbo].[__EFMigrationsHistory]
-       WHERE [MigrationId] = @MigrationId
-         AND [ProductVersion] <> @ProductVersion
-   )
+BEGIN
+    EXEC sp_executesql
+        N'SELECT @ExistingVersion = [ProductVersion]
+          FROM [dbo].[__EFMigrationsHistory]
+          WHERE [MigrationId] = @ExpectedMigrationId;',
+        N'@ExpectedMigrationId NVARCHAR(150), @ExistingVersion NVARCHAR(32) OUTPUT',
+        @ExpectedMigrationId = @MigrationId,
+        @ExistingVersion = @ExistingProductVersion OUTPUT;
+END;
+
+IF @ExistingProductVersion IS NOT NULL
+   AND @ExistingProductVersion <> @ProductVersion
 BEGIN
     SELECT
         N'BLOCKED' AS [BaselineAdoption],
-        [MigrationId],
-        [ProductVersion] AS [ExistingProductVersion],
-        @ProductVersion AS [ExpectedProductVersion]
-    FROM [dbo].[__EFMigrationsHistory]
-    WHERE [MigrationId] = @MigrationId;
+        @MigrationId AS [MigrationId],
+        @ExistingProductVersion AS [ExistingProductVersion],
+        @ProductVersion AS [ExpectedProductVersion];
 
     RAISERROR(N'The baseline migration already exists with a different EF Core product version. No changes were made.', 16, 1);
     RETURN;
 END;
 
-DECLARE @AlreadyAdopted BIT;
-SET @AlreadyAdopted = 0;
-
-IF OBJECT_ID(N'dbo.__EFMigrationsHistory', N'U') IS NOT NULL
-   AND EXISTS
-   (
-       SELECT 1
-       FROM [dbo].[__EFMigrationsHistory]
-       WHERE [MigrationId] = @MigrationId
-   )
+IF @ExistingProductVersion = @ProductVersion
 BEGIN
     SET @AlreadyAdopted = 1;
 END;
@@ -176,27 +192,34 @@ BEGIN TRANSACTION;
 
 IF OBJECT_ID(N'dbo.__EFMigrationsHistory', N'U') IS NULL
 BEGIN
-    CREATE TABLE [dbo].[__EFMigrationsHistory]
+    EXEC
     (
-        [MigrationId] NVARCHAR(150) NOT NULL,
-        [ProductVersion] NVARCHAR(32) NOT NULL,
-        CONSTRAINT [PK___EFMigrationsHistory]
-            PRIMARY KEY ([MigrationId])
+        N'CREATE TABLE [dbo].[__EFMigrationsHistory]
+          (
+              [MigrationId] NVARCHAR(150) NOT NULL,
+              [ProductVersion] NVARCHAR(32) NOT NULL,
+              CONSTRAINT [PK___EFMigrationsHistory]
+                  PRIMARY KEY ([MigrationId])
+          );'
     );
 END;
 
-IF NOT EXISTS
-(
-    SELECT 1
-    FROM [dbo].[__EFMigrationsHistory]
-    WHERE [MigrationId] = @MigrationId
-)
-BEGIN
-    INSERT INTO [dbo].[__EFMigrationsHistory]
-        ([MigrationId], [ProductVersion])
-    VALUES
-        (@MigrationId, @ProductVersion);
-END;
+EXEC sp_executesql
+    N'IF NOT EXISTS
+      (
+          SELECT 1
+          FROM [dbo].[__EFMigrationsHistory]
+          WHERE [MigrationId] = @ExpectedMigrationId
+      )
+      BEGIN
+          INSERT INTO [dbo].[__EFMigrationsHistory]
+              ([MigrationId], [ProductVersion])
+          VALUES
+              (@ExpectedMigrationId, @ExpectedProductVersion);
+      END;',
+    N'@ExpectedMigrationId NVARCHAR(150), @ExpectedProductVersion NVARCHAR(32)',
+    @ExpectedMigrationId = @MigrationId,
+    @ExpectedProductVersion = @ProductVersion;
 
 COMMIT TRANSACTION;
 
