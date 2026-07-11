@@ -75,8 +75,20 @@ jobs:
             --no-build \
             --output ./artifacts/publish 2>&1 | tee publish.log
 
+      - name: Validate Docker Compose
+        run: docker compose --env-file .env.example config --quiet
+
+      - name: Build migration container
+        shell: bash
+        run: |
+          set -o pipefail
+          docker build --target migrator --tag gamefilled-migrator:ci . 2>&1 | tee migration-container.log
+
       - name: Build production container
-        run: docker build --tag gamefilled:ci .
+        shell: bash
+        run: |
+          set -o pipefail
+          docker build --target runtime --tag gamefilled:ci . 2>&1 | tee production-container.log
 
       - name: Upload build and test logs
         if: always()
@@ -88,5 +100,7 @@ jobs:
             test.log
             migration-check.log
             publish.log
+            migration-container.log
+            production-container.log
             tests/Gamefilled.Tests/TestResults/**/*.trx
           if-no-files-found: warn

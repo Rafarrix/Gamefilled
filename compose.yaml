@@ -1,0 +1,63 @@
+name: gamefilled
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+    ports:
+      - "${MSSQL_HOST_PORT:-14333}:1433"
+    volumes:
+      - gamefilled-sql-data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /opt/mssql-tools18/bin/sqlcmd
+          -S localhost
+          -U sa
+          -P "$$MSSQL_SA_PASSWORD"
+          -C
+          -Q "SELECT 1"
+          -b
+          -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  migrations:
+    build:
+      context: .
+      target: migrator
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    command:
+      - "--connection"
+      - "Server=sqlserver,1433;Database=Gamefilleddb;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runtime
+    environment:
+      ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Development}"
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=Gamefilleddb;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
+      IGDB__ClientId: "${IGDB__ClientId:?Set IGDB__ClientId in .env}"
+      IGDB__ClientSecret: "${IGDB__ClientSecret:?Set IGDB__ClientSecret in .env}"
+    ports:
+      - "${GAMEFILLED_HTTP_PORT:-5000}:8080"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    init: true
+    restart: unless-stopped
+
+volumes:
+  gamefilled-sql-data:
