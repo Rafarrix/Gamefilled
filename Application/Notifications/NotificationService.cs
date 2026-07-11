@@ -18,6 +18,32 @@ public sealed class NotificationService
             .AsNoTracking()
             .CountAsync(x => x.UserId == userId && x.ReadAt == null, ct);
 
+    public async Task<NotificationPreview> GetPreviewAsync(
+        int userId,
+        int limit = 5,
+        CancellationToken ct = default)
+    {
+        limit = Math.Clamp(limit, 1, 8);
+
+        var unreadCount = await GetUnreadCountAsync(userId, ct);
+        var items = await _db.UserNotifications
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(limit)
+            .Select(x => new NotificationPreviewItem(
+                x.Id,
+                x.Type,
+                x.CreatedAt,
+                x.ReadAt != null,
+                x.ActorUser != null ? x.ActorUser.Username : null,
+                x.ActorUser != null ? x.ActorUser.DisplayName : null,
+                x.ActorUser != null ? x.ActorUser.AvatarUrl : null))
+            .ToListAsync(ct);
+
+        return new NotificationPreview(unreadCount, items);
+    }
+
     public async Task QueueFollowNotificationAsync(
         User actor,
         User recipient,
@@ -95,4 +121,23 @@ public sealed class NotificationService
 
         await _db.SaveChangesAsync(ct);
     }
+}
+
+public sealed record NotificationPreview(
+    int UnreadCount,
+    IReadOnlyList<NotificationPreviewItem> Items);
+
+public sealed record NotificationPreviewItem(
+    int Id,
+    string Type,
+    DateTime CreatedAt,
+    bool IsRead,
+    string? ActorUsername,
+    string? ActorDisplayName,
+    string? ActorAvatarUrl)
+{
+    public string ActorName =>
+        !string.IsNullOrWhiteSpace(ActorDisplayName)
+            ? ActorDisplayName!
+            : ActorUsername ?? "A player";
 }
