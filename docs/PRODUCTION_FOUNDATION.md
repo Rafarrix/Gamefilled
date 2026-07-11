@@ -67,19 +67,17 @@ Use this sequence:
 
 1. Back up the database.
 2. Run `Database/schema-audit.sql` in SSMS.
-3. When the audit reports known differences, run the dedicated idempotent reconciliation script rather than editing data manually.
-4. Run `Database/schema-audit.sql` again and require `PASS`.
-5. Run `Database/upgrades/2026-07-11-ef-baseline-support-indexes.sql`.
-6. Only after a complete `PASS`, register the existing schema as the initial migration baseline using the protected adoption script prepared for that migration ID.
-7. From then on, future schema changes use normal reviewed EF Core migrations.
+3. When the audit reports known differences, run `Database/upgrades/2026-07-11-reconcile-ef-baseline-schema.sql` rather than editing data manually.
+4. Run `Database/upgrades/2026-07-11-ef-baseline-support-indexes.sql`.
+5. Run `Database/schema-audit.sql` again and require `PASS`.
+6. Run `Database/upgrades/2026-07-11-adopt-ef-initial-baseline.sql`.
+7. Confirm that it reports migration `20260711171753_InitialBaseline` and product version `10.0.9`.
+8. Run `dotnet ef database update`; it must report that the database is already up to date.
+9. From then on, future schema changes use normal reviewed EF Core migrations.
 
-The current reconciliation script is:
+The reconciliation script converts the legacy `Users.CreatedAt` column to `datetime2` and creates required unique indexes. It first detects duplicate usernames, follow pairs and favorite-game positions. When duplicates exist, it stops before any schema change and reports the conflicting keys; it never deletes or merges rows automatically.
 
-```text
-Database/upgrades/2026-07-11-reconcile-ef-baseline-schema.sql
-```
-
-It converts the legacy `Users.CreatedAt` column to `datetime2` and creates required unique indexes. It first detects duplicate usernames, follow pairs and favorite-game positions. When duplicates exist, it stops before any schema change and reports the conflicting keys; it never deletes or merges rows automatically.
+The adoption script is idempotent. It validates the essential tables, indexes and check constraints before creating `dbo.__EFMigrationsHistory` and inserting only the canonical baseline row. It does not recreate or alter application tables.
 
 The CI runs `dotnet ef migrations has-pending-model-changes`. A model change without a corresponding migration therefore fails the pipeline.
 
