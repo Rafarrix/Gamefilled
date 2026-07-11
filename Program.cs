@@ -178,3 +178,8 @@ app.MapGet("/health/ready", async (AppDbContext db, CancellationToken ct) =>
 app.MapRazorPages();
 
 app.Run();
+
+// Exposes the generated top-level Program type to WebApplicationFactory in tests.
+public partial class Program
+{
+}
