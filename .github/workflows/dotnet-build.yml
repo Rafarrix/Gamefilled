@@ -10,7 +10,7 @@ on:
       - v2-development
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -51,6 +51,21 @@ jobs:
             --no-build \
             --logger "trx;LogFileName=test-results.trx" 2>&1 | tee test.log
 
+      - name: Verify EF migration snapshot
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1,1;Database=GamefilledMigrationCheck;User Id=sa;Password=NotUsed_TestOnly_123!;Encrypt=False;Connect Timeout=1
+          IGDB__ClientId: migration-check-client
+          IGDB__ClientSecret: migration-check-secret
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet tool run dotnet-ef migrations has-pending-model-changes \
+            --project Gamefilled.csproj \
+            --startup-project Gamefilled.csproj \
+            --configuration Release \
+            --no-build 2>&1 | tee migration-check.log
+
       - name: Publish
         shell: bash
         run: |
@@ -63,40 +78,6 @@ jobs:
       - name: Build production container
         run: docker build --tag gamefilled:ci .
 
-      - name: Generate EF baseline candidate
-        if: github.ref == 'refs/heads/feature/production-foundation' || github.head_ref == 'feature/production-foundation'
-        env:
-          ASPNETCORE_ENVIRONMENT: Testing
-          ConnectionStrings__DefaultConnection: Server=127.0.0.1,1;Database=GamefilledBaseline;User Id=sa;Password=NotUsed_TestOnly_123!;Encrypt=False;Connect Timeout=1
-          IGDB__ClientId: baseline-generation-client
-          IGDB__ClientSecret: baseline-generation-secret
-        shell: bash
-        run: |
-          set -o pipefail
-          dotnet tool run dotnet-ef migrations add InitialBaseline \
-            --project Gamefilled.csproj \
-            --startup-project Gamefilled.csproj \
-            --output-dir Data/Migrations \
-            --configuration Release \
-            --no-build 2>&1 | tee ef-baseline.log
-
-      - name: Commit EF baseline to the feature branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/production-foundation'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Data/Migrations
-          git diff --cached --quiet || git commit -m "chore: add EF Core initial baseline"
-          git push origin HEAD:feature/production-foundation
-
-      - name: Upload EF baseline candidate
-        if: github.ref == 'refs/heads/feature/production-foundation' || github.head_ref == 'feature/production-foundation'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ef-baseline-candidate
-          path: Data/Migrations
-          if-no-files-found: error
-
       - name: Upload build and test logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -105,7 +86,7 @@ jobs:
           path: |
             build.log
             test.log
+            migration-check.log
             publish.log
-            ef-baseline.log
             tests/Gamefilled.Tests/TestResults/**/*.trx
           if-no-files-found: warn
