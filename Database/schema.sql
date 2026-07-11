@@ -23,14 +23,45 @@ BEGIN
         [BannerUrl] NVARCHAR(500) NULL,
         [LastSeenAt] DATETIME2 NULL
     );
+END
+GO
 
+IF NOT EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'UX_Users_Username'
+      AND object_id = OBJECT_ID(N'dbo.Users')
+)
+BEGIN
     CREATE UNIQUE INDEX [UX_Users_Username]
         ON [dbo].[Users] ([Username])
         WHERE [Username] IS NOT NULL;
+END
+GO
 
+IF NOT EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'UX_Users_Email'
+      AND object_id = OBJECT_ID(N'dbo.Users')
+)
+BEGIN
     CREATE UNIQUE INDEX [UX_Users_Email]
         ON [dbo].[Users] ([Email])
         WHERE [Email] IS NOT NULL;
+END
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'IX_Users_LastSeenAt'
+      AND object_id = OBJECT_ID(N'dbo.Users')
+)
+BEGIN
+    CREATE INDEX [IX_Users_LastSeenAt]
+        ON [dbo].[Users] ([LastSeenAt] DESC)
+        INCLUDE ([Username], [DisplayName], [AvatarUrl]);
 END
 GO
 
@@ -143,5 +174,36 @@ BEGIN
 
     CREATE INDEX [IX_UserGameEntries_UserId_UpdatedAt]
         ON [dbo].[UserGameEntries] ([UserId], [UpdatedAt] DESC);
+END
+GO
+
+IF OBJECT_ID(N'dbo.UserNotifications', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[UserNotifications]
+    (
+        [Id] INT IDENTITY(1,1) NOT NULL CONSTRAINT [PK_UserNotifications] PRIMARY KEY,
+        [UserId] INT NOT NULL,
+        [ActorUserId] INT NULL,
+        [Type] NVARCHAR(64) NOT NULL,
+        [TargetUrl] NVARCHAR(500) NULL,
+        [GameId] INT NULL,
+        [CreatedAt] DATETIME2 NOT NULL CONSTRAINT [DF_UserNotifications_CreatedAt] DEFAULT SYSUTCDATETIME(),
+        [ReadAt] DATETIME2 NULL,
+
+        CONSTRAINT [FK_UserNotifications_Users_UserId]
+            FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE CASCADE,
+
+        CONSTRAINT [FK_UserNotifications_Users_ActorUserId]
+            FOREIGN KEY ([ActorUserId]) REFERENCES [dbo].[Users] ([Id]),
+
+        CONSTRAINT [CK_UserNotifications_Type]
+            CHECK ([Type] IN (N'new_follower', N'mutual_connection'))
+    );
+
+    CREATE INDEX [IX_UserNotifications_UserId_ReadAt_CreatedAt]
+        ON [dbo].[UserNotifications] ([UserId], [ReadAt], [CreatedAt] DESC);
+
+    CREATE INDEX [IX_UserNotifications_UserId_ActorUserId_Type_CreatedAt]
+        ON [dbo].[UserNotifications] ([UserId], [ActorUserId], [Type], [CreatedAt] DESC);
 END
 GO

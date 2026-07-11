@@ -9,6 +9,14 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(defaultConnection))
+{
+    throw new InvalidOperationException(
+        "Missing connection string 'ConnectionStrings:DefaultConnection'. " +
+        "Configure it with user secrets, an ignored appsettings file, or an environment variable.");
+}
+
 /* ============================================================================
    RAZOR PAGES
    ============================================================================ */
@@ -24,12 +32,25 @@ builder.Services.AddRazorPages(options =>
    ENTITY FRAMEWORK CORE + SQL SERVER
    ============================================================================ */
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection, sql =>
+    {
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorNumbersToAdd: null);
+    }));
 
 /* ============================================================================
    IGDB / TWITCH
    ============================================================================ */
-builder.Services.Configure<IgdbOptions>(builder.Configuration.GetSection("IGDB"));
+builder.Services
+    .AddOptions<IgdbOptions>()
+    .Bind(builder.Configuration.GetSection("IGDB"))
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ClientId),
+        "IGDB:ClientId is required.")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ClientSecret),
+        "IGDB:ClientSecret is required.")
+    .ValidateOnStart();
 
 builder.Services.AddHttpClient("TwitchAuth", client =>
 {
@@ -66,20 +87,27 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
 });
 
 builder.Services.AddSession(options =>
 {
+    options.Cookie.Name = ".Gamefilled.Session";
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
     options.IdleTimeout = TimeSpan.FromHours(1);
 });
 
 /* ============================================================================
-   CUSTOM FILTERS
+   PLATFORM SERVICES
    ============================================================================ */
+builder.Services.AddHealthChecks();
 builder.Services.AddScoped<RequireLoginFilter>();
 
 var app = builder.Build();
@@ -93,6 +121,18 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.TryAdd(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=()");
+
+    await next();
+});
+
 app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -100,6 +140,46 @@ app.UseRouting();
 app.UseCookiePolicy();
 app.UseSession();
 app.UseMiddleware<UserPresenceMiddleware>();
+
+app.MapGet("/health/live", () => Results.Ok(new
+{
+    status = "healthy",
+    service = "gamefilled",
+    timestamp = DateTimeOffset.UtcNow
+}));
+
+app.MapGet("/health/ready", async (AppDbContext db, CancellationToken ct) =>
+{
+    try
+    {
+        var databaseReady = await db.Database.CanConnectAsync(ct);
+        if (databaseReady)
+        {
+            return Results.Ok(new
+            {
+                status = "ready",
+                database = "reachable",
+                timestamp = DateTimeOffset.UtcNow
+            });
+        }
+
+        return Results.Json(
+            new { status = "not-ready", database = "unreachable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch
+    {
+        return Results.Json(
+            new { status = "not-ready", database = "unreachable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
+
 app.MapRazorPages();
 
 app.Run();
+
+// Exposes the generated top-level Program type to WebApplicationFactory in tests.
+public partial class Program
+{
+}

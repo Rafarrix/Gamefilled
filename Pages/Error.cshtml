@@ -11,9 +11,9 @@
     <div class="gf-static-shell">
         <section class="gf-system-state">
             <div class="gf-system-state__icon" aria-hidden="true">
-                <i class="@(Model.StatusCode == 404 ? "fas fa-compass" : Model.StatusCode == 403 ? "fas fa-lock" : "fas fa-triangle-exclamation")"></i>
+                <i class="@(Model.HttpStatusCode == 404 ? "fas fa-compass" : Model.HttpStatusCode == 403 ? "fas fa-lock" : "fas fa-triangle-exclamation")"></i>
             </div>
-            <span class="gf-eyebrow">@(Model.StatusCode == 404 ? "Lost route" : "Gamefilled system")</span>
+            <span class="gf-eyebrow">@(Model.HttpStatusCode == 404 ? "Lost route" : "Gamefilled system")</span>
             <h1>@Model.Heading</h1>
             <p>@Model.Message</p>
 
