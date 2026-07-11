@@ -153,16 +153,19 @@ app.MapGet("/health/ready", async (AppDbContext db, CancellationToken ct) =>
     try
     {
         var databaseReady = await db.Database.CanConnectAsync(ct);
-        return databaseReady
-            ? Results.Ok(new
+        if (databaseReady)
+        {
+            return Results.Ok(new
             {
                 status = "ready",
                 database = "reachable",
                 timestamp = DateTimeOffset.UtcNow
-            })
-            : Results.Json(
-                new { status = "not-ready", database = "unreachable" },
-                statusCode: StatusCodes.Status503ServiceUnavailable);
+            });
+        }
+
+        return Results.Json(
+            new { status = "not-ready", database = "unreachable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
     }
     catch
     {
