@@ -25,6 +25,10 @@ jobs:
           cache-dependency-path: |
             Gamefilled.csproj
             tests/Gamefilled.Tests/Gamefilled.Tests.csproj
+            .config/dotnet-tools.json
+
+      - name: Restore local tools
+        run: dotnet tool restore
 
       - name: Restore
         run: dotnet restore Gamefilled.sln
@@ -55,6 +59,28 @@ jobs:
 
       - name: Build production container
         run: docker build --tag gamefilled:ci .
+
+      - name: Generate EF baseline candidate
+        if: github.ref == 'refs/heads/feature/production-foundation'
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1,1;Database=GamefilledBaseline;User Id=sa;Password=NotUsed_TestOnly_123!;Encrypt=False;Connect Timeout=1
+          IGDB__ClientId: baseline-generation-client
+          IGDB__ClientSecret: baseline-generation-secret
+        run: |
+          dotnet tool run dotnet-ef migrations add InitialBaseline \
+            --project Gamefilled.csproj \
+            --startup-project Gamefilled.csproj \
+            --output-dir Data/Migrations \
+            --no-build
+
+      - name: Upload EF baseline candidate
+        if: github.ref == 'refs/heads/feature/production-foundation'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ef-baseline-candidate
+          path: Data/Migrations
+          if-no-files-found: error
 
       - name: Upload build and test logs
         if: always()
