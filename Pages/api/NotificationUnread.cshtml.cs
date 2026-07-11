@@ -39,7 +39,7 @@ public sealed class NotificationUnreadModel : PageModel
                 createdAt = DateTime.SpecifyKind(item.CreatedAt, DateTimeKind.Utc),
                 openUrl = $"/notifications?handler=Open&id={item.Id}"
             };
-        });
+        }).ToArray();
 
         return new JsonResult(new
         {
