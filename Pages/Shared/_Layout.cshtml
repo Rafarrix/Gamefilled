@@ -60,6 +60,8 @@
     <link rel="stylesheet" href="~/css/header-v2.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/header-search-v2.css" asp-append-version="true">
     <link rel="stylesheet" href="~/css/footer-v2.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/notification-bell.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/interaction-language.css" asp-append-version="true">
 </head>
 
 <body class="d-flex flex-column min-vh-100 @(isFullBleed ? "fullbleed" : "")">
@@ -87,15 +89,43 @@
 
                 <div class="collapse navbar-collapse mt-2 mt-lg-0" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-auto align-items-lg-center">
-                        <li class="nav-item">
-                            <a class="nav-link position-relative @(notificationsActive ? "is-active" : string.Empty)"
-                               id="nav-notification-bell"
-                               href="/notifications/"
-                               aria-label="Notifications">
-                                <i class="fas fa-bell" aria-hidden="true"></i>
-                                <span class="notification-indicator"></span>
-                            </a>
-                        </li>
+                        @if (!string.IsNullOrEmpty(username))
+                        {
+                            <li class="nav-item dropdown gf-notification-nav" id="notification-li">
+                                <button class="nav-link position-relative @(notificationsActive ? "is-active" : string.Empty)"
+                                        id="nav-notification-bell"
+                                        type="button"
+                                        aria-label="Notifications"
+                                        aria-haspopup="true"
+                                        aria-expanded="false"
+                                        aria-controls="notification-menu">
+                                    <i class="fas fa-bell" aria-hidden="true"></i>
+                                    <span class="notification-indicator" hidden></span>
+                                </button>
+
+                                <div class="gf-notification-menu" id="notification-menu" role="dialog" aria-label="Notification preview" hidden>
+                                    <div class="gf-notification-menu__header">
+                                        <div>
+                                            <strong>Notifications</strong>
+                                            <span id="notification-menu-summary">Your latest updates</span>
+                                        </div>
+                                        <a href="/notifications?filter=unread">Unread</a>
+                                    </div>
+
+                                    <div class="gf-notification-menu__list" id="notification-menu-list">
+                                        <div class="gf-notification-menu__state">
+                                            <span class="gf-notification-menu__spinner" aria-hidden="true"></span>
+                                            Loading updates…
+                                        </div>
+                                    </div>
+
+                                    <a class="gf-notification-menu__footer" href="/notifications">
+                                        <span>See all notifications</span>
+                                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </li>
+                        }
 
                         @if (string.IsNullOrEmpty(username))
                         {
