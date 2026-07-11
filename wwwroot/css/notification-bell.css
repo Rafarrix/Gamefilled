@@ -301,3 +301,20 @@
         max-height: 360px;
     }
 }
+
+@media (max-width: 420px) {
+    .gf-notification-menu__header {
+        gap: 10px;
+    }
+
+    .gf-notification-preview {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        gap: 8px;
+        padding-inline: 8px;
+    }
+
+    .gf-notification-preview__avatar {
+        width: 38px;
+        height: 38px;
+    }
+}
