@@ -1,0 +1,10 @@
+.gf-library-filter-tab {
+    left: -1px;
+    background: #0e1015;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .16);
+}
+
+.gf-library-filter-tab:hover,
+.gf-library-filter-tab:focus-visible {
+    background: #132019;
+}

@@ -1,38 +1,34 @@
-﻿@page
+@page
 @model Gamefilled.Pages.Settings.DefaultsModel
 @{
     ViewData["Title"] = "Defaults";
     ViewData["ActiveSettings"] = "Defaults";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container settings-wrap">
-    <div class="row">
-        <div class="col-lg-3 d-none d-lg-block">
-            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
-        </div>
-
-        <div class="col-lg-9">
-            <div class="settings-content">
-                <div class="settings-content-header">
-                    <h2 class="mb-0">Defaults</h2>
-                </div>
-
-                <p class="subtitle-text mb-3">Placeholders por agora — mais tarde metemos opções como plataforma preferida, idioma, etc.</p>
-
-                <div class="row mb-3">
-                    <div class="col">
-                        <label class="mb-1">Default list</label>
-                        <select class="backloggd-field w-100">
-                            <option>Backlog</option>
-                            <option>Playing</option>
-                            <option>Played</option>
-                            <option>Wishlist</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" disabled>Save Changes</button>
+<div class="gf-settings-page">
+    <div class="gf-settings-shell">
+        <header class="gf-settings-heading">
+            <div>
+                <span class="gf-eyebrow">Personal defaults</span>
+                <h1>Defaults</h1>
+                <p>Future preferences for language, platform and library actions.</p>
             </div>
+        </header>
+
+        <div class="gf-settings-layout">
+            <partial name="~/Pages/Settings/_SettingsNav.cshtml" />
+            <main class="gf-settings-content">
+                <section class="gf-panel">
+                    <div class="gf-panel__header">
+                        <div><h2>Default behaviour</h2><p>These controls will only appear when the underlying preferences are stored and applied.</p></div>
+                        <span class="gf-chip"><i class="fas fa-clock" aria-hidden="true"></i> Planned</span>
+                    </div>
+                    <div class="gf-panel__body">
+                        <div class="gf-empty">No fake save controls are shown until this setting is functional.</div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 </div>

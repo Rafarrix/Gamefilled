@@ -1,0 +1,119 @@
+@page "/notifications"
+@model Gamefilled.Pages.NotificationsModel
+@using Gamefilled.Models
+@{
+    ViewData["Title"] = "Notifications";
+    ViewData["FullBleed"] = true;
+}
+
+<link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/notifications-v2.css" asp-append-version="true" />
+
+<div class="gf-notifications-page">
+    <header class="gf-notifications-hero">
+        <div class="gf-notifications-shell gf-notifications-hero__inner">
+            <div>
+                <span class="gf-eyebrow">Your updates</span>
+                <h1>Notifications</h1>
+                <p>Direct updates that involve you, without the noise of a social feed.</p>
+            </div>
+
+            <div class="gf-notifications-hero__actions">
+                <div class="gf-notifications-counts" aria-label="Notification summary">
+                    <span><strong>@Model.UnreadCount</strong> unread</span>
+                    <span><strong>@Model.TotalCount</strong> total</span>
+                </div>
+
+                @if (Model.UnreadCount > 0)
+                {
+                    <form method="post" asp-page-handler="MarkAllRead">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="filter" value="@Model.Filter" />
+                        <input type="hidden" name="page" value="@Model.PageNumber" />
+                        <button class="gf-btn gf-btn--secondary" type="submit">
+                            <i class="fas fa-check-double" aria-hidden="true"></i>
+                            Mark all as read
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </header>
+
+    <main class="gf-notifications-shell gf-notifications-main">
+        <nav class="gf-notifications-filters" aria-label="Notification filters">
+            <a class="@(Model.Filter == "all" ? "is-active" : string.Empty)" href="/notifications?filter=all">
+                All <span>@Model.TotalCount</span>
+            </a>
+            <a class="@(Model.Filter == "unread" ? "is-active" : string.Empty)" href="/notifications?filter=unread">
+                Unread <span>@Model.UnreadCount</span>
+            </a>
+        </nav>
+
+        @if (Model.Items.Any())
+        {
+            <section class="gf-notifications-list" aria-label="Notifications">
+                @foreach (var item in Model.Items)
+                {
+                    var avatar = string.IsNullOrWhiteSpace(item.ActorAvatarUrl)
+                        ? "/lib/imgs/defaultavatar.png"
+                        : item.ActorAvatarUrl;
+
+                    <a class="gf-notification-card @(!item.IsRead ? "is-unread" : string.Empty)"
+                       href="/notifications?handler=Open&id=@item.Id">
+                        <span class="gf-notification-card__avatar">
+                            <img src="@avatar" alt="@item.ActorName avatar" loading="lazy" />
+                            <i class="@item.Icon" aria-hidden="true"></i>
+                        </span>
+
+                        <span class="gf-notification-card__body">
+                            <span class="gf-notification-card__title">@item.Title</span>
+                            <span class="gf-notification-card__message">@item.Message</span>
+                            <span class="gf-notification-card__time">@Gamefilled.Pages.NotificationsModel.RelativeTime(item.CreatedAt)</span>
+                        </span>
+
+                        @if (!item.IsRead)
+                        {
+                            <span class="gf-notification-card__unread" aria-label="Unread"></span>
+                        }
+
+                        <i class="fas fa-arrow-right gf-notification-card__arrow" aria-hidden="true"></i>
+                    </a>
+                }
+            </section>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="gf-notifications-pagination" aria-label="Notification pages">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a href="@Model.PageUrl(Model.PageNumber - 1)"><i class="fas fa-arrow-left" aria-hidden="true"></i> Previous</a>
+                    }
+                    <span>Page @Model.PageNumber of @Model.TotalPages</span>
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a href="@Model.PageUrl(Model.PageNumber + 1)">Next <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                    }
+                </nav>
+            }
+        }
+        else
+        {
+            <section class="gf-empty-state gf-notifications-empty">
+                <span class="gf-empty-state__icon"><i class="fas fa-bell-slash" aria-hidden="true"></i></span>
+                <h2>@(Model.Filter == "unread" ? "You're all caught up" : "No notifications yet")</h2>
+                <p>@(Model.Filter == "unread"
+                    ? "There are no unread notifications right now."
+                    : "New followers and direct interactions will appear here.")</p>
+                @if (Model.Filter == "unread")
+                {
+                    <a class="gf-btn gf-btn--secondary" href="/notifications?filter=all">View all notifications</a>
+                }
+                else
+                {
+                    <a class="gf-btn gf-btn--secondary" href="/people">Discover people</a>
+                }
+            </section>
+        }
+    </main>
+</div>

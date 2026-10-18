@@ -1,15 +1,24 @@
-﻿using Gamefilled.Data;
+using Gamefilled.Application.Companies;
+using Gamefilled.Application.Games;
+using Gamefilled.Application.Notifications;
+using Gamefilled.Application.Social;
+using Gamefilled.Data;
 using Gamefilled.Infrastructure;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(defaultConnection))
+{
+    throw new InvalidOperationException(
+        "Missing connection string 'ConnectionStrings:DefaultConnection'. " +
+        "Configure it with user secrets, an ignored appsettings file, or an environment variable.");
+}
+
 /* ============================================================================
    RAZOR PAGES
-   ----------------------------------------------------------------------------
-   Regista Razor Pages e aplica proteção automática à pasta /Settings
-   através do filtro RequireLoginFilter.
    ============================================================================ */
 builder.Services.AddRazorPages(options =>
 {
@@ -21,101 +30,156 @@ builder.Services.AddRazorPages(options =>
 
 /* ============================================================================
    ENTITY FRAMEWORK CORE + SQL SERVER
-   ----------------------------------------------------------------------------
-   Regista o AppDbContext para acesso à base de dados SQL Server.
-   A connection string é lida de appsettings.json.
    ============================================================================ */
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection, sql =>
+    {
+        sql.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorNumbersToAdd: null);
+    }));
 
 /* ============================================================================
    IGDB / TWITCH
-   ----------------------------------------------------------------------------
-   Regista:
-   - opções da IGDB (ClientId / ClientSecret)
-   - provider de token Twitch
-   - cliente HTTP principal da IGDB
    ============================================================================ */
+builder.Services
+    .AddOptions<IgdbOptions>()
+    .Bind(builder.Configuration.GetSection("IGDB"))
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ClientId),
+        "IGDB:ClientId is required.")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ClientSecret),
+        "IGDB:ClientSecret is required.")
+    .ValidateOnStart();
 
-// Liga a secção "IGDB" do appsettings à classe IgdbOptions
-builder.Services.Configure<IgdbOptions>(builder.Configuration.GetSection("IGDB"));
+builder.Services.AddHttpClient("TwitchAuth", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
-// HttpClient para obter token OAuth do Twitch
-builder.Services.AddHttpClient<IgdbTokenProvider>();
+builder.Services.AddSingleton<IgdbTokenProvider>();
 
-// HttpClient tipado para a API IGDB
 builder.Services.AddHttpClient<IgdbClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.igdb.com/v4/");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 
+builder.Services.AddHttpClient<IgdbApiClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.igdb.com/v4/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.AddScoped<IGameDiscoveryService, GameDiscoveryService>();
+builder.Services.AddScoped<UserLibraryService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<SocialGraphService>();
+builder.Services.AddScoped<SocialListService>();
+builder.Services.AddScoped<NotificationService>();
+
 /* ============================================================================
-   SESSÃO
-   ----------------------------------------------------------------------------
-   Usa memória distribuída local e cookies de sessão.
+   CACHE + SESSION
    ============================================================================ */
+builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
 });
 
 builder.Services.AddSession(options =>
 {
-    // Cookie da sessão não é acessível por JavaScript
+    options.Cookie.Name = ".Gamefilled.Session";
     options.Cookie.HttpOnly = true;
-
-    // Necessário para a app funcionar mesmo sem consentimento explícito
     options.Cookie.IsEssential = true;
-
-    // Proteção CSRF / navegação normal
     options.Cookie.SameSite = SameSiteMode.Lax;
-
-    // Só obriga HTTPS quando o pedido já for HTTPS
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
-    // Duração máxima de inatividade da sessão
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
     options.IdleTimeout = TimeSpan.FromHours(1);
 });
 
 /* ============================================================================
-   FILTROS CUSTOM
-   ----------------------------------------------------------------------------
-   Regista o filtro RequireLoginFilter no DI container.
+   PLATFORM SERVICES
    ============================================================================ */
+builder.Services.AddHealthChecks();
 builder.Services.AddScoped<RequireLoginFilter>();
 
 var app = builder.Build();
 
 /* ============================================================================
-   PIPELINE HTTP
+   HTTP PIPELINE
    ============================================================================ */
-
-// Tratamento de erros em produção
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
-// Força HTTPS
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.TryAdd(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=()");
+
+    await next();
+});
+
+app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
 app.UseHttpsRedirection();
-
-// Permite servir ficheiros estáticos (css, js, imgs, lib, etc.)
 app.UseStaticFiles();
-
-// Routing base
 app.UseRouting();
-
-// Política de cookies
 app.UseCookiePolicy();
-
-// Sessão (tem de vir antes de usar páginas que dependem da sessão)
 app.UseSession();
+app.UseMiddleware<UserPresenceMiddleware>();
 
-// Mapeia Razor Pages
+app.MapGet("/health/live", () => Results.Ok(new
+{
+    status = "healthy",
+    service = "gamefilled",
+    timestamp = DateTimeOffset.UtcNow
+}));
+
+app.MapGet("/health/ready", async (AppDbContext db, CancellationToken ct) =>
+{
+    try
+    {
+        var databaseReady = await db.Database.CanConnectAsync(ct);
+        if (databaseReady)
+        {
+            return Results.Ok(new
+            {
+                status = "ready",
+                database = "reachable",
+                timestamp = DateTimeOffset.UtcNow
+            });
+        }
+
+        return Results.Json(
+            new { status = "not-ready", database = "unreachable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch
+    {
+        return Results.Json(
+            new { status = "not-ready", database = "unreachable" },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
+
 app.MapRazorPages();
 
 app.Run();
+
+// Exposes the generated top-level Program type to WebApplicationFactory in tests.
+public partial class Program
+{
+}

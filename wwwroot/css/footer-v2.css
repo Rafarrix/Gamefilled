@@ -1,0 +1,120 @@
+@import url("global-audit-v2.css");
+@import url("profile-family-v2.css");
+
+body > main {
+    min-width: 0;
+}
+
+.footer {
+    margin-top: clamp(40px, 4vw, 68px) !important;
+    border-top: 1px solid rgba(255,255,255,.07);
+    background: #0e1015;
+}
+
+.gf-footer-inner {
+    min-height: 58px;
+    padding-block: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 18px;
+}
+
+.gf-footer-links {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.gf-footer-meta {
+    display: contents;
+}
+
+.gf-footer-meta > span:first-child {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    white-space: nowrap;
+}
+
+.gf-footer-provider {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #8992a3;
+    white-space: nowrap;
+}
+
+.gf-footer-links a,
+.gf-footer-meta a,
+.gf-footer-meta span {
+    color: #8992a3;
+    font-size: .82rem;
+    text-decoration: none;
+}
+
+.gf-footer-links a:hover,
+.gf-footer-meta a:hover {
+    color: #f3f4f6;
+    text-decoration: none;
+}
+
+.gf-footer-provider i {
+    color: rgba(110,231,161,.72);
+    font-size: .76rem;
+}
+
+.gf-footer-provider a {
+    color: #aeb7c6;
+    text-decoration: none;
+}
+
+.gf-footer-provider a:hover {
+    color: #f3f4f6;
+    text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+    .footer {
+        margin-top: 40px !important;
+    }
+
+    .gf-footer-inner {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, auto);
+        justify-items: center;
+        gap: 10px;
+        padding-block: 16px;
+        text-align: center;
+    }
+
+    .gf-footer-links,
+    .gf-footer-provider,
+    .gf-footer-meta > span:first-child {
+        grid-column: 1;
+        justify-self: center;
+    }
+
+    .gf-footer-links {
+        grid-row: 1;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .gf-footer-provider {
+        grid-row: 2;
+    }
+
+    .gf-footer-meta > span:first-child {
+        grid-row: 3;
+    }
+}

@@ -1,0 +1,169 @@
+@page "/u/{username}/{section:regex(^(games|playing|backlog|wishlist)$)}"
+@using Gamefilled.Models
+@model Gamefilled.Pages.u.LibraryModel
+@{
+    ViewData["Title"] = $"{Model.Result.Owner.DisplayName} · {Model.Title}";
+    ViewData["FullBleed"] = true;
+
+    var avatar = string.IsNullOrWhiteSpace(Model.Result.Owner.AvatarUrl)
+        ? "/lib/imgs/defaultavatar.png"
+        : Model.Result.Owner.AvatarUrl;
+}
+
+<link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/library-v2.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/library-personal.css" asp-append-version="true" />
+
+<div class="gf-library-page">
+    <section class="gf-library-hero">
+        <div class="gf-library-shell gf-library-hero__inner @(Model.IsOwnProfile ? "is-own" : "is-public")">
+            <div class="gf-library-title">
+                <span class="gf-eyebrow">@Model.Eyebrow</span>
+                <h1><i class="@Model.Icon" aria-hidden="true"></i>@Model.Title</h1>
+                <p>@Model.Description</p>
+            </div>
+
+            @if (!Model.IsOwnProfile)
+            {
+                <a class="gf-library-owner" href="/u/@Model.Result.Owner.Username">
+                    <img src="@avatar" alt="@Model.Result.Owner.DisplayName avatar" />
+                    <span>
+                        <small>@@@Model.Result.Owner.Username</small>
+                        <strong>@Model.Result.Owner.DisplayName</strong>
+                    </span>
+                </a>
+            }
+
+            <div class="gf-library-total">
+                <strong>@Model.Result.TotalItems</strong>
+                <span>@(Model.Result.TotalItems == 1 ? "game" : "games")</span>
+            </div>
+        </div>
+    </section>
+
+    <main class="gf-library-shell gf-library-main">
+        <nav class="gf-library-tabs" aria-label="Library sections">
+            <a class="@(Model.Section == "games" ? "is-active" : string.Empty)" href="@Model.LibraryUrl("games")">
+                <i class="fas fa-circle-check" aria-hidden="true"></i>
+                <span>Played</span>
+                <strong>@Model.Count(GameLibraryStatus.Played)</strong>
+            </a>
+            <a class="@(Model.Section == "playing" ? "is-active" : string.Empty)" href="@Model.LibraryUrl("playing")">
+                <i class="fas fa-gamepad" aria-hidden="true"></i>
+                <span>Playing</span>
+                <strong>@Model.Count(GameLibraryStatus.Playing)</strong>
+            </a>
+            <a class="@(Model.Section == "backlog" ? "is-active" : string.Empty)" href="@Model.LibraryUrl("backlog")">
+                <i class="fas fa-layer-group" aria-hidden="true"></i>
+                <span>Backlog</span>
+                <strong>@Model.Count(GameLibraryStatus.Backlog)</strong>
+            </a>
+            <a class="@(Model.Section == "wishlist" ? "is-active" : string.Empty)" href="@Model.LibraryUrl("wishlist")">
+                <i class="fas fa-heart" aria-hidden="true"></i>
+                <span>Wishlist</span>
+                <strong>@Model.Count(GameLibraryStatus.Wishlist)</strong>
+            </a>
+        </nav>
+
+        <section class="gf-library-toolbar" aria-label="Library controls">
+            <form method="get" action="/u/@Model.Result.Owner.Username/@Model.Section" class="gf-library-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search"
+                       name="q"
+                       value="@Model.Query"
+                       placeholder="@(Model.IsOwnProfile ? "Search your library" : "Search this library")"
+                       aria-label="@(Model.IsOwnProfile ? "Search your library" : "Search this library")" />
+                @if (Model.Sort != "recent")
+                {
+                    <input type="hidden" name="sort" value="@Model.Sort" />
+                }
+                <button type="submit">Search</button>
+            </form>
+
+            <div class="gf-library-sort" aria-label="Sort library">
+                <span>Sort</span>
+                <a class="@(Model.Sort == "recent" ? "is-active" : string.Empty)" href="@Model.SortUrl("recent")">Recent</a>
+                <a class="@(Model.Sort == "title" ? "is-active" : string.Empty)" href="@Model.SortUrl("title")">Title</a>
+                <a class="@(Model.Sort == "rating" ? "is-active" : string.Empty)" href="@Model.SortUrl("rating")">Rating</a>
+                <a class="@(Model.Sort == "release" ? "is-active" : string.Empty)" href="@Model.SortUrl("release")">Release</a>
+            </div>
+        </section>
+
+        @if (Model.Result.Games.Any())
+        {
+            <section class="gf-library-grid" aria-label="@Model.Title games">
+                @foreach (var game in Model.Result.Games)
+                {
+                    <article class="gf-library-card">
+                        <a class="gf-library-card__cover" href="/games/@game.GameId" title="@game.Name">
+                            @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
+                            {
+                                <img src="@game.CoverUrl" alt="@game.Name" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-gamepad" aria-hidden="true"></i></span>
+                            }
+
+                            @if (game.Rating.HasValue)
+                            {
+                                <em><i class="fas fa-star" aria-hidden="true"></i>@game.Rating/10</em>
+                            }
+                        </a>
+
+                        <div class="gf-library-card__body">
+                            <a href="/games/@game.GameId">@game.Name</a>
+                            <div>
+                                @if (game.ReleaseYear.HasValue)
+                                {
+                                    <span>@game.ReleaseYear</span>
+                                }
+                                @if (game.HasReview)
+                                {
+                                    <span><i class="fas fa-message" aria-hidden="true"></i> Review</span>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
+            </section>
+
+            @if (Model.Result.TotalPages > 1)
+            {
+                <nav class="gf-library-pagination" aria-label="Library pages">
+                    @if (Model.Result.PageNumber > 1)
+                    {
+                        <a href="@Model.LibraryUrl(Model.Section, Model.Result.PageNumber - 1)">
+                            <i class="fas fa-arrow-left" aria-hidden="true"></i> Previous
+                        </a>
+                    }
+                    <span>Page @Model.Result.PageNumber of @Model.Result.TotalPages</span>
+                    @if (Model.Result.PageNumber < Model.Result.TotalPages)
+                    {
+                        <a href="@Model.LibraryUrl(Model.Section, Model.Result.PageNumber + 1)">
+                            Next <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    }
+                </nav>
+            }
+        }
+        else
+        {
+            <section class="gf-empty-state gf-library-empty">
+                <span class="gf-empty-state__icon"><i class="@Model.Icon" aria-hidden="true"></i></span>
+                <h2>@(string.IsNullOrWhiteSpace(Model.Query) ? $"No {Model.Title.ToLowerInvariant()} games yet" : "No matching games")</h2>
+                <p>@(string.IsNullOrWhiteSpace(Model.Query)
+                    ? (Model.IsOwnProfile ? "Games you add from a game page will appear here." : "Games added from a game page will appear here.")
+                    : "Try another title or clear the search.")</p>
+                @if (!string.IsNullOrWhiteSpace(Model.Query))
+                {
+                    <a class="gf-btn gf-btn--secondary" href="@Model.LibraryUrl(Model.Section)">Clear search</a>
+                }
+                else
+                {
+                    <a class="gf-btn gf-btn--secondary" href="/games">Browse games</a>
+                }
+            </section>
+        }
+    </main>
+</div>

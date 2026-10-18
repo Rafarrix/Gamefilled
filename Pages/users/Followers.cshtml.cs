@@ -1,52 +1,46 @@
+using Gamefilled.Application.Social;
 using Gamefilled.Data;
 using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace Gamefilled.Pages.users
+namespace Gamefilled.Pages.users;
+
+public sealed class FollowersModel : PageModel
 {
-    /// <summary>
-    /// Página que lista os followers de um utilizador.
-    /// </summary>
-    public class FollowersModel : PageModel
+    private readonly AppDbContext _db;
+    private readonly SocialListService _socialLists;
+
+    public FollowersModel(AppDbContext db, SocialListService socialLists)
     {
-        private readonly AppDbContext _db;
+        _db = db;
+        _socialLists = socialLists;
+    }
 
-        public FollowersModel(AppDbContext db)
-        {
-            _db = db;
-        }
+    public User ProfileUser { get; private set; } = default!;
+    public IReadOnlyList<SocialListUserCard> Users { get; private set; } = [];
+    public bool IsOwnProfile { get; private set; }
 
-        /// <summary>
-        /// Utilizador dono da página.
-        /// </summary>
-        public User? ProfileUser { get; private set; }
+    public async Task<IActionResult> OnGetAsync(string username, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            return NotFound();
 
-        /// <summary>
-        /// Lista de utilizadores que seguem ProfileUser.
-        /// </summary>
-        public List<User> Users { get; private set; } = new();
+        var profileUser = await _db.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(user => user.Username == username, cancellationToken);
 
-        public async Task<IActionResult> OnGetAsync(string username)
-        {
-            if (string.IsNullOrWhiteSpace(username))
-                return NotFound();
+        if (profileUser is null)
+            return NotFound();
 
-            // Carrega o utilizador dono do perfil.
-            ProfileUser = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (ProfileUser == null)
-                return NotFound();
+        ProfileUser = profileUser;
+        Users = await _socialLists.GetFollowersAsync(profileUser.Id, cancellationToken);
 
-            // Carrega os followers por ordem mais recente.
-            Users = await _db.Follows
-                .Where(f => f.FollowingId == ProfileUser.Id)
-                .Include(f => f.Follower)
-                .OrderByDescending(f => f.CreatedAt)
-                .Select(f => f.Follower!)
-                .ToListAsync();
+        var currentUsername = HttpContext.Session.GetString("username");
+        IsOwnProfile = !string.IsNullOrWhiteSpace(currentUsername) &&
+            string.Equals(currentUsername, profileUser.Username, StringComparison.OrdinalIgnoreCase);
 
-            return Page();
-        }
+        return Page();
     }
 }

@@ -1,0 +1,104 @@
+/*
+ * Gamefilled interaction language
+ *
+ * The default action is a dark control with a restrained green edge, matching
+ * Filters and Game Universe. Bright solid green is reserved for explicit
+ * commit/success actions through .gf-btn--commit.
+ */
+
+.btn-primary,
+.btn-main,
+.gf-auth-submit,
+.gf-btn--primary {
+    border: 1px solid rgba(74, 222, 128, .34) !important;
+    background:
+        linear-gradient(180deg, rgba(21, 55, 37, .72), rgba(10, 27, 19, .92)) !important;
+    color: #ecfdf5 !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .04),
+        0 10px 28px rgba(0, 0, 0, .18) !important;
+    text-shadow: none;
+    transition:
+        transform 150ms ease,
+        border-color 150ms ease,
+        background 150ms ease,
+        box-shadow 150ms ease,
+        color 150ms ease !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible,
+.btn-main:hover,
+.btn-main:focus-visible,
+.gf-auth-submit:hover,
+.gf-auth-submit:focus-visible,
+.gf-btn--primary:hover,
+.gf-btn--primary:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(74, 222, 128, .62) !important;
+    background:
+        linear-gradient(180deg, rgba(25, 76, 48, .78), rgba(12, 36, 24, .96)) !important;
+    color: #ffffff !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .06),
+        0 14px 34px rgba(0, 0, 0, .24),
+        0 0 0 3px rgba(34, 197, 94, .07) !important;
+    text-decoration: none !important;
+}
+
+.btn-primary:active,
+.btn-main:active,
+.gf-auth-submit:active,
+.gf-btn--primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled,
+.btn-primary.disabled,
+.btn-main:disabled,
+.gf-auth-submit:disabled,
+.gf-btn--primary:disabled {
+    border-color: rgba(255, 255, 255, .08) !important;
+    background: rgba(255, 255, 255, .035) !important;
+    color: rgba(229, 231, 235, .38) !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+}
+
+.gf-btn--secondary,
+.btn-outline-secondary {
+    border-color: rgba(255, 255, 255, .10) !important;
+    background: rgba(255, 255, 255, .025) !important;
+    color: #d1d5db !important;
+}
+
+.gf-btn--secondary:hover,
+.gf-btn--secondary:focus-visible,
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus-visible {
+    border-color: rgba(74, 222, 128, .26) !important;
+    background: rgba(0, 176, 32, .075) !important;
+    color: #ecfdf5 !important;
+}
+
+.gf-notification-card,
+.gf-notification-card:hover,
+.gf-notification-card:focus-visible {
+    color: inherit;
+    text-decoration: none !important;
+}
+
+/* Opt-in treatment for actions that permanently commit user data. */
+.gf-btn--commit {
+    border: 1px solid #16c43a !important;
+    background: #00b020 !important;
+    color: #fff !important;
+    box-shadow: 0 12px 28px rgba(0, 176, 32, .16) !important;
+}
+
+.gf-btn--commit:hover,
+.gf-btn--commit:focus-visible {
+    border-color: #35d65a !important;
+    background: #16c43a !important;
+    color: #fff !important;
+}

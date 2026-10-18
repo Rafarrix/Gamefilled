@@ -1,0 +1,203 @@
+@page "/company/{id:int}/{slug?}"
+@using Gamefilled.Application.Companies
+@model Gamefilled.Pages.company.DetailsModel
+@{
+    ViewData["Title"] = Model.Company?.Name ?? "Company";
+    var company = Model.Company!;
+}
+
+<link rel="stylesheet" href="~/css/company.css" asp-append-version="true" />
+
+<div class="gf-company-page">
+    <div class="gf-company-shell">
+        <section class="gf-company-hero">
+            <div class="gf-company-logo">
+                @if (!string.IsNullOrWhiteSpace(company.LogoUrl))
+                {
+                    <img src="@company.LogoUrl" alt="@company.Name logo" />
+                }
+                else
+                {
+                    <span class="gf-company-logo__fallback">@Initials(company.Name)</span>
+                }
+            </div>
+
+            <div class="gf-company-identity">
+                <div class="gf-company-eyebrow">Company profile</div>
+                <h1 class="gf-company-title">@company.Name</h1>
+
+                @if (!string.IsNullOrWhiteSpace(company.Description))
+                {
+                    <div class="gf-company-description">@company.Description</div>
+                }
+                else
+                {
+                    <div class="gf-company-description">
+                        IGDB does not currently provide an editorial description for this company.
+                    </div>
+                }
+
+                <div class="gf-company-facts">
+                    @if (!string.IsNullOrWhiteSpace(company.FoundedText))
+                    {
+                        <span class="gf-company-fact">
+                            Founded <strong>@company.FoundedText</strong>
+                        </span>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(company.Status))
+                    {
+                        <span class="gf-company-fact">
+                            Status <strong>@company.Status</strong>
+                        </span>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(company.Size))
+                    {
+                        <span class="gf-company-fact">
+                            Size <strong>@company.Size</strong>
+                        </span>
+                    }
+
+                    @if (company.Country != null)
+                    {
+                        <span class="gf-company-fact gf-company-country"
+                              title="ISO @company.Country.Alpha2 · @company.Country.NumericCode">
+                            <span class="gf-company-country__flag" aria-hidden="true">@company.Country.Flag</span>
+                            <strong>@company.Country.EnglishName()</strong>
+                        </span>
+                    }
+
+                    @if (company.Parent != null)
+                    {
+                        <span class="gf-company-fact">
+                            Parent
+                            <a class="gf-company-parent"
+                               href="/company/@company.Parent.Id/@company.Parent.Slug">
+                                @company.Parent.Name
+                            </a>
+                        </span>
+                    }
+                </div>
+
+                @if (company.Websites.Count > 0)
+                {
+                    <div class="gf-company-links">
+                        @foreach (var website in company.Websites.Take(8))
+                        {
+                            <a class="gf-company-link"
+                               href="@website.Url"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                                @(string.IsNullOrWhiteSpace(website.Type) ? WebsiteLabel(website.Url) : website.Type)
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="gf-company-stats" aria-label="Company game statistics">
+            <div class="gf-company-stat">
+                <strong>@company.Games.Count.ToString("N0")</strong>
+                <span>Known games</span>
+            </div>
+
+            <div class="gf-company-stat">
+                <strong>@company.DevelopedCount.ToString("N0")</strong>
+                <span>Developed</span>
+            </div>
+
+            <div class="gf-company-stat">
+                <strong>@company.PublishedCount.ToString("N0")</strong>
+                <span>Published</span>
+            </div>
+        </section>
+
+        <section class="gf-company-catalogue">
+            <div class="gf-company-section-head">
+                <div>
+                    <h2>Games catalogue</h2>
+                    <p>Games where the company appears as a developer, publisher, porting or supporting studio.</p>
+                </div>
+            </div>
+
+            @if (company.Games.Count == 0)
+            {
+                <div class="gf-company-empty">
+                    No games associated with this company were found on IGDB.
+                </div>
+            }
+            else
+            {
+                <div class="gf-company-games">
+                    @foreach (var game in company.Games)
+                    {
+                        <a class="gf-company-game" href="/games/@game.Id" title="@game.Name">
+                            <div class="gf-company-game__cover">
+                                @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
+                                {
+                                    <img src="@game.CoverUrl" alt="@game.Name" loading="lazy" />
+                                }
+
+                                <div class="gf-company-game__roles">
+                                    @if (game.IsDeveloper)
+                                    {
+                                        <span class="gf-company-role gf-company-role--developer">Dev</span>
+                                    }
+
+                                    @if (game.IsPublisher)
+                                    {
+                                        <span class="gf-company-role gf-company-role--publisher">Publisher</span>
+                                    }
+
+                                    @if (game.IsPorting)
+                                    {
+                                        <span class="gf-company-role">Porting</span>
+                                    }
+
+                                    @if (game.IsSupporting)
+                                    {
+                                        <span class="gf-company-role">Support</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="gf-company-game__name">@game.Name</div>
+                            <div class="gf-company-game__meta">
+                                @(game.ReleaseYear?.ToString() ?? "Release unknown")
+                                @if (game.TotalRating.HasValue)
+                                {
+                                    <span> · ★ @game.TotalRating.Value.ToString("0.#")</span>
+                                }
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>
+
+@functions {
+    static string Initials(string value)
+    {
+        var words = value
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .ToArray();
+
+        return words.Length == 0
+            ? "?"
+            : string.Concat(words.Select(word => char.ToUpperInvariant(word[0])));
+    }
+
+    static string WebsiteLabel(string value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            return "Website";
+
+        return uri.Host.Replace("www.", "", StringComparison.OrdinalIgnoreCase);
+    }
+}

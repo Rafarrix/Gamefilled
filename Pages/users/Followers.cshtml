@@ -1,26 +1,61 @@
-﻿@page "/u/{username}/followers"
+@page "/u/{username}/followers"
 @model Gamefilled.Pages.users.FollowersModel
 @{
-    ViewData["Title"] = $"{Model.ProfileUser?.Username} Followers";
+    var profileName = Model.ProfileUser.DisplayName ?? Model.ProfileUser.Username ?? "User";
+    var profileUsername = Model.ProfileUser.Username ?? string.Empty;
+
+    ViewData["Title"] = $"{profileName} · Followers";
+    ViewData["FullBleed"] = true;
 }
 
-<div class="container py-4">
-    <h1 class="mb-4">@Model.ProfileUser?.Username's Followers</h1>
+<link rel="stylesheet" href="~/css/people.css" asp-append-version="true" />
 
-    @if (Model.Users.Any())
-    {
-        <div class="list-group">
-            @foreach (var user in Model.Users)
-            {
-                <a class="list-group-item list-group-item-action bg-transparent text-light border-secondary"
-                   href="/u/@user.Username">
-                    @user.Username
-                </a>
-            }
+<div class="gf-people-page">
+    <section class="gf-people-hero">
+        <div class="gf-people-hero__glow gf-people-hero__glow--one"></div>
+        <div class="gf-people-hero__glow gf-people-hero__glow--two"></div>
+
+        <div class="container gf-people-hero__inner">
+            <div class="gf-people-hero__copy">
+                <div class="gf-people-eyebrow">@(Model.IsOwnProfile ? "Your community" : "Community")</div>
+                <h1>@(Model.IsOwnProfile ? "Your followers" : $"{profileName}'s followers")</h1>
+                <p>@(Model.IsOwnProfile ? "People who chose to follow your Gamefilled profile." : "People who follow this player on Gamefilled.")</p>
+            </div>
+
+            <div class="gf-people-hero__stats" aria-label="Followers overview">
+                <div>
+                    <strong>@Model.Users.Count</strong>
+                    <span>followers</span>
+                </div>
+            </div>
         </div>
-    }
-    else
-    {
-        <div class="text-muted">No followers yet.</div>
-    }
+    </section>
+
+    <main class="container gf-people-shell">
+        <div class="gf-people-results-head">
+            <div>
+                <h2>@(Model.IsOwnProfile ? "People following you" : "Followers")</h2>
+                <p>Online players appear first.</p>
+            </div>
+
+            <a class="gf-people-clear" href="/u/@profileUsername">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Back to profile
+            </a>
+        </div>
+
+        @if (Model.Users.Any())
+        {
+            <partial name="~/Pages/Shared/_SocialCards.cshtml" model="Model.Users" />
+        }
+        else
+        {
+            <section class="gf-people-empty">
+                <span class="gf-people-empty__icon"><i class="fas fa-users" aria-hidden="true"></i></span>
+                <h2>@(Model.IsOwnProfile ? "No followers yet" : "No followers yet")</h2>
+                <p>@(Model.IsOwnProfile ? "Share your profile and connect with players who match your taste." : "Followers will appear here when people connect with this profile.")</p>
+                <a href="/people">Discover people</a>
+            </section>
+        }
+    </main>
 </div>

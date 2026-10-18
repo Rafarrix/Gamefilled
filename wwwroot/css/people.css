@@ -1,0 +1,614 @@
+.gf-people-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(0, 176, 32, .08), transparent 27rem),
+        #0e1015;
+    color: #f3f4f6;
+}
+
+.gf-people-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 132px 0 72px;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+    background:
+        linear-gradient(to bottom, rgba(9, 12, 17, .78), rgba(14, 16, 21, .96)),
+        linear-gradient(120deg, rgba(0, 176, 32, .09), transparent 48%);
+}
+
+.gf-people-hero__glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(30px);
+    pointer-events: none;
+}
+
+.gf-people-hero__glow--one {
+    width: 320px;
+    height: 320px;
+    top: -190px;
+    right: 12%;
+    background: rgba(0, 176, 32, .16);
+}
+
+.gf-people-hero__glow--two {
+    width: 220px;
+    height: 220px;
+    left: 5%;
+    bottom: -160px;
+    background: rgba(34, 197, 94, .10);
+}
+
+.gf-people-hero__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 36px;
+}
+
+.gf-people-hero__copy {
+    max-width: 720px;
+}
+
+.gf-people-eyebrow {
+    color: #4ade80;
+    font-size: .7rem;
+    font-weight: 850;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.gf-people-hero h1 {
+    margin: 10px 0 12px;
+    max-width: 680px;
+    font-size: clamp(2.35rem, 5vw, 4.6rem);
+    font-weight: 900;
+    line-height: .98;
+    letter-spacing: -.055em;
+}
+
+.gf-people-hero p {
+    margin: 0;
+    max-width: 650px;
+    color: rgba(229, 231, 235, .64);
+    font-size: .98rem;
+    line-height: 1.7;
+}
+
+.gf-people-hero__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 9px;
+}
+
+.gf-people-hero__stats div {
+    min-width: 130px;
+    padding: 17px 19px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
+    background: rgba(17, 21, 28, .72);
+    backdrop-filter: blur(12px);
+}
+
+.gf-people-hero__stats strong,
+.gf-people-hero__stats span {
+    display: block;
+}
+
+.gf-people-hero__stats strong {
+    font-size: 1.65rem;
+    line-height: 1;
+}
+
+.gf-people-hero__stats span {
+    margin-top: 5px;
+    color: rgba(229, 231, 235, .48);
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.gf-people-shell {
+    padding-top: 28px;
+    padding-bottom: 72px;
+}
+
+.gf-people-toolbar {
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 16px;
+    background: rgba(20, 24, 31, .82);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .18);
+    backdrop-filter: blur(12px);
+}
+
+.gf-people-search {
+    min-width: 280px;
+    flex: 1 1 500px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 7px 0 14px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 12px;
+    background: #171b23;
+}
+
+.gf-people-search > i {
+    color: rgba(134, 239, 172, .66);
+}
+
+.gf-people-search input {
+    min-width: 0;
+    min-height: 46px;
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: #f9fafb;
+    outline: 0;
+}
+
+.gf-people-search input::placeholder {
+    color: rgba(229, 231, 235, .38);
+}
+
+.gf-people-search button {
+    min-height: 36px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 9px;
+    background: #00b020;
+    color: #fff;
+    font-size: .76rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.gf-people-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.gf-people-filters a {
+    min-height: 38px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: rgba(229, 231, 235, .62);
+    font-size: .74rem;
+    font-weight: 750;
+}
+
+.gf-people-filters a:hover,
+.gf-people-filters a:focus-visible,
+.gf-people-filters a.is-active {
+    border-color: rgba(74, 222, 128, .24);
+    background: rgba(0, 176, 32, .10);
+    color: #dcfce7;
+    text-decoration: none;
+    outline: none;
+}
+
+.gf-presence-dot {
+    width: 9px;
+    height: 9px;
+    display: inline-block;
+    flex: 0 0 auto;
+    border: 2px solid #141821;
+    border-radius: 50%;
+    background: #64748b;
+}
+
+.gf-presence-dot.is-online {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, .14);
+}
+
+.gf-people-results-head {
+    margin: 28px 0 15px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.gf-people-results-head h2 {
+    margin: 0;
+    color: #f9fafb;
+    font-size: 1.16rem;
+    font-weight: 850;
+}
+
+.gf-people-results-head p {
+    margin: 4px 0 0;
+    color: rgba(229, 231, 235, .46);
+    font-size: .76rem;
+}
+
+.gf-people-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: rgba(229, 231, 235, .56);
+    font-size: .75rem;
+}
+
+.gf-people-clear:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+.gf-people-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.gf-person-card {
+    min-width: 0;
+    padding: 17px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at top right, rgba(0, 176, 32, .07), transparent 42%),
+        rgba(19, 23, 30, .88);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .16);
+    transition: transform .17s ease, border-color .17s ease, background .17s ease;
+}
+
+.gf-person-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(74, 222, 128, .20);
+    background:
+        radial-gradient(circle at top right, rgba(0, 176, 32, .11), transparent 44%),
+        rgba(21, 26, 34, .96);
+}
+
+.gf-person-card__identity {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+}
+
+.gf-person-card__identity:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.gf-person-card__avatar-wrap {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+}
+
+.gf-person-card__avatar {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: 13px;
+    background: #0e1015;
+}
+
+.gf-person-card__avatar-wrap .gf-presence-dot {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 12px;
+    height: 12px;
+}
+
+.gf-person-card__names {
+    min-width: 0;
+}
+
+.gf-person-card__names strong,
+.gf-person-card__names small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gf-person-card__names strong {
+    color: #f9fafb;
+    font-size: .92rem;
+}
+
+.gf-person-card__names small {
+    margin-top: 2px;
+    color: rgba(229, 231, 235, .44);
+    font-size: .72rem;
+}
+
+.gf-person-card__badges {
+    min-height: 24px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.gf-social-badge {
+    min-height: 22px;
+    padding: 3px 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .055);
+    color: rgba(229, 231, 235, .62);
+    font-size: .62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.gf-social-badge.is-mutual,
+.gf-social-badge.is-you {
+    background: rgba(0, 176, 32, .12);
+    color: #86efac;
+}
+
+.gf-person-card__presence {
+    margin-left: auto;
+    color: rgba(229, 231, 235, .38);
+    font-size: .66rem;
+}
+
+.gf-person-card__bio {
+    min-height: 62px;
+    margin: 12px 0 14px;
+    overflow: hidden;
+    display: -webkit-box;
+    color: rgba(229, 231, 235, .60);
+    font-size: .76rem;
+    line-height: 1.55;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.gf-person-card__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .065);
+    border-radius: 11px;
+    background: rgba(0, 0, 0, .13);
+}
+
+.gf-person-card__stats a {
+    min-width: 0;
+    padding: 10px 6px;
+    color: inherit;
+    text-align: center;
+}
+
+.gf-person-card__stats a + a {
+    border-left: 1px solid rgba(255, 255, 255, .06);
+}
+
+.gf-person-card__stats a:hover {
+    background: rgba(0, 176, 32, .06);
+    color: inherit;
+    text-decoration: none;
+}
+
+.gf-person-card__stats strong,
+.gf-person-card__stats span {
+    display: block;
+}
+
+.gf-person-card__stats strong {
+    color: #f9fafb;
+    font-size: .88rem;
+}
+
+.gf-person-card__stats span {
+    margin-top: 2px;
+    color: rgba(229, 231, 235, .38);
+    font-size: .58rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.gf-person-card__actions {
+    margin-top: 13px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.gf-person-card__actions form {
+    margin: 0;
+}
+
+.gf-person-card__profile,
+.gf-person-card__follow {
+    min-height: 38px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 10px;
+    font-size: .72rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.gf-person-card__profile {
+    background: rgba(255, 255, 255, .035);
+    color: rgba(229, 231, 235, .72);
+}
+
+.gf-person-card__follow {
+    width: 100%;
+    background: #00b020;
+    color: #fff;
+}
+
+.gf-person-card__follow.is-following {
+    border-color: rgba(74, 222, 128, .20);
+    background: rgba(0, 176, 32, .11);
+    color: #bbf7d0;
+}
+
+.gf-person-card__profile:hover,
+.gf-person-card__follow:hover,
+.gf-person-card__profile:focus-visible,
+.gf-person-card__follow:focus-visible {
+    transform: translateY(-1px);
+    color: #fff;
+    text-decoration: none;
+    outline: none;
+}
+
+.gf-people-pagination {
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+.gf-people-pagination a,
+.gf-people-pagination span {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .035);
+    color: rgba(229, 231, 235, .66);
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.gf-people-pagination a:hover,
+.gf-people-pagination a.is-active {
+    border-color: rgba(74, 222, 128, .26);
+    background: rgba(0, 176, 32, .12);
+    color: #dcfce7;
+    text-decoration: none;
+}
+
+.gf-people-pagination .is-disabled {
+    opacity: .3;
+}
+
+.gf-people-empty {
+    min-height: 330px;
+    padding: 50px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px dashed rgba(255, 255, 255, .10);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .025);
+}
+
+.gf-people-empty__icon {
+    width: 62px;
+    height: 62px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: rgba(0, 176, 32, .11);
+    color: #86efac;
+    font-size: 1.25rem;
+}
+
+.gf-people-empty h2 {
+    margin: 17px 0 5px;
+    font-size: 1.15rem;
+}
+
+.gf-people-empty p {
+    margin: 0;
+    color: rgba(229, 231, 235, .48);
+    font-size: .8rem;
+}
+
+.gf-people-empty a {
+    margin-top: 15px;
+    color: #86efac;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+@media (max-width: 991px) {
+    .gf-people-hero__inner {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .gf-people-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .gf-people-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 680px) {
+    .gf-people-hero {
+        padding: 112px 0 52px;
+    }
+
+    .gf-people-hero__stats {
+        width: 100%;
+    }
+
+    .gf-people-search {
+        min-width: 0;
+    }
+
+    .gf-people-filters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gf-people-filters a {
+        justify-content: center;
+    }
+
+    .gf-people-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 420px) {
+    .gf-people-hero__stats {
+        grid-template-columns: 1fr;
+    }
+
+    .gf-people-results-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

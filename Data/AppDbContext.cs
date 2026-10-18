@@ -1,139 +1,213 @@
-﻿using Gamefilled.Models;
+using Gamefilled.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Gamefilled.Data
+namespace Gamefilled.Data;
+
+public sealed class AppDbContext : DbContext
 {
-    /// <summary>
-    /// Contexto principal de acesso à base de dados da aplicação.
-    ///
-    /// O que este ficheiro faz:
-    /// - expõe as tabelas principais através de DbSet
-    /// - configura relações entre entidades
-    /// - define índices únicos
-    /// - controla regras de delete em foreign keys
-    ///
-    /// Importância:
-    /// É o centro da comunicação entre o código C# e a base de dados.
-    /// </summary>
-    public class AppDbContext : DbContext
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
     {
-        /// <summary>
-        /// Construtor do contexto.
-        /// Recebe as opções configuradas no Program.cs.
-        /// </summary>
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
+    }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<UserFavoriteGame> UserFavoriteGames => Set<UserFavoriteGame>();
+    public DbSet<UserActivity> UserActivities => Set<UserActivity>();
+    public DbSet<UserGameEntry> UserGameEntries => Set<UserGameEntry>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        ConfigureUsers(modelBuilder);
+        ConfigureFollows(modelBuilder);
+        ConfigureFavoriteGames(modelBuilder);
+        ConfigureActivities(modelBuilder);
+        ConfigureGameEntries(modelBuilder);
+        ConfigureNotifications(modelBuilder);
+    }
+
+    private static void ConfigureUsers(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<User>();
+
+        entity.Property(x => x.Username).HasMaxLength(100);
+        entity.Property(x => x.DisplayName).HasMaxLength(100);
+        entity.Property(x => x.Email).HasMaxLength(150);
+        entity.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
+        entity.Property(x => x.Role).HasMaxLength(20).IsRequired().HasDefaultValue("User");
+        entity.Property(x => x.Bio).HasMaxLength(500);
+        entity.Property(x => x.AvatarUrl).HasMaxLength(500);
+        entity.Property(x => x.BannerUrl).HasMaxLength(500);
+        entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+
+        entity.HasIndex(x => x.Username)
+            .HasDatabaseName("UX_Users_Username")
+            .HasFilter("[Username] IS NOT NULL")
+            .IsUnique();
+
+        entity.HasIndex(x => x.Email)
+            .HasDatabaseName("UX_Users_Email")
+            .HasFilter("[Email] IS NOT NULL")
+            .IsUnique();
+
+        entity.HasIndex(x => x.LastSeenAt)
+            .HasDatabaseName("IX_Users_LastSeenAt")
+            .IsDescending()
+            .IncludeProperties(x => new { x.Username, x.DisplayName, x.AvatarUrl });
+    }
+
+    private static void ConfigureFollows(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<Follow>();
+
+        entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+
+        entity.HasOne(x => x.Follower)
+            .WithMany(x => x.Following)
+            .HasForeignKey(x => x.FollowerId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Follows_Follower");
+
+        entity.HasOne(x => x.Following)
+            .WithMany(x => x.Followers)
+            .HasForeignKey(x => x.FollowingId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Follows_Following");
+
+        entity.HasIndex(x => new { x.FollowerId, x.FollowingId })
+            .HasDatabaseName("UX_Follows_FollowerId_FollowingId")
+            .IsUnique();
+
+        entity.ToTable(table => table.HasCheckConstraint(
+            "CK_Follows_NoSelfFollow",
+            "[FollowerId] <> [FollowingId]"));
+    }
+
+    private static void ConfigureFavoriteGames(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<UserFavoriteGame>();
+
+        entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+        entity.Property(x => x.IsPrimary).HasDefaultValue(false);
+
+        entity.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_UserFavoriteGames_Users");
+
+        entity.HasIndex(x => new { x.UserId, x.GameId })
+            .HasDatabaseName("UX_UserFavoriteGames_UserId_GameId")
+            .IsUnique();
+
+        entity.HasIndex(x => new { x.UserId, x.SortOrder })
+            .HasDatabaseName("UX_UserFavoriteGames_UserId_SortOrder")
+            .IsUnique();
+
+        entity.ToTable(table => table.HasCheckConstraint(
+            "CK_UserFavoriteGames_SortOrder",
+            "[SortOrder] BETWEEN 1 AND 5"));
+    }
+
+    private static void ConfigureActivities(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<UserActivity>();
+
+        entity.Property(x => x.Type).HasMaxLength(50).IsRequired();
+        entity.Property(x => x.MetaJson).HasColumnType("nvarchar(max)");
+        entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+
+        entity.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_UserActivities_Users");
+
+        entity.HasOne(x => x.TargetUser)
+            .WithMany()
+            .HasForeignKey(x => x.TargetUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_UserActivities_TargetUser");
+
+        entity.HasIndex(x => new { x.UserId, x.CreatedAt })
+            .HasDatabaseName("IX_UserActivities_UserId_CreatedAt")
+            .IsDescending(false, true);
+    }
+
+    private static void ConfigureGameEntries(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<UserGameEntry>();
+
+        entity.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        entity.Property(x => x.ReviewText).HasColumnType("nvarchar(max)");
+        entity.Property(x => x.ContainsSpoilers).HasDefaultValue(false);
+        entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+        entity.Property(x => x.UpdatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+
+        entity.HasOne(x => x.User)
+            .WithMany(x => x.GameEntries)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_UserGameEntries_Users");
+
+        entity.HasIndex(x => new { x.UserId, x.GameId })
+            .HasDatabaseName("UX_UserGameEntries_UserId_GameId")
+            .IsUnique();
+
+        entity.HasIndex(x => new { x.GameId, x.Status })
+            .HasDatabaseName("IX_UserGameEntries_GameId_Status");
+
+        entity.HasIndex(x => new { x.UserId, x.UpdatedAt })
+            .HasDatabaseName("IX_UserGameEntries_UserId_UpdatedAt")
+            .IsDescending(false, true);
+
+        entity.ToTable(table =>
         {
-        }
+            table.HasCheckConstraint(
+                "CK_UserGameEntries_Status",
+                "[Status] IN (N'played', N'playing', N'backlog', N'wishlist')");
+            table.HasCheckConstraint(
+                "CK_UserGameEntries_Rating",
+                "[Rating] IS NULL OR [Rating] BETWEEN 1 AND 10");
+            table.HasCheckConstraint(
+                "CK_UserGameEntries_ReviewTextLength",
+                "[ReviewText] IS NULL OR LEN([ReviewText]) <= 5000");
+        });
+    }
 
-        /* =====================================================================
-           DBSETS
-           ---------------------------------------------------------------------
-           Cada DbSet representa uma tabela da base de dados.
-           ===================================================================== */
+    private static void ConfigureNotifications(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<UserNotification>();
 
-        /// <summary>
-        /// Tabela de utilizadores.
-        /// </summary>
-        public DbSet<User> Users { get; set; }
+        entity.Property(x => x.Type).HasMaxLength(64).IsRequired();
+        entity.Property(x => x.TargetUrl).HasMaxLength(500);
+        entity.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
 
-        /// <summary>
-        /// Tabela que representa relações de follow entre utilizadores.
-        /// </summary>
-        public DbSet<Follow> Follows { get; set; }
+        entity.HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_UserNotifications_Users_UserId");
 
-        /// <summary>
-        /// Tabela dos jogos favoritos dos utilizadores.
-        /// </summary>
-        public DbSet<UserFavoriteGame> UserFavoriteGames { get; set; }
+        entity.HasOne(x => x.ActorUser)
+            .WithMany()
+            .HasForeignKey(x => x.ActorUserId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_UserNotifications_Users_ActorUserId");
 
-        /// <summary>
-        /// Tabela das atividades dos utilizadores.
-        /// </summary>
-        public DbSet<UserActivity> UserActivities { get; set; }
+        entity.HasIndex(x => new { x.UserId, x.ReadAt, x.CreatedAt })
+            .HasDatabaseName("IX_UserNotifications_UserId_ReadAt_CreatedAt")
+            .IsDescending(false, false, true);
 
-        /* =====================================================================
-           CONFIGURAÇÃO DO MODELO
-           ---------------------------------------------------------------------
-           Aqui definimos relações explícitas, índices e regras que vão além
-           das convenções automáticas do Entity Framework Core.
-           ===================================================================== */
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            // Mantém qualquer configuração base do EF Core.
-            base.OnModelCreating(modelBuilder);
+        entity.HasIndex(x => new { x.UserId, x.ActorUserId, x.Type, x.CreatedAt })
+            .HasDatabaseName("IX_UserNotifications_UserId_ActorUserId_Type_CreatedAt")
+            .IsDescending(false, false, false, true);
 
-            /* -----------------------------------------------------------------
-               FOLLOW
-               -----------------------------------------------------------------
-               Uma relação Follow liga dois utilizadores:
-               - Follower  -> quem segue
-               - Following -> quem é seguido
-               ----------------------------------------------------------------- */
-
-            modelBuilder.Entity<Follow>()
-                .HasOne(f => f.Follower)
-                .WithMany(u => u.Following)
-                .HasForeignKey(f => f.FollowerId)
-                .OnDelete(DeleteBehavior.Restrict);
-            // Restrict evita deletes em cascata problemáticos numa relação autorreferenciada.
-
-            modelBuilder.Entity<Follow>()
-                .HasOne(f => f.Following)
-                .WithMany(u => u.Followers)
-                .HasForeignKey(f => f.FollowingId)
-                .OnDelete(DeleteBehavior.Restrict);
-            // Também se usa Restrict no lado do utilizador seguido.
-
-            modelBuilder.Entity<Follow>()
-                .HasIndex(f => new { f.FollowerId, f.FollowingId })
-                .IsUnique();
-            // Garante que não há follows duplicados entre os mesmos dois utilizadores.
-
-            /* -----------------------------------------------------------------
-               USER FAVORITE GAME
-               -----------------------------------------------------------------
-               Guarda os jogos favoritos de cada utilizador e a ordem em que
-               aparecem no perfil.
-               ----------------------------------------------------------------- */
-
-            modelBuilder.Entity<UserFavoriteGame>()
-                .HasOne(x => x.User)
-                .WithMany()
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-            // Se o utilizador for apagado, os seus favoritos também são removidos.
-
-            modelBuilder.Entity<UserFavoriteGame>()
-                .HasIndex(x => new { x.UserId, x.SortOrder })
-                .IsUnique();
-            // Garante que o utilizador não repete a mesma posição na lista.
-
-            modelBuilder.Entity<UserFavoriteGame>()
-                .HasIndex(x => new { x.UserId, x.GameId })
-                .IsUnique();
-            // Garante que o mesmo jogo não é adicionado duas vezes aos favoritos.
-
-            /* -----------------------------------------------------------------
-               USER ACTIVITY
-               -----------------------------------------------------------------
-               Guarda ações relacionadas com um utilizador.
-               Pode apontar também para outro utilizador alvo.
-               ----------------------------------------------------------------- */
-
-            modelBuilder.Entity<UserActivity>()
-                .HasOne(x => x.User)
-                .WithMany()
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-            // O autor da atividade usa Restrict para evitar cascatas automáticas.
-
-            modelBuilder.Entity<UserActivity>()
-                .HasOne(x => x.TargetUser)
-                .WithMany()
-                .HasForeignKey(x => x.TargetUserId)
-                .OnDelete(DeleteBehavior.Restrict);
-            // O utilizador alvo também usa Restrict para evitar conflitos relacionais.
-        }
+        entity.ToTable(table => table.HasCheckConstraint(
+            "CK_UserNotifications_Type",
+            "[Type] IN (N'new_follower', N'mutual_connection')"));
     }
 }
