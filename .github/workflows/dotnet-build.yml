@@ -3,10 +3,12 @@ name: .NET Build
 on:
   push:
     branches:
+      - master
       - v2-development
       - "feature/**"
   pull_request:
     branches:
+      - master
       - v2-development
 
 permissions:
