@@ -1,5 +1,6 @@
 using Gamefilled.Application.Companies;
 using Gamefilled.Application.Games;
+using Gamefilled.Application.Email;
 using Gamefilled.Application.Notifications;
 using Gamefilled.Application.Social;
 using Gamefilled.Application.Security;
@@ -73,6 +74,15 @@ builder.Services.AddHttpClient<IgdbApiClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.igdb.com/v4/");
     client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+// Not used by the existing auth flow. The future Identity implementation will
+// call this transport; missing API credentials fail closed at send time.
+builder.Services.Configure<ResendEmailOptions>(builder.Configuration.GetSection("Resend"));
+builder.Services.AddHttpClient<ITransactionalEmailSender, ResendEmailSender>(client =>
+{
+    client.BaseAddress = new Uri("https://api.resend.com/");
+    client.Timeout = TimeSpan.FromSeconds(20);
 });
 
 builder.Services.AddScoped<IGameDiscoveryService, GameDiscoveryService>();
