@@ -4,6 +4,7 @@ using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gamefilled.Pages
 {
@@ -16,6 +17,7 @@ namespace Gamefilled.Pages
     /// - gerar hash da password com BCrypt
     /// - criar conta na base de dados
     /// </summary>
+    [EnableRateLimiting("registration-ip")]
     public class RegisterModel : PageModel
     {
         private readonly AppDbContext _context;
