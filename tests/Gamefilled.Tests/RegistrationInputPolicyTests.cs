@@ -70,4 +70,27 @@ public sealed class RegistrationInputPolicyTests
         Assert.NotNull(model.Error);
         Assert.Contains("Terms", model.Error);
     }
+
+    [Theory]
+    [InlineData("12345678901", false)]
+    [InlineData("123456789012", true)]
+    [InlineData(" 123456789012 ", true)]
+    [InlineData("", false)]
+    public void Password_policy_is_shared_by_registration_and_account_settings(
+        string candidate, bool expected)
+    {
+        Assert.Equal(expected, RegistrationInputPolicy.IsAllowedPassword(candidate));
+
+        var registrationValid = RegistrationInputPolicy.TryValidate(
+            "validuser", "user@example.com", candidate, candidate,
+            out _, out _, out _);
+        Assert.Equal(expected, registrationValid);
+    }
+
+    [Fact]
+    public void Password_policy_rejects_more_than_128_characters()
+    {
+        var candidate = new string('x', 129);
+        Assert.False(RegistrationInputPolicy.IsAllowedPassword(candidate));
+    }
 }
