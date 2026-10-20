@@ -59,6 +59,13 @@ namespace Gamefilled.Pages.Users
             if (identifier.Contains("@"))
                 identifier = identifier.ToLowerInvariant();
 
+            // Never allocate a rate-limit cache key from unbounded user input.
+            if (identifier.Length > 150)
+            {
+                Error = "Invalid username, email or password.";
+                return Page();
+            }
+
             if (_attempts.IsBlocked(identifier, out var remainingMinutes))
             {
                 Error = $"Too many attempts. Try again in {remainingMinutes} minute(s).";
