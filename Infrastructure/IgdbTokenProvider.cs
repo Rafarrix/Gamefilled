@@ -60,10 +60,9 @@ public sealed class IgdbTokenProvider
 
             if (!response.IsSuccessStatusCode)
             {
-                var responseBody = await response.Content.ReadAsStringAsync(ct);
+                // Provider response bodies are untrusted and may contain sensitive data.
                 throw new HttpRequestException(
-                    $"Twitch OAuth returned {(int)response.StatusCode} " +
-                    $"({response.ReasonPhrase}). Body: {Truncate(responseBody, 300)}",
+                    $"Twitch OAuth returned HTTP {(int)response.StatusCode}.",
                     inner: null,
                     response.StatusCode);
             }
@@ -92,8 +91,4 @@ public sealed class IgdbTokenProvider
         !string.IsNullOrWhiteSpace(_token) &&
         DateTimeOffset.UtcNow < _tokenExpiresAtUtc;
 
-    private static string Truncate(string value, int maxLength) =>
-        value.Length <= maxLength
-            ? value
-            : value[..maxLength] + "…";
 }
