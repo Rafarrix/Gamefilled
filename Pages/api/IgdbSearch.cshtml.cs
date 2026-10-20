@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Gamefilled.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Headers;
 using System.Text;
@@ -6,40 +7,39 @@ using System.Text.Json;
 
 namespace Gamefilled.Pages.api
 {
-    [IgnoreAntiforgeryToken]
     public class IgdbSearchModel : PageModel
     {
         private readonly IConfiguration _cfg;
         private readonly ILogger<IgdbSearchModel> _logger;
         private readonly IHttpClientFactory _http;
+        private readonly IgdbTokenProvider _tokenProvider;
 
-        public IgdbSearchModel(IConfiguration cfg, ILogger<IgdbSearchModel> logger, IHttpClientFactory http)
+        public IgdbSearchModel(IConfiguration cfg, ILogger<IgdbSearchModel> logger, IHttpClientFactory http, IgdbTokenProvider tokenProvider)
         {
             _cfg = cfg;
             _logger = logger;
             _http = http;
+            _tokenProvider = tokenProvider;
         }
 
         public async Task<IActionResult> OnGetAsync(string term)
         {
-            if (string.IsNullOrWhiteSpace(term))
-                return new JsonResult(new { error = "Empty query." }) { StatusCode = 400 };
+            if (string.IsNullOrWhiteSpace(term) || term.Trim().Length > 100)
+                return new JsonResult(new { error = "Search term must have 1-100 characters." }) { StatusCode = 400 };
 
             var clientId = _cfg["IGDB:ClientId"];
-            var clientSecret = _cfg["IGDB:ClientSecret"];
-
-            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+            if (string.IsNullOrWhiteSpace(clientId))
             {
                 return new JsonResult(new
                 {
-                    error = "Missing IGDB config (IGDB:ClientId / IGDB:ClientSecret)."
+                    error = "Game search temporarily unavailable."
                 })
-                { StatusCode = 500 };
+                { StatusCode = 503 };
             }
 
             try
             {
-                var token = await GetTwitchToken(clientId, clientSecret);
+                var token = await _tokenProvider.GetAccessTokenAsync();
 
                 var client = _http.CreateClient();
                 client.DefaultRequestHeaders.Remove("Client-ID");
@@ -75,15 +75,13 @@ limit 25;
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("IGDB /games failed: {Status} | Body: {Body}", response.StatusCode, responseText);
+                    _logger.LogWarning("IGDB /games failed with HTTP {Status}", (int)response.StatusCode);
 
                     return new JsonResult(new
                     {
-                        error = "IGDB request failed",
-                        status = (int)response.StatusCode,
-                        body = responseText
+                        error = "Game search temporarily unavailable."
                     })
-                    { StatusCode = 500 };
+                    { StatusCode = 502 };
                 }
 
                 return Content(responseText, "application/json");
@@ -91,7 +89,7 @@ limit 25;
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in IGDB search");
-                return new JsonResult(new { error = ex.Message }) { StatusCode = 500 };
+                return new JsonResult(new { error = "Game search temporarily unavailable." }) { StatusCode = 502 };
             }
         }
 
@@ -102,24 +100,5 @@ limit 25;
                 .Replace("\"", "\\\"");
         }
 
-        private async Task<string> GetTwitchToken(string clientId, string clientSecret)
-        {
-            var client = _http.CreateClient();
-
-            var url =
-                "https://id.twitch.tv/oauth2/token" +
-                $"?client_id={clientId}" +
-                $"&client_secret={clientSecret}" +
-                "&grant_type=client_credentials";
-
-            var r = await client.PostAsync(url, null);
-            var text = await r.Content.ReadAsStringAsync();
-
-            if (!r.IsSuccessStatusCode)
-                throw new Exception($"Twitch token failed ({r.StatusCode}): {text}");
-
-            using var jsonDoc = JsonDocument.Parse(text);
-            return jsonDoc.RootElement.GetProperty("access_token").GetString()!;
-        }
     }
 }
