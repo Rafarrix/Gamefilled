@@ -1,4 +1,5 @@
 using System.Net.Mail;
+using Gamefilled.Application.Security;
 using Gamefilled.Data;
 using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -110,15 +111,10 @@ public class AccountModel : PageModel
             return Page();
         }
 
-        if (NewPassword.Length < 8)
+        // Apply exactly the same password rules as new-account registration.
+        if (!RegistrationInputPolicy.IsAllowedPassword(NewPassword))
         {
-            PasswordError = "The new password must contain at least 8 characters.";
-            return Page();
-        }
-
-        if (!NewPassword.Any(char.IsLetter) || !NewPassword.Any(char.IsDigit))
-        {
-            PasswordError = "Use at least one letter and one number.";
+            PasswordError = "The new password must contain 12 to 128 characters.";
             return Page();
         }
 
@@ -168,7 +164,7 @@ public class AccountModel : PageModel
 
     private static bool IsValidEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(email) || email.Length > 254)
+        if (string.IsNullOrWhiteSpace(email) || email.Length > 150)
             return false;
 
         try

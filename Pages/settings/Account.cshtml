@@ -33,7 +33,7 @@
                         </div>
                     </section>
                     <section class="gf-panel">
-                        <div class="gf-panel__header"><div><h2>Change password</h2><p>Use at least eight characters with a letter and number.</p></div></div>
+                        <div class="gf-panel__header"><div><h2>Change password</h2><p>Use 12 to 128 characters. Spaces are preserved.</p></div></div>
                         <div class="gf-panel__body">
                             @if (!string.IsNullOrWhiteSpace(Model.PasswordSuccess)) { <div class="gf-alert gf-alert--success" role="status">@Model.PasswordSuccess</div> }
                             @if (!string.IsNullOrWhiteSpace(Model.PasswordError)) { <div class="gf-alert gf-alert--danger" role="alert">@Model.PasswordError</div> }

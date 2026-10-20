@@ -11,6 +11,12 @@ public static class RegistrationInputPolicy
     public const int MinimumPasswordLength = 12;
     public const int MaximumPasswordLength = 128;
 
+    // Shared rule for new accounts and password changes.
+    public static bool IsAllowedPassword(string? password) =>
+        !string.IsNullOrEmpty(password)
+        && password.Length >= MinimumPasswordLength
+        && password.Length <= MaximumPasswordLength;
+
     public static bool TryValidate(
         string? username,
         string? email,
@@ -52,7 +58,7 @@ public static class RegistrationInputPolicy
         }
 
         // Never Trim() passwords: leading and trailing spaces are meaningful.
-        if (password.Length < MinimumPasswordLength || password.Length > MaximumPasswordLength)
+        if (!IsAllowedPassword(password))
         {
             error = "Password must be 12-128 characters.";
             return false;
