@@ -4,10 +4,40 @@ Status: **design only**. No database migration, mail provider, route or authenti
 behaviour is enabled by this document. Do not publicly expose `gamefilled.pt`
 while the gates below remain open.
 
+## Decision update — 2026-10-20: test accounts and data are disposable
+
+The project owner explicitly confirmed that current Gamefilled accounts and library
+entries are test data and may be discarded. Prefer a **clean-slate ASP.NET Core
+Identity implementation on a NEW, isolated SQL Server database**, rather than a
+complex backwards-compatible migration of old sessions and BCrypt accounts.
+
+- Treat the existing Gamefilled database as a **source to preserve temporarily**,
+  not as a database to modify during development. Back it up off-host and test a
+  restore, even if its contents are disposable, so infrastructure rollback works.
+- Create and migrate the new database independently using reviewed EF migrations.
+  Keep the Gamefilled game catalog/IGDB/social/library features, but update all
+  application references to use a single, canonical Identity account model and
+  authenticated ClaimsPrincipal. No custom session-based fallback.
+- Existing test accounts **do not need migration**. After a supervised cutover,
+  users register again, confirm their email and repopulate their collections.
+- Do not delete, replace or clear the current SQL data until the clean Identity
+  deployment has passed integration tests, the user has confirmed cutover and
+  the old backup is safely stored.
+- Passwords must use the standard framework hasher. Implement the official
+  Identity login, email verification, password reset, security-stamp validation
+  and account settings flows. Avoid hand-rolled security token storage.
+- Evaluate moving auth data into the same SQL database as the social/library
+  entities (recommended for referential integrity) with explicit mappings,
+  constraints and migration tests.
+- Minimize the transition period when both authentication mechanisms could be
+  active: the new version must not authorize requests based on legacy session keys.
+
 ## Existing system and threats
 
 - The existing `Users` table has integer `Id` keys referenced by follows,
-  libraries, reviews and notifications. Preserve them and every FK.
+  libraries, reviews and notifications. Existing data is disposable, so the
+  **new database** may use a fresh Identity user schema and new IDs, provided all
+  the new social/library foreign keys are correct and verified.
 - Passwords use BCrypt hashes. Current login writes `userId`, `username`,
   `displayName` and `role` to ASP.NET Core Session. Authorization across
   Razor Pages often reads those session values rather than
@@ -26,14 +56,13 @@ while the gates below remain open.
 
 ## Target authentication
 
-1. Integrate **ASP.NET Core Identity** using the current `Users` IDs and
-   existing profile/social/library rows. Evaluate a custom `IdentityUser<int>`
-   or compatible store carefully; do not drop/recreate `Users` or alter existing
-   IDs. Add required Identity fields/tables using reviewed EF migrations.
-2. On initial login, a custom `IPasswordHasher` may verify existing BCrypt
-   hashes and return `SuccessRehashNeeded` to migrate on successful login to
-   a supported Identity hash. Never force password resets without a recovery
-   route. Verify malformed hashes are handled safely.
+1. Integrate **ASP.NET Core Identity** on a separate database using its
+   supported Entity Framework Core stores and a custom application user for
+   profile fields. Design the new FK model and reviewed EF migrations without
+   preserving throwaway account IDs or existing BCrypt hashes.
+2. Remove all custom password verification/authentication and migrate to the
+   supported Identity password hasher and account management APIs; legacy users
+   re-register after the explicit cutover.
 3. Replace all session-based authentication/authorization consumers with a
    supported Identity principal + authorization policies. Cover every mutating
    Razor Page/handler, follow, library, notification and settings operation.
@@ -54,9 +83,9 @@ while the gates below remain open.
   secrets or self-built cryptography. Configure purpose-scoped expiry
   (suggested: email verification 24 h; password reset 30 minutes) and
   single-use behaviour through Identity's security stamp changes.
-- After registering, do not permit unverified new accounts to log in or perform
-  authenticated actions. To avoid locking out legacy accounts abruptly, apply
-  an explicit documented migration policy and invite existing users to verify.
+- After registering, do not permit unverified accounts to log in or perform
+  authenticated actions. Existing test accounts will not be migrated or
+  silently marked as verified; users will re-register.
 - Requesting a reset or verification email must use the same generic response
   regardless of whether the email is registered, avoiding account enumeration.
   Apply anti-abuse throttling to send/resend routes and review email cost
@@ -86,18 +115,20 @@ while the gates below remain open.
    Test a full database restore to an isolated instance before any migration.
    Protect the provider key and Data Protection key material separately.
 2. **Design:** inspect all authorization consumers, agree on Identity storage,
-   migration and backward compatibility; inspect `/Settings/Account` and
+   clean database cutover; inspect `/Settings/Account` and
    all POST handlers. Confirm DNS manager and outbound mail domain.
 3. **Build:** implement on isolated feature branch with a reviewed EF Core
-   migration and dedicated integration tests. Existing usernames, BCrypt
-   passwords, FKs, libraries and profile fields must survive. CI must be green.
+   migration and dedicated integration tests. Old accounts and their test
+   library rows need not survive; all **new** identity/social/library FKs,
+   account workflows and authorizations must pass. CI must be green.
 4. **Security tests:** verify invalid/expired/used tokens, account enumeration,
    reset session invalidation, HTTPS-origin enforcement, CSRF, rate limits,
-   duplicate emails, password/role changes, unverified access, and legacy
-   account compatibility. Include database-backed integration tests.
-5. **Staging:** run the migration on a *restored clone* with a test mail domain
-   before applying to the actual Gamefilled SQL Server. Validate app startup,
-   mail delivery, rollback/restore path and browser sessions.
+   duplicate emails, password/role changes, unverified access, and rejection
+   of legacy session-only authentication. Include database-backed integration tests.
+5. **Staging:** run EF migrations on a brand-new **isolated** database and
+   use a test sending domain. Validate startup, email delivery, login, stored
+   collections and denial of access using the old session cookie. Keep the
+   original database unchanged for recovery.
 6. **Production:** deploy from an exact tested commit only after the mail domain
    is verified and the checklist is signed off; monitor errors without logging
    secrets. Publish external access only after broader security audit.
@@ -105,7 +136,20 @@ while the gates below remain open.
 ## Non-goals of this first stage
 
 - No public DNS/router/firewall opening.
-- No immediate mandatory re-verification of legacy accounts.
+- No migration/re-verification of existing throwaway accounts; users register
+  again after an explicit cutover.
 - No automatic in-place change of existing BCrypt hashes.
 - No custom password reset table/token scheme while Identity is being adopted.
 - No claim that a CI pass alone certifies the system as breach-free.
+
+## Mail provider / data-protection assessment
+
+- Resend's Ireland (eu-west-1) setting is an **email sending region**, not EU
+  data residency. As of October 2026, Resend says message content and logs
+  are stored in the United States. Review the DPA and update the Gamefilled
+  privacy notice before publication. Prefer minimal account email content
+  and short retention where configurable.
+- Domain DNS verification alone never requires publishing a web server or
+  opening router ports. Review provider DKIM, SPF and bounce/return-path MX
+  records for conflicts before editing DNS. Never replace an existing primary
+  domain MX without deliberate review.
