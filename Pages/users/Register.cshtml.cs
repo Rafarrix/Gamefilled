@@ -1,4 +1,5 @@
-﻿using Gamefilled.Data;
+﻿using Gamefilled.Application.Security;
+using Gamefilled.Data;
 using Gamefilled.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -34,6 +35,7 @@ namespace Gamefilled.Pages
         [BindProperty] public string Email { get; set; } = string.Empty;
         [BindProperty] public string Password { get; set; } = string.Empty;
         [BindProperty] public string ConfirmPassword { get; set; } = string.Empty;
+        [BindProperty] public bool AcceptTerms { get; set; }
 
         public string? Error { get; set; }
 
@@ -41,40 +43,19 @@ namespace Gamefilled.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // 1) Validação básica de preenchimento.
-            if (string.IsNullOrWhiteSpace(Username) ||
-                string.IsNullOrWhiteSpace(Email) ||
-                string.IsNullOrWhiteSpace(Password) ||
-                string.IsNullOrWhiteSpace(ConfirmPassword))
+            // Validate before database queries or expensive BCrypt hashing.
+            if (!RegistrationInputPolicy.TryValidate(
+                    Username, Email, Password, ConfirmPassword,
+                    out var username, out var email, out var validationError))
             {
-                Error = "Please fill in all fields.";
+                Error = validationError;
                 return Page();
             }
 
-            // 2) Normalização.
-            var username = Username.Trim();
-            var email = Email.Trim().ToLowerInvariant();
-            var password = Password.Trim();
-            var confirm = ConfirmPassword.Trim();
-
-            // 3) Verifica se passwords coincidem.
-            if (password != confirm)
+            // This checkbox must also be enforced on the server, not only with HTML 'required'.
+            if (!AcceptTerms)
             {
-                Error = "Passwords do not match.";
-                return Page();
-            }
-
-            // 4) Regras mínimas da password.
-            if (password.Length < 6)
-            {
-                Error = "Password must be at least 6 characters.";
-                return Page();
-            }
-
-            // 5) Validação de email muito básica.
-            if (!email.Contains("@"))
-            {
-                Error = "Please enter a valid email.";
+                Error = "You must accept the Terms of Service and Privacy Policy.";
                 return Page();
             }
 
@@ -93,7 +74,7 @@ namespace Gamefilled.Pages
             }
 
             // 8) Gera hash seguro da password.
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: BcryptWorkFactor);
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(Password, workFactor: BcryptWorkFactor);
 
             // 9) Cria novo utilizador.
             var newUser = new User
@@ -102,7 +83,7 @@ namespace Gamefilled.Pages
                 Email = email,
                 PasswordHash = passwordHash,
                 Role = "User",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(newUser);
