@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled", "Gamefilled.cs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.Tests", "tests\Gamefilled.Tests\Gamefilled.Tests.csproj", "{B031B029-0B88-4C6D-9C85-8B05DE68A6FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.V3", "v3\Gamefilled.V3\Gamefilled.V3.csproj", "{4A073F06-51F5-4F0E-A3A6-29A5EF005719}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.V3.Tests", "tests\Gamefilled.V3.Tests\Gamefilled.V3.Tests.csproj", "{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{B031B029-0B88-4C6D-9C85-8B05DE68A6FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B031B029-0B88-4C6D-9C85-8B05DE68A6FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B031B029-0B88-4C6D-9C85-8B05DE68A6FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A073F06-51F5-4F0E-A3A6-29A5EF005719}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A073F06-51F5-4F0E-A3A6-29A5EF005719}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A073F06-51F5-4F0E-A3A6-29A5EF005719}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A073F06-51F5-4F0E-A3A6-29A5EF005719}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
