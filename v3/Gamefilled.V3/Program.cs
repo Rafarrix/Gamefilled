@@ -74,7 +74,13 @@ app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler(_ => { });
+    // Never leak exception details to callers in Production.
+    app.UseExceptionHandler(errorApp =>
+        errorApp.Run(context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            return Task.CompletedTask;
+        }));
     app.UseHsts();
 }
 
