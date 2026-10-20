@@ -58,6 +58,7 @@
                         <div class="gf-auth-field">
                             <label asp-for="Password" class="gf-auth-label">Password</label>
                             <input asp-for="Password" class="gf-auth-input" type="password" placeholder="Password" autocomplete="new-password" />
+                            <small>Use 12 to 128 characters. Spaces are preserved.</small>
                         </div>
 
                         <div class="gf-auth-field">
@@ -66,7 +67,7 @@
                         </div>
 
                         <div class="gf-auth-check">
-                            <input type="checkbox" id="terms" required />
+                            <input asp-for="AcceptTerms" type="checkbox" id="terms" required />
                             <label for="terms">
                                 I agree to the <a href="/terms">Terms of Service</a> and
                                 <a href="/privacy">Privacy Policy</a>.
