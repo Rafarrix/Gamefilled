@@ -1,6 +1,8 @@
+using Gamefilled.Application.Security;
 using Gamefilled.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -9,15 +11,18 @@ namespace Gamefilled.Pages.Users
     /// <summary>
     /// User login page.
     /// </summary>
+    [EnableRateLimiting("login-ip")]
     public class LoginModel : PageModel
     {
         private readonly AppDbContext _context;
         private readonly ILogger<LoginModel> _logger;
+        private readonly LoginAttemptGuard _attempts;
 
-        public LoginModel(AppDbContext context, ILogger<LoginModel> logger)
+        public LoginModel(AppDbContext context, ILogger<LoginModel> logger, LoginAttemptGuard attempts)
         {
             _context = context;
             _logger = logger;
+            _attempts = attempts;
         }
 
         [BindProperty]
@@ -31,12 +36,6 @@ namespace Gamefilled.Pages.Users
 
         public string? Error { get; set; }
 
-        private const int MaxAttempts = 5;
-        private static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(5);
-
-        private const string KeyFailCount = "login_fail_count";
-        private const string KeyLockUntil = "login_lock_until_utc";
-
         public void OnGet()
         {
             if (!IsSafeLocalReturnUrl(ReturnUrl))
@@ -47,23 +46,6 @@ namespace Gamefilled.Pages.Users
         {
             if (!IsSafeLocalReturnUrl(ReturnUrl))
                 ReturnUrl = null;
-
-            var lockUntilUtc = GetLockUntilUtc();
-            if (lockUntilUtc != null)
-            {
-                var nowUtc = DateTimeOffset.UtcNow;
-
-                if (nowUtc < lockUntilUtc.Value)
-                {
-                    var remaining = lockUntilUtc.Value - nowUtc;
-                    var mins = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
-
-                    Error = $"Too many attempts. Try again in {mins} minute(s).";
-                    return Page();
-                }
-
-                ClearFailCounterAndLock();
-            }
 
             if (string.IsNullOrWhiteSpace(EmailOrUsername) || string.IsNullOrEmpty(Password))
             {
@@ -77,6 +59,19 @@ namespace Gamefilled.Pages.Users
             if (identifier.Contains("@"))
                 identifier = identifier.ToLowerInvariant();
 
+            // Never allocate a rate-limit cache key from unbounded user input.
+            if (identifier.Length > 150)
+            {
+                Error = "Invalid username, email or password.";
+                return Page();
+            }
+
+            if (_attempts.IsBlocked(identifier, out var remainingMinutes))
+            {
+                Error = $"Too many attempts. Try again in {remainingMinutes} minute(s).";
+                return Page();
+            }
+
             try
             {
                 _logger.LogInformation(
@@ -89,7 +84,7 @@ namespace Gamefilled.Pages.Users
 
                 if (user == null || string.IsNullOrWhiteSpace(user.PasswordHash))
                 {
-                    RegisterFailAttempt();
+                    _attempts.RecordFailure(identifier);
                     Error = "Invalid username, email or password.";
                     return Page();
                 }
@@ -97,12 +92,12 @@ namespace Gamefilled.Pages.Users
                 var ok = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
                 if (!ok)
                 {
-                    RegisterFailAttempt();
+                    _attempts.RecordFailure(identifier);
                     Error = "Invalid username, email or password.";
                     return Page();
                 }
 
-                ClearFailCounterAndLock();
+                _attempts.RecordSuccess(identifier);
 
                 var now = DateTime.UtcNow;
                 user.LastSeenAt = now;
@@ -138,41 +133,6 @@ namespace Gamefilled.Pages.Users
                 Error = "An unexpected error occurred.";
                 return Page();
             }
-        }
-
-        private void RegisterFailAttempt()
-        {
-            var count = HttpContext.Session.GetInt32(KeyFailCount) ?? 0;
-            count++;
-            HttpContext.Session.SetInt32(KeyFailCount, count);
-
-            if (count >= MaxAttempts)
-            {
-                var lockUntil = DateTimeOffset.UtcNow.Add(LockDuration);
-                HttpContext.Session.SetString(KeyLockUntil, lockUntil.ToString("O"));
-
-                _logger.LogWarning(
-                    "Login locked for {Minutes} minutes (attempts={Count}).",
-                    LockDuration.TotalMinutes,
-                    count);
-            }
-        }
-
-        private DateTimeOffset? GetLockUntilUtc()
-        {
-            var value = HttpContext.Session.GetString(KeyLockUntil);
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            return DateTimeOffset.TryParse(value, out var lockUntil)
-                ? lockUntil
-                : null;
-        }
-
-        private void ClearFailCounterAndLock()
-        {
-            HttpContext.Session.Remove(KeyFailCount);
-            HttpContext.Session.Remove(KeyLockUntil);
         }
 
         private bool IsSafeLocalReturnUrl(string? url)

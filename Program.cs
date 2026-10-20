@@ -2,9 +2,13 @@ using Gamefilled.Application.Companies;
 using Gamefilled.Application.Games;
 using Gamefilled.Application.Notifications;
 using Gamefilled.Application.Social;
+using Gamefilled.Application.Security;
 using Gamefilled.Data;
 using Gamefilled.Infrastructure;
 using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -105,12 +109,64 @@ builder.Services.AddSession(options =>
 });
 
 /* ============================================================================
+   PROXY TRUST AND REQUEST THROTTLING
+   ============================================================================ */
+// Only accept client IP and HTTPS scheme headers from explicitly trusted proxy networks.
+// Configure ReverseProxy__TrustedNetwork in the deployment (e.g., the dedicated Docker subnet).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+
+    var trustedNetwork = builder.Configuration["ReverseProxy:TrustedNetwork"];
+    if (!string.IsNullOrWhiteSpace(trustedNetwork))
+    {
+        if (!System.Net.IPNetwork.TryParse(trustedNetwork, out var network))
+            throw new InvalidOperationException("Invalid ReverseProxy:TrustedNetwork CIDR.");
+
+        options.KnownIPNetworks.Add(network);
+    }
+});
+
+builder.Services.AddSingleton<LoginAttemptGuard>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login-ip", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: "login:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy("registration-ip", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: "register:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 15,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+
+/* ============================================================================
    PLATFORM SERVICES
    ============================================================================ */
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<RequireLoginFilter>();
 
 var app = builder.Build();
+
+// Must run before HTTPS redirection, session and endpoint rate limiting.
+app.UseForwardedHeaders();
 
 /* ============================================================================
    HTTP PIPELINE
@@ -137,6 +193,7 @@ app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiter();
 app.UseCookiePolicy();
 app.UseSession();
 app.UseMiddleware<UserPresenceMiddleware>();
