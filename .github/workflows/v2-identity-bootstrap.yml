@@ -38,6 +38,8 @@ jobs:
             --configuration Release \
             --no-build \
             --output-dir Data/Migrations
+          # Build again so the freshly scaffolded migration and snapshot are loaded.
+          dotnet build v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj --configuration Release --no-restore
           dotnet tool run dotnet-ef migrations has-pending-model-changes \
             --project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
             --startup-project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
