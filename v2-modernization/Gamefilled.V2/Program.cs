@@ -12,7 +12,7 @@ var connection = builder.Configuration.GetConnectionString("V2ModernDatabase");
 if (string.IsNullOrWhiteSpace(connection))
 {
     throw new InvalidOperationException(
-        "V3 requires ConnectionStrings:V2ModernDatabase for an isolated SQL database.");
+        "Gamefilled V2 modernization requires ConnectionStrings:V2ModernDatabase for an isolated SQL database.");
 }
 
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
@@ -89,7 +89,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// The V3 foundation has NO registration, login, password reset, or public
+// The modernized V2 foundation has NO registration, login, password reset, or public
 // mail endpoints yet. Those require reviewed migrations and integration tests.
 app.MapGet("/health/live", () => Results.Ok(new { status = "healthy", service = "gamefilled-v2-modern" }))
     .AllowAnonymous();
