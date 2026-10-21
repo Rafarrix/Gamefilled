@@ -62,3 +62,23 @@ Review them for unintended operations before using `database update`.
 - Live production cutover and any public DNS/router exposure.
 
 A passing build or unit test is not proof of readiness for public access.
+
+## Password recovery implementation (isolated V2 modernization)
+
+- `/account/forgot-password` accepts an email and gives the same generic
+  response whether the account exists, is verified or does not exist.
+- Verified accounts receive a signed Identity password reset link from the
+  same fixed `Gamefilled:PublicOrigin` as email confirmations. Never use
+  the request Host header to generate security links.
+- `/account/reset-password` displays a form with POST antiforgery validation;
+  reset tokens are not consumed automatically by email link scanners.
+- A valid reset changes the Identity password and rotates the security stamp;
+  reset links cannot be reused afterward. Password length is 12–128 characters.
+- Identity cookie tickets are revalidated against the security stamp at
+  one-minute intervals. **Revocation is not instantaneous** for existing cookies;
+  strict immediate revocation requires a server-side session store at cutover.
+- Tokens currently share a **one-hour** lifetime through the standard
+  Data Protection token provider. Consider separate lifetimes for confirmation
+  and password reset after staging tests, using supported Identity providers.
+- No user can test this on `dev.gamefilled.pt` yet; the modernized host is
+  still an isolated code/SQL CI module, not deployed on the homelab.

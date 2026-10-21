@@ -15,6 +15,7 @@ public sealed class IdentityAccountPagesTests : IClassFixture<ModernIdentityAppl
     [InlineData("/account/register")]
     [InlineData("/account/login")]
     [InlineData("/account/resend")]
+    [InlineData("/account/forgot-password")]
     [InlineData("/account/confirm?userId=00000000-0000-0000-0000-000000000000&code=invalid")]
     public async Task Account_pages_render_anonymously_without_a_database_query(string path)
     {
@@ -34,6 +35,7 @@ public sealed class IdentityAccountPagesTests : IClassFixture<ModernIdentityAppl
     [InlineData("/account/register")]
     [InlineData("/account/login")]
     [InlineData("/account/resend")]
+    [InlineData("/account/forgot-password")]
     [InlineData("/account/confirm")]
     public async Task Account_mutation_without_antiforgery_token_is_rejected(string path)
     {
