@@ -32,6 +32,11 @@ Cloudflare tunnel, public DNS, UPnP, or a VPN accessible to strangers.
    disk and reserves CPU while running.
 3. Confirm `192.168.1.21:8444` is unused and the Docker network
    `172.28.81.0/24` does not overlap an existing network/VPN.
+   Proxmox VM 110 currently only allows selected inbound LAN ports:
+   before browser testing, authorize **TCP 8444 only from
+   `192.168.1.0/24` on this VM**, after verifying the preview is running.
+   This is a restricted LAN exception, **not** a router/WAN rule.
+   Remove that VM firewall exception when retiring the preview.
 4. Back up the live service **off-host** and check its existing health
    before changing the homelab. Do not run `docker compose down -v`.
 5. Configure the preview's API secrets privately. Do not paste them into
