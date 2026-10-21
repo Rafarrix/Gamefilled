@@ -74,6 +74,20 @@ jobs:
             --configuration Release \
             --no-build 2>&1 | tee migration-check.log
 
+      - name: Verify isolated V2 Identity migration snapshot
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
+          ConnectionStrings__V2ModernDatabase: Server=127.0.0.1,1;Database=GamefilledV2ModernCI;User Id=sa;Password=Unused_TestOnly_123!;Encrypt=False;Connect Timeout=1
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet tool run dotnet-ef migrations has-pending-model-changes \
+            --project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
+            --startup-project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
+            --context GamefilledIdentityDbContext \
+            --configuration Release \
+            --no-build 2>&1 | tee identity-migration-check.log
+
       - name: Publish
         shell: bash
         run: |
@@ -108,6 +122,7 @@ jobs:
             test.log
             v3-test.log
             migration-check.log
+            identity-migration-check.log
             publish.log
             migration-container.log
             production-container.log
