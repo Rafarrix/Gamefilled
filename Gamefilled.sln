@@ -7,9 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled", "Gamefilled.cs
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.Tests", "tests\Gamefilled.Tests\Gamefilled.Tests.csproj", "{B031B029-0B88-4C6D-9C85-8B05DE68A6FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.V3", "v3\Gamefilled.V3\Gamefilled.V3.csproj", "{4A073F06-51F5-4F0E-A3A6-29A5EF005719}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.V2", "v2-modernization\Gamefilled.V2\Gamefilled.V2.csproj", "{4A073F06-51F5-4F0E-A3A6-29A5EF005719}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.V3.Tests", "tests\Gamefilled.V3.Tests\Gamefilled.V3.Tests.csproj", "{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gamefilled.V2.Tests", "tests\Gamefilled.V2.Tests\Gamefilled.V2.Tests.csproj", "{8BFAC9CF-09B7-4CC8-BBC3-A991ECF36C11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
