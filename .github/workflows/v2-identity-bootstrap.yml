@@ -51,7 +51,9 @@ jobs:
           set -euo pipefail
           generated=$(find v2-modernization/Gamefilled.V2/Data/Migrations -name '*_InitialIdentity.cs' | head -n 1)
           test -n "$generated"
-          if grep -Eq 'migrationBuilder\.(Drop|Alter|Delete|Update)' "$generated"; then
+          # Inspect only Up: Down normally drops the newly created tables.
+          if sed -n '/protected override void Up(/,/protected override void Down(/p' "$generated" \
+              | grep -Eq 'migrationBuilder\.(Drop|Alter|Delete|Update)'; then
             echo 'Unexpected data modification in initial migration'
             exit 1
           fi
