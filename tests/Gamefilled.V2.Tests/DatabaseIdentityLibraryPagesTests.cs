@@ -50,11 +50,7 @@ public sealed class DatabaseIdentityLibraryPagesTests
 
         using var anonymous = Client(factory);
         using var blocked = await anonymous.GetAsync("/library/all");
-        Assert.True(blocked.StatusCode == HttpStatusCode.Redirect,
-            "Anonymous request status: " + blocked.StatusCode
-            + "; diagnostic body: " +
-            (await blocked.Content.ReadAsStringAsync())[..Math.Min(2000,
-                (await blocked.Content.ReadAsStringAsync()).Length)]);
+        Assert.Equal(HttpStatusCode.Redirect, blocked.StatusCode);
 
         using var a = Client(factory);
         using var b = Client(factory);
