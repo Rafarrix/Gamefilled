@@ -135,13 +135,17 @@ app.Use(async (context, next) =>
 
 if (!app.Environment.IsDevelopment())
 {
-    // Never leak exception details to callers in Production.
-    app.UseExceptionHandler(errorApp =>
-        errorApp.Run(context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            return Task.CompletedTask;
-        }));
+    // Keep staging/CI exceptions inspectable in the isolated TestServer,
+    // without leaking exception details from any real deployment.
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        app.UseExceptionHandler(errorApp =>
+            errorApp.Run(context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                return Task.CompletedTask;
+            }));
+    }
     app.UseHsts();
 }
 
