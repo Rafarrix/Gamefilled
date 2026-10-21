@@ -75,8 +75,9 @@
             </form>
         </section>
         <p id="game-id-help" class="gf-library-import-note">
-            Integration preview: games are currently referenced by their IGDB IDs.
-            Titles, artwork and the add-from-game-page experience will be restored with the catalog integration.
+            Library preview: metadata is read from the existing IGDB lookup; your saved
+            statuses and reviews remain in Gamefilled. The game-page add flow
+            will replace this temporary numeric field after the detail page migration.
         </p>
         @if (Model.Entries.Count == 0)
         {
@@ -91,21 +92,40 @@
                 @foreach (var game in Model.Entries)
                 {
                     <article class="gf-library-card">
-                        <div class="gf-library-card__body">
-                            <h2>IGDB #@game.IgdbGameId</h2>
-                            <p>Status: @game.Status</p>
-                            @if (game.Rating is not null)
+                        <a class="gf-library-card__cover" href="/games/@game.Entry.IgdbGameId" title="@game.Name">
+                            @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
                             {
-                                <p>Rating: @game.Rating/10</p>
+                                <img src="@game.CoverUrl" alt="@game.Name cover" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-gamepad" aria-hidden="true"></i></span>
+                            }
+                            @if (game.Entry.Rating.HasValue)
+                            {
+                                <em><i class="fas fa-star" aria-hidden="true"></i>@game.Entry.Rating/10</em>
+                            }
+                        </a>
+                        <div class="gf-library-card__body">
+                            <h2><a href="/games/@game.Entry.IgdbGameId">@game.Name</a></h2>
+                            <small>IGDB #@game.Entry.IgdbGameId</small>
+                            @if (game.ReleaseYear.HasValue)
+                            {
+                                <p>Released @game.ReleaseYear</p>
+                            }
+                            <p>Status: @game.Entry.Status</p>
+                            @if (game.Entry.Rating is not null)
+                            {
+                                <p>Rating: @game.Entry.Rating/10</p>
                             }
                             <form method="post" asp-page-handler="Status">
-                                <input type="hidden" name="gameId" value="@game.IgdbGameId" />
+                                <input type="hidden" name="gameId" value="@game.Entry.IgdbGameId" />
                                 <input type="hidden" name="section" value="@Model.Section" />
-                                <label for="status-@game.IgdbGameId">Change status</label>
-                                <select name="status" id="status-@game.IgdbGameId">
+                                <label for="status-@game.Entry.IgdbGameId">Change status</label>
+                                <select name="status" id="status-@game.Entry.IgdbGameId">
                                     @foreach (var status in sections.Where(x => x.Key != "all"))
                                     {
-                                        <option value="@status.Key" selected="@(status.Key == game.Status)">
+                                        <option value="@status.Key" selected="@(status.Key == game.Entry.Status)">
                                             @status.Name
                                         </option>
                                     }
@@ -113,25 +133,25 @@
                                 <button type="submit">Update status</button>
                             </form>
                             <form method="post" asp-page-handler="Review">
-                                <input type="hidden" name="gameId" value="@game.IgdbGameId" />
+                                <input type="hidden" name="gameId" value="@game.Entry.IgdbGameId" />
                                 <input type="hidden" name="section" value="@Model.Section" />
-                                <label for="rating-@game.IgdbGameId">Rating (1–10)</label>
+                                <label for="rating-@game.Entry.IgdbGameId">Rating (1–10)</label>
                                 <input type="number" min="1" max="10" name="rating"
-                                       id="rating-@game.IgdbGameId" value="@game.Rating" />
-                                <label for="review-@game.IgdbGameId">Review</label>
-                                <textarea id="review-@game.IgdbGameId" maxlength="5000"
-                                          name="reviewText" rows="4">@game.ReviewText</textarea>
+                                       id="rating-@game.Entry.IgdbGameId" value="@game.Entry.Rating" />
+                                <label for="review-@game.Entry.IgdbGameId">Review</label>
+                                <textarea id="review-@game.Entry.IgdbGameId" maxlength="5000"
+                                          name="reviewText" rows="4">@game.Entry.ReviewText</textarea>
                                 <label>
                                     <input type="checkbox" name="containsSpoilers" value="true"
-                                           checked="@game.ContainsSpoilers" />
+                                           checked="@game.Entry.ContainsSpoilers" />
                                     Contains spoilers
                                 </label>
                                 <button type="submit">Save review</button>
                             </form>
                             <form method="post" asp-page-handler="Remove">
-                                <input type="hidden" name="gameId" value="@game.IgdbGameId" />
+                                <input type="hidden" name="gameId" value="@game.Entry.IgdbGameId" />
                                 <input type="hidden" name="section" value="@Model.Section" />
-                                <button type="submit" aria-label="Remove IGDB game @game.IgdbGameId from your library">
+                                <button type="submit" aria-label="Remove IGDB game @game.Entry.IgdbGameId from your library">
                                     Remove
                                 </button>
                             </form>
@@ -139,6 +159,20 @@
                     </article>
                 }
             </section>
+        }
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="gf-library-pagination" aria-label="Library pages">
+                @if (Model.PageNumber > 1)
+                {
+                    <a href="/library/@Model.Section?page=@(Model.PageNumber - 1)">Previous</a>
+                }
+                <span>Page @Model.PageNumber of @Model.TotalPages</span>
+                @if (Model.PageNumber < Model.TotalPages)
+                {
+                    <a href="/library/@Model.Section?page=@(Model.PageNumber + 1)">Next</a>
+                }
+            </nav>
         }
     </main>
 </div>

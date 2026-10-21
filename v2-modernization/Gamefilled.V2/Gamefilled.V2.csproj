@@ -29,5 +29,13 @@
   <ItemGroup>
     <Compile Include="../../Application/Email/ITransactionalEmailSender.cs" Link="Shared/Email/ITransactionalEmailSender.cs" />
     <Compile Include="../../Infrastructure/ResendEmailSender.cs" Link="Shared/Email/ResendEmailSender.cs" />
+    <!-- Reuse exact tested existing IGDB client and catalog query methods.
+         Never duplicate or revise search/discovery/special-category criteria. -->
+    <Compile Include="../../Infrastructure/IgdbClient.cs" Link="Shared/Igdb/IgdbClient.cs" />
+    <Compile Include="../../Infrastructure/IgdbOptions.cs" Link="Shared/Igdb/IgdbOptions.cs" />
+    <Compile Include="../../Infrastructure/IgdbTokenProvider.cs" Link="Shared/Igdb/IgdbTokenProvider.cs" />
+    <Compile Include="../../Infrastructure/TwitchTokenResponse.cs" Link="Shared/Igdb/TwitchTokenResponse.cs" />
+    <Compile Include="../../Infrastructure/IgdbDtos.cs" Link="Shared/Igdb/IgdbDtos.cs" />
+    <Compile Include="../../Infrastructure/IgdbGameDetailsDto.cs" Link="Shared/Igdb/IgdbGameDetailsDto.cs" />
   </ItemGroup>
 </Project>

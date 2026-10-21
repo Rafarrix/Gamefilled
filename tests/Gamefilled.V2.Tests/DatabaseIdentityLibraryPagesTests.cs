@@ -2,6 +2,9 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Gamefilled.V2.Data;
 using Gamefilled.V2.Identity;
+using Gamefilled.V2.Library;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -27,6 +30,11 @@ public sealed class DatabaseIdentityLibraryPagesTests
             // The host deliberately surfaces unhandled exceptions in Testing only.
             host.UseEnvironment("Testing");
             host.UseSetting("ConnectionStrings:V2ModernDatabase", connection);
+            host.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<ILibraryGameCatalog>();
+                services.AddSingleton<ILibraryGameCatalog>(new FakeLibraryCatalog());
+            });
         });
 
         var emailA = Guid.NewGuid().ToString("N") + "@example.invalid";
@@ -78,6 +86,9 @@ public sealed class DatabaseIdentityLibraryPagesTests
         {
             var body = await aPage.Content.ReadAsStringAsync();
             Assert.Contains("IGDB #7301", body);
+            Assert.Contains("Test game from IGDB", body);
+            Assert.Contains("https://images.igdb.com/igdb/image/upload/t_cover_big/co123.jpg", body);
+            Assert.Contains("href=\"/games/7301\"", body);
             Assert.Contains("playing", body);
         }
 
@@ -172,4 +183,20 @@ public sealed class DatabaseIdentityLibraryPagesTests
 
     private static FormUrlEncodedContent Form(params (string Name, string Value)[] fields) =>
         new(fields.Select(item => new KeyValuePair<string, string>(item.Name, item.Value)));
+    private sealed class FakeLibraryCatalog : ILibraryGameCatalog
+    {
+        public Task<IReadOnlyDictionary<int, LibraryGameMetadata>> GetByIdsAsync(
+            IEnumerable<int> gameIds, CancellationToken cancellationToken = default)
+        {
+            IReadOnlyDictionary<int, LibraryGameMetadata> result =
+                gameIds.Where(id => id == 7301).Distinct().ToDictionary(
+                    id => id,
+                    id => new LibraryGameMetadata(
+                        id,
+                        "Test game from IGDB",
+                        "https://images.igdb.com/igdb/image/upload/t_cover_big/co123.jpg",
+                        2024));
+            return Task.FromResult(result);
+        }
+    }
 }

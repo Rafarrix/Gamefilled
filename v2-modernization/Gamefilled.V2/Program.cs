@@ -23,6 +23,16 @@ if (string.IsNullOrWhiteSpace(connection))
 
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<GameLibraryService>();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IgdbOptions>(builder.Configuration.GetSection("IGDB"));
+builder.Services.AddHttpClient("TwitchAuth");
+builder.Services.AddSingleton<IgdbTokenProvider>();
+builder.Services.AddHttpClient<IgdbClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.igdb.com/v4/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddScoped<ILibraryGameCatalog, IgdbLibraryGameCatalog>();
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
     options.UseSqlServer(connection));
 
