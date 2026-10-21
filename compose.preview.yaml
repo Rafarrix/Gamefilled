@@ -1,0 +1,97 @@
+# Completely independent and temporary V2-preview project.
+# Invoke ONLY with: docker compose --project-name gamefilled-v2-preview
+#    --env-file preview/.env.preview -f compose.preview.yaml ...
+# Never run 'down -v' against the existing /opt/gamefilled compose project.
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: "${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD in preview/.env.preview}"
+    volumes:
+      - preview-sql:/var/opt/mssql
+    networks:
+      - database
+    restart: unless-stopped
+    mem_limit: 3g
+    pids_limit: 300
+    security_opt:
+      - no-new-privileges:true
+
+  migrator:
+    profiles: ["setup"]
+    build:
+      context: .
+      dockerfile: preview/Dockerfile
+      target: migrator
+    environment:
+      ASPNETCORE_ENVIRONMENT: PreviewMigration
+      ConnectionStrings__V2ModernDatabase: "Server=sql,1433;Database=GamefilledV2Preview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
+    depends_on:
+      - sql
+    networks:
+      - database
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build:
+      context: .
+      dockerfile: preview/Dockerfile
+      target: web
+    environment:
+      ASPNETCORE_ENVIRONMENT: Preview
+      ConnectionStrings__V2ModernDatabase: "Server=sql,1433;Database=GamefilledV2Preview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
+      Gamefilled__PublicOrigin: "https://preview.gamefilled.pt:8444"
+      ReverseProxy__TrustedNetwork: "172.28.81.2/32"
+      DataProtection__KeysDirectory: "/app/keys"
+      Resend__ApiKeyFile: "/run/secrets/resend_api_key"
+      IGDB__ClientId: "${PREVIEW_IGDB_CLIENT_ID:-}"
+      IGDB__ClientSecret: "${PREVIEW_IGDB_CLIENT_SECRET:-}"
+    depends_on:
+      - sql
+    volumes:
+      - ./preview/local/keys:/app/keys
+      - ./preview/local/secrets/resend_api_key:/run/secrets/resend_api_key:ro
+    networks:
+      - database
+      - edge
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    ports:
+      - "${PREVIEW_LAN_IP:?Set LAN IP}:8444:443/tcp"
+    volumes:
+      - ./preview/Caddyfile:/etc/caddy/Caddyfile:ro
+      - preview-caddy-data:/data
+      - preview-caddy-config:/config
+    depends_on:
+      - web
+    networks:
+      edge:
+        ipv4_address: 172.28.81.2
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  database:
+    internal: true
+  edge:
+    ipam:
+      config:
+        - subnet: 172.28.81.0/24
+
+volumes:
+  preview-sql:
+  preview-caddy-data:
+  preview-caddy-config:
