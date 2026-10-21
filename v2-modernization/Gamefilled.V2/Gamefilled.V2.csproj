@@ -16,4 +16,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+  <!-- Compile the same reviewed mail transport as the running V2; no duplicate API code. -->
+  <ItemGroup>
+    <Compile Include="../../Application/Email/ITransactionalEmailSender.cs" Link="Shared/Email/ITransactionalEmailSender.cs" />
+    <Compile Include="../../Infrastructure/ResendEmailSender.cs" Link="Shared/Email/ResendEmailSender.cs" />
+  </ItemGroup>
 </Project>

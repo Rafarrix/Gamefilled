@@ -129,3 +129,64 @@ jobs:
             tests/Gamefilled.Tests/TestResults/**/*.trx
             tests/Gamefilled.V2.Tests/TestResults/**/*.trx
           if-no-files-found: warn
+
+  identity-sql:
+    name: Identity SQL integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Express
+          MSSQL_SA_PASSWORD: TestOnly_Sql_2026_ChangeMe!
+        ports:
+          - 14334:1433
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ASPNETCORE_ENVIRONMENT: Testing
+      GAMEFILLED_V2_SQL_INTEGRATION: "1"
+      ConnectionStrings__V2ModernDatabase: "Server=127.0.0.1,14334;Database=GamefilledV2ModernCI;User Id=sa;Password=TestOnly_Sql_2026_ChangeMe!;Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
+      Gamefilled__PublicOrigin: https://dev.gamefilled.pt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore EF tooling and V2 Identity
+        run: |
+          dotnet tool restore
+          dotnet restore v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj
+          dotnet build v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj --configuration Release --no-restore
+      - name: Apply EF Identity migration to disposable SQL database
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 15); do
+            if dotnet tool run dotnet-ef database update \
+              --project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
+              --startup-project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
+              --context GamefilledIdentityDbContext \
+              --configuration Release --no-build > sql-migration.log 2>&1; then
+              echo "Isolated Identity SQL migration applied."
+              break
+            fi
+            if [ "$attempt" -eq 15 ]; then
+              echo "SQL migration did not succeed; see sanitized diagnostics."
+              tail -n 35 sql-migration.log
+              exit 1
+            fi
+            sleep 4
+          done
+      - name: Test real registration, confirmation and login against SQL
+        run: |
+          dotnet test tests/Gamefilled.V2.Tests/Gamefilled.V2.Tests.csproj \
+            --configuration Release \
+            --filter "FullyQualifiedName~DatabaseIdentityFlowTests" \
+            --logger "trx;LogFileName=identity-sql.trx"

@@ -1,0 +1,12 @@
+@page "/account/login"
+@model Gamefilled.V2.Pages.Account.LoginModel
+<h1>Sign in to Gamefilled</h1>
+<form method="post">
+    <div asp-validation-summary="All" role="alert"></div>
+    <label asp-for="Email">Email address</label>
+    <input asp-for="Email" type="email" autocomplete="email" />
+    <label asp-for="Password">Password</label>
+    <input asp-for="Password" type="password" autocomplete="current-password" />
+    <button type="submit">Sign in</button>
+</form>
+<p><a href="/account/register">Create account</a> · <a href="/account/resend">Confirm email</a></p>

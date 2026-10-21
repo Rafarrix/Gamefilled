@@ -1,0 +1,26 @@
+@page "/account/register"
+@model Gamefilled.V2.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Create account";
+}
+<h1>Create a Gamefilled account</h1>
+@if (Model.RequestAccepted)
+{
+    <p>If this account can be created, you'll receive a confirmation email. Check your inbox and spam folder.</p>
+    <p><a href="/account/resend">Resend a confirmation email</a> or <a href="/account/login">sign in</a>.</p>
+}
+else
+{
+    <form method="post">
+        <div asp-validation-summary="All" role="alert"></div>
+        <label asp-for="Username">Username</label>
+        <input asp-for="Username" autocomplete="username" maxlength="30" />
+        <label asp-for="Email">Email address</label>
+        <input asp-for="Email" type="email" autocomplete="email" maxlength="254" />
+        <label asp-for="Password">Password (12–128 characters)</label>
+        <input asp-for="Password" type="password" autocomplete="new-password" minlength="12" maxlength="128" />
+        <label><input asp-for="AcceptTerms" type="checkbox" required /> I accept the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.</label>
+        <button type="submit">Create account</button>
+    </form>
+}
+<p>Already have an account? <a href="/account/login">Sign in</a>.</p>

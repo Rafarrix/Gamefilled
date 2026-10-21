@@ -1,0 +1,16 @@
+@page "/account/resend"
+@model Gamefilled.V2.Pages.Account.ResendModel
+<h1>Resend confirmation</h1>
+@if (Model.RequestAccepted)
+{
+    <p>If the account needs verification, a new email will be sent.</p>
+}
+else
+{
+    <form method="post">
+        <div asp-validation-summary="All" role="alert"></div>
+        <label asp-for="Email">Email address</label>
+        <input asp-for="Email" type="email" autocomplete="email" />
+        <button type="submit">Send confirmation email</button>
+    </form>
+}

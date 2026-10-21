@@ -1,5 +1,10 @@
 using Gamefilled.V2.Data;
 using Gamefilled.V2.Identity;
+using Gamefilled.V2.Security;
+using Gamefilled.Application.Email;
+using Gamefilled.Infrastructure;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -15,6 +20,7 @@ if (string.IsNullOrWhiteSpace(connection))
         "Gamefilled V2 modernization requires ConnectionStrings:V2ModernDatabase for an isolated SQL database.");
 }
 
+builder.Services.AddRazorPages();
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
     options.UseSqlServer(connection));
 
@@ -36,6 +42,42 @@ builder.Services.AddIdentityCore<GamefilledUser>(options =>
 .AddEntityFrameworkStores<GamefilledIdentityDbContext>()
 .AddSignInManager()
 .AddDefaultTokenProviders();
+
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(1);
+});
+
+builder.Services.AddSingleton<AccountLinkFactory>();
+builder.Services.Configure<ResendEmailOptions>(builder.Configuration.GetSection("Resend"));
+builder.Services.AddHttpClient<ITransactionalEmailSender, ResendEmailSender>(client =>
+{
+    client.BaseAddress = new Uri("https://api.resend.com/");
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("account-forms", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 25,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+    options.AddPolicy("email-send", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+});
 
 // Cookie-only by design. No bearer/refresh-token endpoint or legacy session auth.
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
@@ -71,6 +113,16 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 app.UseForwardedHeaders();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/account", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        context.Response.Headers["Referrer-Policy"] = "no-referrer";
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    }
+    await next();
+});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -86,11 +138,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// The modernized V2 foundation has NO registration, login, password reset, or public
-// mail endpoints yet. Those require reviewed migrations and integration tests.
+// Modernization routes remain isolated from current V2; not deployed publicly.
+// Account recovery and richer user flows will follow after staging SQL validation.
 app.MapGet("/health/live", () => Results.Ok(new { status = "healthy", service = "gamefilled-v2-modern" }))
     .AllowAnonymous();
 
@@ -98,6 +151,8 @@ app.MapGet("/identity/me", (System.Security.Claims.ClaimsPrincipal principal) =>
 {
     return Results.Ok(new { id = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value });
 }).RequireAuthorization();
+
+app.MapRazorPages();
 
 app.Run();
 

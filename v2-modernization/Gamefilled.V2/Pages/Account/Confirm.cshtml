@@ -1,0 +1,22 @@
+@page "/account/confirm"
+@model Gamefilled.V2.Pages.Account.ConfirmModel
+@{
+    ViewData["Title"] = "Confirm email";
+}
+<h1>Confirm your email</h1>
+@if (Model.Completed)
+{
+    <p>Your address has been confirmed. <a href="/account/login">Sign in</a>.</p>
+}
+else if (Model.Invalid)
+{
+    <p>This confirmation link is invalid or expired. <a href="/account/resend">Request another</a>.</p>
+}
+else
+{
+    <form method="post">
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="Code" />
+        <button type="submit">Confirm email address</button>
+    </form>
+}
