@@ -1,16 +1,16 @@
-# Gamefilled V3 — backend reconstruction blueprint
+# Gamefilled V2 — backend modernization plan
 
-Status: **design and inventory**. The existing V2 containers remain running and no SQL data is removed. Existing accounts and saved games are disposable test data by the owner's decision. The existing front-end is a visual baseline, not an immutable requirement.
+Status: **design and inventory for post-PAP V2**. The existing currently hosted V2 containers remain running and no SQL data is removed. Existing accounts and saved games are disposable test data by the owner's decision. The existing front-end is a visual baseline, not an immutable requirement.
 
 ## Decision
 
 Rebuild the authentication and weak backend pieces professionally rather than maintaining compatibility with custom BCrypt/session authorization. Use a **modular monolith**, not microservices: ASP.NET Core 10 Razor Pages, ASP.NET Core Identity with EF stores, SQL Server and reviewable EF Core migrations, typed HttpClients for IGDB/Resend, Caddy for HTTPS. Preserve the well-working visual system, improve secondary pages, and eliminate abandoned placeholders or implement them correctly.
 
-Create a NEW isolated database for V3. Do not change the V2 database or deploy V3 publicly until acceptance gates pass. After cutover, discard old disposable accounts only with the owner's explicit go-ahead and a restorable off-host backup.
+Create a NEW isolated database for the modernized V2 backend. Do not change the V2 database or deploy the modernized V2 publicly until acceptance gates pass. After cutover, discard old disposable accounts only with the owner's explicit go-ahead and a restorable off-host backup.
 
 ## Verified repository inventory (2026-10-20)
 
-| Feature | Current implementation | V3 decision |
+| Feature | Current implementation | the modernized V2 decision |
 | --- | --- | --- |
 | Register/Login | Custom BCrypt, session IDs/role, rate-limit memory cache | Replace with Identity; email verification required |
 | Settings/Account | Password/email changes against session user ID | Replace with Identity; email change requires new-address verification and recent auth |
@@ -35,10 +35,10 @@ Create a NEW isolated database for V3. Do not change the V2 database or deploy V
 
 Use explicit service interfaces for each module. Keep Razor Page models thin and prevent duplicated SQL/business rules in views and APIs. Do not expose the DB or backend containers publicly.
 
-## V3 delivery milestones
+## the modernized V2 delivery milestones
 
 1. **Design and risk inventory** — routes, all POST/GET handlers, session reads, EF queries, JS innerHTML, external URLs and existing UI reviewed; identify required vs optional features.
-2. **Database and Identity baseline** — create isolated V3 SQL database and EF migrations; add Identity entities with appropriate indexes, ownership FKs and delete rules. Add database-backed integration tests. Never use `EnsureCreated` in deployment.
+2. **Database and Identity baseline** — create isolated the modernized V2 SQL database and EF migrations; add Identity entities with appropriate indexes, ownership FKs and delete rules. Add database-backed integration tests. Never use `EnsureCreated` in deployment.
 3. **Full authorization cutover** — move all current-user lookups to Identity/ClaimsPrincipal; no `Session.GetInt32("userId")` as an authority. Validate unauthorized access across every mutation. Test login, logout, CSRF, password reset and security-stamp session invalidation.
 4. **Mail flows** — verification, re-send and recovery through already-implemented Resend transport. Tokens are handled by Identity; fixed HTTPS origin; generic replies; no tracking or secret logging. Secret-file access validated with non-root container.
 5. **Feature parity** — catalog, game details, libraries, ratings/reviews, user profiles, follows/friends and notifications must pass functional and security integration tests. Reuse CSS and frontend components but improve rough pages.
@@ -57,4 +57,4 @@ Use explicit service interfaces for each module. Keep Razor Page models thin and
 
 ## Near-term implementation order
 
-Start with V3 **new Identity schema and database**, not polishing the legacy login. In parallel, collect a route/permission matrix and a secondary-page inventory. Only add one authenticated module at a time. Preserve the existing web UI until a feature is verified, then switch its backend.
+Start with the modernized V2 **new Identity schema and database**, not polishing the legacy login. In parallel, collect a route/permission matrix and a secondary-page inventory. Only add one authenticated module at a time. Preserve the existing web UI until a feature is verified, then switch its backend.

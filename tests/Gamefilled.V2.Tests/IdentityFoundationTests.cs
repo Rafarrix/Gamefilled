@@ -1,6 +1,6 @@
 using System.Net;
-using Gamefilled.V3.Data;
-using Gamefilled.V3.Identity;
+using Gamefilled.V2.Data;
+using Gamefilled.V2.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -10,13 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Gamefilled.V3.Tests;
+namespace Gamefilled.V2.Tests;
 
-public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory>
+public sealed class IdentityFoundationTests : IClassFixture<ModernIdentityApplicationFactory>
 {
-    private readonly V3ApplicationFactory _factory;
+    private readonly ModernIdentityApplicationFactory _factory;
 
-    public IdentityFoundationTests(V3ApplicationFactory factory) => _factory = factory;
+    public IdentityFoundationTests(ModernIdentityApplicationFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Foundation_exposes_only_its_own_liveness_endpoint()
@@ -29,7 +29,7 @@ public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory
         using var response = await client.GetAsync("/health/live");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("gamefilled-v3", await response.Content.ReadAsStringAsync());
+        Assert.Contains("gamefilled-v2-modern", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory
             .GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>()
             .Get(IdentityConstants.ApplicationScheme);
 
-        Assert.Equal("__Host-GamefilledV3", cookie.Cookie.Name);
+        Assert.Equal("__Host-GamefilledV2Modern", cookie.Cookie.Name);
         Assert.Equal(Microsoft.AspNetCore.Http.CookieSecurePolicy.Always, cookie.Cookie.SecurePolicy);
         Assert.True(cookie.Cookie.HttpOnly);
         Assert.Equal(Microsoft.AspNetCore.Http.SameSiteMode.Lax, cookie.Cookie.SameSite);
@@ -71,7 +71,7 @@ public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
 
-        Assert.Equal("GamefilledV3Tests", context.Database.GetDbConnection().Database);
+        Assert.Equal("GamefilledV2ModernTests", context.Database.GetDbConnection().Database);
 
         var user = context.Model.FindEntityType(typeof(GamefilledUser));
         Assert.NotNull(user);
@@ -81,15 +81,15 @@ public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory
 }
 
 /// <summary>All connection details are test placeholders; no database is contacted.</summary>
-public sealed class V3ApplicationFactory : WebApplicationFactory<Program>
+public sealed class ModernIdentityApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string? _oldConnection =
-        Environment.GetEnvironmentVariable("ConnectionStrings__V3Database");
+        Environment.GetEnvironmentVariable("ConnectionStrings__V2ModernDatabase");
 
-    public V3ApplicationFactory()
+    public ModernIdentityApplicationFactory()
     {
-        Environment.SetEnvironmentVariable("ConnectionStrings__V3Database",
-            "Server=127.0.0.1,1;Database=GamefilledV3Tests;User Id=sa;Password=NotReal_TestOnly_123!;Encrypt=False;Connect Timeout=1");
+        Environment.SetEnvironmentVariable("ConnectionStrings__V2ModernDatabase",
+            "Server=127.0.0.1,1;Database=GamefilledV2ModernTests;User Id=sa;Password=NotReal_TestOnly_123!;Encrypt=False;Connect Timeout=1");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -100,6 +100,6 @@ public sealed class V3ApplicationFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        Environment.SetEnvironmentVariable("ConnectionStrings__V3Database", _oldConnection);
+        Environment.SetEnvironmentVariable("ConnectionStrings__V2ModernDatabase", _oldConnection);
     }
 }

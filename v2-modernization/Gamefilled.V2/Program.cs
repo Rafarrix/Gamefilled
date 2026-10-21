@@ -1,5 +1,5 @@
-using Gamefilled.V3.Data;
-using Gamefilled.V3.Identity;
+using Gamefilled.V2.Data;
+using Gamefilled.V2.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Deliberately different from V2's DefaultConnection / Gamefilleddb.
-var connection = builder.Configuration.GetConnectionString("V3Database");
+var connection = builder.Configuration.GetConnectionString("V2ModernDatabase");
 if (string.IsNullOrWhiteSpace(connection))
 {
     throw new InvalidOperationException(
-        "V3 requires ConnectionStrings:V3Database for an isolated SQL database.");
+        "Gamefilled V2 modernization requires ConnectionStrings:V2ModernDatabase for an isolated SQL database.");
 }
 
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
@@ -42,7 +42,7 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.Name = "__Host-GamefilledV3";
+    options.Cookie.Name = "__Host-GamefilledV2Modern";
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
@@ -89,9 +89,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// The V3 foundation has NO registration, login, password reset, or public
+// The modernized V2 foundation has NO registration, login, password reset, or public
 // mail endpoints yet. Those require reviewed migrations and integration tests.
-app.MapGet("/health/live", () => Results.Ok(new { status = "healthy", service = "gamefilled-v3" }))
+app.MapGet("/health/live", () => Results.Ok(new { status = "healthy", service = "gamefilled-v2-modern" }))
     .AllowAnonymous();
 
 app.MapGet("/identity/me", (System.Security.Claims.ClaimsPrincipal principal) =>

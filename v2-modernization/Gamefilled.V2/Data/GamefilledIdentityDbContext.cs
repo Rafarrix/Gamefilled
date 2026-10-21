@@ -1,9 +1,9 @@
-using Gamefilled.V3.Identity;
+using Gamefilled.V2.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Gamefilled.V3.Data;
+namespace Gamefilled.V2.Data;
 
 /// <summary>
 /// A new schema for V3: never point this DbContext at the V2 Gamefilleddb.

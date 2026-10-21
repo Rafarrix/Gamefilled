@@ -14,6 +14,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <ProjectReference Include="../../v3/Gamefilled.V3/Gamefilled.V3.csproj" />
+    <ProjectReference Include="../../v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj" />
   </ItemGroup>
 </Project>

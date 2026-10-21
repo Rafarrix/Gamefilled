@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
-namespace Gamefilled.V3.Identity;
+namespace Gamefilled.V2.Identity;
 
 /// <summary>
 /// Canonical account entity for Gamefilled V3. All future social/library entities
