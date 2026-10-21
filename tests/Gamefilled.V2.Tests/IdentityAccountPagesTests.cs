@@ -11,6 +11,23 @@ public sealed class IdentityAccountPagesTests : IClassFixture<ModernIdentityAppl
     private readonly ModernIdentityApplicationFactory _factory;
     public IdentityAccountPagesTests(ModernIdentityApplicationFactory factory) => _factory = factory;
 
+    [Fact]
+    public async Task Private_preview_homepage_exposes_only_navigation_and_no_user_data()
+    {
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false
+        });
+        using var response = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Private LAN preview", html);
+        Assert.Contains("/games/search", html);
+        Assert.Contains("/library/all", html);
+        Assert.Contains("noindex, nofollow", html);
+    }
+
     [Theory]
     [InlineData("/account/register")]
     [InlineData("/account/login")]
