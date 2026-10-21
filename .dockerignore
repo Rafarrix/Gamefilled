@@ -21,3 +21,8 @@ appsettings.Local.json
 appsettings.Production.json
 appsettings.Staging.json
 Database
+
+# Exclude secret mounts and local preview data from SDK build contexts
+preview/local/
+preview/.env.preview
+preview/**/resend_api_key
