@@ -37,6 +37,9 @@ public sealed class IndexModel(GameLibraryService library, ILibraryGameCatalog c
     public async Task<IActionResult> OnGetAsync(
         string? section, int page = 1, CancellationToken ct = default)
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Challenge();
+
         var normalized = NormalizeSection(section);
         if (normalized is null)
             return NotFound();
@@ -63,6 +66,9 @@ public sealed class IndexModel(GameLibraryService library, ILibraryGameCatalog c
     public async Task<IActionResult> OnPostStatusAsync(
         int gameId, string? status, string? section, CancellationToken ct)
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Challenge();
+
         if (gameId <= 0 || GameLibraryStatus.Normalize(status) is null)
             return BadRequest();
 
@@ -75,6 +81,9 @@ public sealed class IndexModel(GameLibraryService library, ILibraryGameCatalog c
         int gameId, int? rating, string? reviewText, bool containsSpoilers,
         string? section, CancellationToken ct)
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Challenge();
+
         if (gameId <= 0 || rating is < 1 or > 10 || reviewText?.Length > 5000)
             return BadRequest();
 
@@ -86,6 +95,9 @@ public sealed class IndexModel(GameLibraryService library, ILibraryGameCatalog c
     public async Task<IActionResult> OnPostRemoveAsync(
         int gameId, string? section, CancellationToken ct)
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return Challenge();
+
         if (gameId <= 0)
             return BadRequest();
 
