@@ -1,0 +1,11 @@
+# HTTPS-only preview on the LAN. Never forward your router to this service.
+preview.gamefilled.pt {
+    tls internal
+    encode zstd gzip
+    reverse_proxy web:8080
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+    }
+}
