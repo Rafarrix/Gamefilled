@@ -74,6 +74,22 @@ builder.Services.AddRateLimiter(options =>
                     QueueLimit = 0,
                     AutoReplenishment = true
                 }));
+    // Mutating library actions are bounded by authenticated user or network origin.
+    // Browsing the library must not consume the write allowance.
+    options.AddPolicy("library-write", context =>
+        !HttpMethods.IsPost(context.Request.Method)
+            ? RateLimitPartition.GetNoLimiter("library-read")
+            : RateLimitPartition.GetFixedWindowLimiter(
+                context.User.Identity?.IsAuthenticated == true
+                    ? "library:" + (context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown")
+                    : "library-anon:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 60,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
     options.AddPolicy("email-send", context =>
         !HttpMethods.IsPost(context.Request.Method)
             ? RateLimitPartition.GetNoLimiter("email-form-read")
@@ -135,7 +151,7 @@ app.Use(async (context, next) =>
 
 if (!app.Environment.IsDevelopment())
 {
-    // Never leak exception details to callers in Production.
+    // Never expose stack traces to clients outside local development.
     app.UseExceptionHandler(errorApp =>
         errorApp.Run(context =>
         {
@@ -146,9 +162,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 // Modernization routes remain isolated from current V2; not deployed publicly.

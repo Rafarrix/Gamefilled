@@ -16,6 +16,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+  <!-- Reuse existing post-PAP V2 styling rather than inventing a new UI. -->
+  <ItemGroup>
+    <Content Include="../../wwwroot/css/design-system.css" Link="wwwroot/css/design-system.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../wwwroot/css/library-v2.css" Link="wwwroot/css/library-v2.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../wwwroot/css/library-personal.css" Link="wwwroot/css/library-personal.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
   <!-- Compile the same reviewed mail transport as the running V2; no duplicate API code. -->
   <ItemGroup>
     <Compile Include="../../Application/Email/ITransactionalEmailSender.cs" Link="Shared/Email/ITransactionalEmailSender.cs" />
