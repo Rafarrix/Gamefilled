@@ -1,0 +1,83 @@
+@page "/games/search"
+@model Gamefilled.V2.Pages.Games.SearchModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Discover games · Gamefilled";
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/library-v2.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/library-personal.css" asp-append-version="true" />
+</head>
+<body>
+<div class="gf-library-page">
+    <section class="gf-library-hero">
+        <div class="gf-library-shell gf-library-hero__inner">
+            <div class="gf-library-title">
+                <span class="gf-eyebrow">Gamefilled discovery</span>
+                <h1>Find a game</h1>
+                <p>Search the IGDB catalog, open a game and save it to your library.</p>
+            </div>
+        </div>
+    </section>
+    <main class="gf-library-shell gf-library-main">
+        <section class="gf-library-toolbar" aria-label="Search the catalog">
+            <form method="get" action="/games/search" class="gf-library-search" role="search">
+                <label for="game-search-query">Search games</label>
+                <input id="game-search-query" type="search" name="q" minlength="2" maxlength="80"
+                       required value="@Model.Query" placeholder="Game title" autocomplete="off" />
+                <button type="submit" class="gf-btn gf-btn--secondary">Search</button>
+            </form>
+        </section>
+
+        @if (Model.Unavailable)
+        {
+            <p role="status">Game search is temporarily unavailable. Please try again later.</p>
+        }
+        else if (Model.Searched && Model.Results.Count == 0)
+        {
+            <section class="gf-empty-state gf-library-empty">
+                <h2>No matching games found</h2>
+                <p>Try another game name. Some editions have different catalog titles.</p>
+            </section>
+        }
+        else if (Model.Results.Count > 0)
+        {
+            <section class="gf-library-grid" aria-label="Matching games">
+                @foreach (var game in Model.Results)
+                {
+                    <article class="gf-library-card">
+                        <a class="gf-library-card__cover" href="/games/@game.Id">
+                            @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
+                            {
+                                <img src="@game.CoverUrl" alt="@game.Name cover" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="gf-library-card__cover-fallback">Game</span>
+                            }
+                        </a>
+                        <div class="gf-library-card__body">
+                            <h2><a href="/games/@game.Id">@game.Name</a></h2>
+                            @if (game.ReleaseYear.HasValue)
+                            {
+                                <p>Released @game.ReleaseYear</p>
+                            }
+                            <a href="/games/@game.Id" class="gf-btn gf-btn--secondary">
+                                View game · Add to library
+                            </a>
+                        </div>
+                    </article>
+                }
+            </section>
+        }
+        <p><a href="/library/all">Back to my library</a></p>
+    </main>
+</div>
+</body>
+</html>
