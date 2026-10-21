@@ -59,24 +59,31 @@ builder.Services.AddHttpClient<ITransactionalEmailSender, ResendEmailSender>(cli
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("account-forms", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 25,
-            Window = TimeSpan.FromMinutes(1),
-            QueueLimit = 0,
-            AutoReplenishment = true
-        }));
-    options.AddPolicy("email-send", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 5,
-            Window = TimeSpan.FromHours(1),
-            QueueLimit = 0,
-            AutoReplenishment = true
-        }));
+    // Rendering a GET form must not consume the small POST/send allowance.
+    options.AddPolicy("account-forms", context =>
+        !HttpMethods.IsPost(context.Request.Method)
+            ? RateLimitPartition.GetNoLimiter("account-form-read")
+            : RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 25,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
+    options.AddPolicy("email-send", context =>
+        !HttpMethods.IsPost(context.Request.Method)
+            ? RateLimitPartition.GetNoLimiter("email-form-read")
+            : RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromHours(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
 });
 
 // Cookie-only by design. No bearer/refresh-token endpoint or legacy session auth.
