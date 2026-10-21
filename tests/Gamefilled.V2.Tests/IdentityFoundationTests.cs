@@ -12,11 +12,11 @@ using Xunit;
 
 namespace Gamefilled.V2.Tests;
 
-public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory>
+public sealed class IdentityFoundationTests : IClassFixture<ModernIdentityApplicationFactory>
 {
-    private readonly V3ApplicationFactory _factory;
+    private readonly ModernIdentityApplicationFactory _factory;
 
-    public IdentityFoundationTests(V3ApplicationFactory factory) => _factory = factory;
+    public IdentityFoundationTests(ModernIdentityApplicationFactory factory) => _factory = factory;
 
     [Fact]
     public async Task Foundation_exposes_only_its_own_liveness_endpoint()
@@ -81,12 +81,12 @@ public sealed class IdentityFoundationTests : IClassFixture<V3ApplicationFactory
 }
 
 /// <summary>All connection details are test placeholders; no database is contacted.</summary>
-public sealed class V3ApplicationFactory : WebApplicationFactory<Program>
+public sealed class ModernIdentityApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string? _oldConnection =
         Environment.GetEnvironmentVariable("ConnectionStrings__V2ModernDatabase");
 
-    public V3ApplicationFactory()
+    public ModernIdentityApplicationFactory()
     {
         Environment.SetEnvironmentVariable("ConnectionStrings__V2ModernDatabase",
             "Server=127.0.0.1,1;Database=GamefilledV2ModernTests;User Id=sa;Password=NotReal_TestOnly_123!;Encrypt=False;Connect Timeout=1");
