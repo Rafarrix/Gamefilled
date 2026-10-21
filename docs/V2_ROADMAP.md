@@ -1,5 +1,36 @@
 # Gamefilled V2 Roadmap
 
+## Roadmap ativo — atualizado em 21/10/2026
+
+**V1 é exclusivamente a apresentação PAP; V2 inclui TODO o trabalho pós-PAP.**
+O produto final será uma só aplicação V2. A árvore `v2-modernization/`
+é temporária para testes, não uma segunda aplicação em produção.
+
+| Fase | GitHub issue | Estado atual |
+| --- | --- | --- |
+| Autenticação Identity e sessões | [#27](https://github.com/Rafarrix/Gamefilled/issues/27) | Fluxos base e SQL CI aprovados; sem deploy |
+| Biblioteca, ratings, reviews | [#28](https://github.com/Rafarrix/Gamefilled/issues/28) | **Em desenvolvimento**: schema GUID, serviço e testes |
+| Comunidade, amigos, notificações | [#29](https://github.com/Rafarrix/Gamefilled/issues/29) | Por migrar |
+| Steam opcional | [#30](https://github.com/Rafarrix/Gamefilled/issues/30) | Planeador de importação iniciado, API pendente |
+| FY na home e semelhantes no detalhe | [#31](https://github.com/Rafarrix/Gamefilled/issues/31) | Planeado com design atual |
+| Auditoria integral, moderação e cutover | [#32](https://github.com/Rafarrix/Gamefilled/issues/32) | Pendente |
+
+**Ordem de execução:** biblioteca → comunidade → Steam → recomendações →
+teste integral → moderação e lançamento. Segurança contínua; frontend
+polido gradualmente **sem abandonar o design atual**. As checklists
+originais abaixo são um registo histórico de um plano anterior, não a
+descrição do estado atual das implementações nem da branch `master`.
+
+**Gates:** cada módulo só conclui depois de validar SQL real, isolamento
+de utilizadores, antiforgery, testes e UX. O cutover final exige testes de
+todas as funcionalidades em conjunto, backup externo/restauro e aprovação
+explícita. Nenhuma abertura pública do router ou DNS antes disso.
+
+---
+
+## Plano histórico de 2026 (preservado como referência)
+
+
 ## Goal
 
 Evolve the PAP version into a production-ready gaming discovery and social platform without discarding the existing ASP.NET Core backend or the current dark and green Gamefilled identity.
