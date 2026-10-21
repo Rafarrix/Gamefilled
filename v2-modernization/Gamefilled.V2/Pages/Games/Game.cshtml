@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/game-v2.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/game-experience.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/game-universe.css" asp-append-version="true" />
 </head>
 <body>
 <div class="gf-game-page">
@@ -142,6 +143,133 @@
                 </div>
             }
         </section>
+
+        @if (game.CommunityRating.HasValue || game.Companies.Count > 0)
+        {
+            <section class="gf-game-insights" aria-labelledby="game-insights-heading">
+                <div class="gf-section-heading">
+                    <div>
+                        <span class="gf-section-heading__eyebrow">Game data</span>
+                        <h2 id="game-insights-heading">At a glance</h2>
+                    </div>
+                </div>
+                @if (game.CommunityRating is { } score)
+                {
+                    <div class="gf-insight-card gf-insight-card--rating">
+                        <span class="gf-insight-card__eyebrow">IGDB rating</span>
+                        <strong>@(score.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)) / 100</strong>
+                        @if (game.CommunityRatingCount is > 0)
+                        {
+                            <span>(@game.CommunityRatingCount ratings)</span>
+                        }
+                    </div>
+                }
+                @if (game.Companies.Count > 0)
+                {
+                    <div class="bl-rows">
+                        @foreach (var company in game.Companies)
+                        {
+                            <div class="bl-row">
+                                <span class="bl-row__label">@company.Role</span>
+                                <span class="bl-row__value">@company.Name</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        }
+
+        @if (game.ReleaseTimeline.Count > 0)
+        {
+            <section class="gf-game-insights" aria-labelledby="releases-heading">
+                <div class="gf-section-heading">
+                    <div>
+                        <span class="gf-section-heading__eyebrow">Release history</span>
+                        <h2 id="releases-heading">Releases by platform</h2>
+                    </div>
+                </div>
+                <ol class="bl-rows">
+                    @foreach (var release in game.ReleaseTimeline)
+                    {
+                        <li class="bl-row">
+                            <span class="bl-row__label">@(release.Platform ?? "Platform unspecified")</span>
+                            <span class="bl-row__value">@release.Label</span>
+                        </li>
+                    }
+                </ol>
+            </section>
+        }
+
+        @if (game.Screenshots.Count > 0 || game.Videos.Count > 0)
+        {
+            <section class="gf-media-room" aria-labelledby="game-media-heading">
+                <div class="gf-media-room__head">
+                    <div class="gf-section-heading">
+                        <div>
+                            <span class="gf-section-heading__eyebrow">Game media</span>
+                            <h2 id="game-media-heading">Screenshots and trailers</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="gf-media-grid">
+                    @foreach (var screenshot in game.Screenshots)
+                    {
+                        <a class="gf-media-item" href="@screenshot.Url"
+                           target="_blank" rel="noopener noreferrer"
+                           aria-label="Open @screenshot.Name">
+                            <img class="bl-media__img" src="@screenshot.Url" alt="@screenshot.Name" loading="lazy" />
+                        </a>
+                    }
+                    @foreach (var video in game.Videos)
+                    {
+                        <a class="gf-media-item" href="@video.WatchUrl"
+                           target="_blank" rel="noopener noreferrer"
+                           aria-label="Watch @video.Name on YouTube">
+                            <img class="bl-media__img" src="@video.ThumbnailUrl" alt="@video.Name trailer" loading="lazy" />
+                            <span class="gf-media-item__badge">Video · YouTube</span>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (game.Universe.Count > 0)
+        {
+            <section class="gf-universe-section" aria-labelledby="universe-heading">
+                <div class="gf-universe-section__head">
+                    <h2 id="universe-heading" class="gf-universe-section__title">Game Universe</h2>
+                </div>
+                @foreach (var group in game.Universe)
+                {
+                    <details class="gf-universe-section">
+                        <summary class="gf-universe-section__title">@group.Title (@group.Games.Count)</summary>
+                        <div class="gf-universe-list">
+                            @foreach (var related in group.Games)
+                            {
+                                <a class="gf-universe-game" href="/games/@related.Id">
+                                    <div class="gf-universe-game__cover">
+                                        @if (!string.IsNullOrWhiteSpace(related.CoverUrl))
+                                        {
+                                            <img src="@related.CoverUrl" alt="@related.Name cover" loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <span class="gf-universe-game__fallback">Game</span>
+                                        }
+                                    </div>
+                                    <div class="gf-universe-game__content">
+                                        <span class="gf-universe-game__name">@related.Name</span>
+                                        <span class="gf-universe-game__year">
+                                            @(related.ReleaseYear?.ToString() ?? "Release unknown")
+                                        </span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </details>
+                }
+            </section>
+        }
 
         @if (game.SimilarGames.Count > 0)
         {
