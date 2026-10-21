@@ -121,6 +121,73 @@ public sealed class DatabaseIdentityFlowTests
 
         using var profile = await client.GetAsync("/identity/me");
         Assert.Equal(HttpStatusCode.OK, profile.StatusCode);
+
+        string? stampBefore;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<GamefilledUser>>();
+            stampBefore = await users.GetSecurityStampAsync((await users.FindByEmailAsync(email))!);
+        }
+
+        // Request a password reset. Delivery is captured locally, never sent to Resend.
+        using (var forgotPage = await client.GetAsync("/account/forgot-password"))
+        {
+            var csrf = GetCsrf(await forgotPage.Content.ReadAsStringAsync());
+            using var request = await client.PostAsync("/account/forgot-password", Form(
+                ("Email", email), ("__RequestVerificationToken", csrf)));
+            Assert.Equal(HttpStatusCode.OK, request.StatusCode);
+            Assert.Contains("send password reset instructions", 
+                await request.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        var resetUrl = Regex.Match(mail.Message!, @"https://dev\.gamefilled\.pt/account/reset-password\?[^\s]+").Value;
+        Assert.NotEmpty(resetUrl);
+        var resetLink = new Uri(resetUrl);
+        var resetParameters = resetLink.Query.TrimStart('?').Split('&')
+            .Select(pair => pair.Split('=', 2))
+            .ToDictionary(parts => parts[0], parts => Uri.UnescapeDataString(parts[1]));
+        const string newPassword = "an-even-longer-recovered-passphrase";
+
+        using (var resetPage = await client.GetAsync(resetLink.PathAndQuery))
+        {
+            var csrf = GetCsrf(await resetPage.Content.ReadAsStringAsync());
+            using var reset = await client.PostAsync("/account/reset-password", Form(
+                ("UserId", resetParameters["userId"]), ("Code", resetParameters["code"]),
+                ("NewPassword", newPassword), ("ConfirmPassword", newPassword),
+                ("__RequestVerificationToken", csrf)));
+            Assert.Equal(HttpStatusCode.OK, reset.StatusCode);
+            Assert.Contains("Your password has been changed", await reset.Content.ReadAsStringAsync());
+        }
+
+        // A reset token must not work twice, even with the old valid URL.
+        using (var resetPage = await client.GetAsync(resetLink.PathAndQuery))
+        {
+            var csrf = GetCsrf(await resetPage.Content.ReadAsStringAsync());
+            using var resetAgain = await client.PostAsync("/account/reset-password", Form(
+                ("UserId", resetParameters["userId"]), ("Code", resetParameters["code"]),
+                ("NewPassword", "yet-another-secure-test-passphrase"),
+                ("ConfirmPassword", "yet-another-secure-test-passphrase"),
+                ("__RequestVerificationToken", csrf)));
+            Assert.Equal(HttpStatusCode.OK, resetAgain.StatusCode);
+            Assert.Contains("invalid or expired", await resetAgain.Content.ReadAsStringAsync());
+        }
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<GamefilledUser>>();
+            var stampAfter = await users.GetSecurityStampAsync((await users.FindByEmailAsync(email))!);
+            Assert.NotEqual(stampBefore, stampAfter);
+        }
+
+        // A fresh browser cannot use the old password and can use the new one.
+        using var fresh = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://dev.gamefilled.pt"),
+            AllowAutoRedirect = false,
+            HandleCookies = true
+        });
+        await AssertLoginAsync(fresh, email, password, shouldSucceed: false);
+        await AssertLoginAsync(fresh, email, newPassword, shouldSucceed: true);
     }
 
     private static async Task AssertLoginAsync(
