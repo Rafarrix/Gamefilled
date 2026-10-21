@@ -30,8 +30,8 @@ jobs:
           cache-dependency-path: |
             Gamefilled.csproj
             tests/Gamefilled.Tests/Gamefilled.Tests.csproj
-            v3/Gamefilled.V3/Gamefilled.V3.csproj
-            tests/Gamefilled.V3.Tests/Gamefilled.V3.Tests.csproj
+            v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj
+            tests/Gamefilled.V2.Tests/Gamefilled.V2.Tests.csproj
             .config/dotnet-tools.json
 
       - name: Restore local tools
@@ -54,7 +54,7 @@ jobs:
             --configuration Release \
             --no-build \
             --logger "trx;LogFileName=test-results.trx" 2>&1 | tee test.log
-          dotnet test tests/Gamefilled.V3.Tests/Gamefilled.V3.Tests.csproj \
+          dotnet test tests/Gamefilled.V2.Tests/Gamefilled.V2.Tests.csproj \
             --configuration Release \
             --no-build \
             --logger "trx;LogFileName=v3-test-results.trx" 2>&1 | tee v3-test.log
@@ -112,5 +112,5 @@ jobs:
             migration-container.log
             production-container.log
             tests/Gamefilled.Tests/TestResults/**/*.trx
-            tests/Gamefilled.V3.Tests/TestResults/**/*.trx
+            tests/Gamefilled.V2.Tests/TestResults/**/*.trx
           if-no-files-found: warn
