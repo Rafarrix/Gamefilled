@@ -1,6 +1,6 @@
 # Gamefilled V2 Roadmap
 
-## Roadmap ativo — atualizado em 21/10/2026
+## Roadmap ativo — atualizado em 21/10/2026 (preview LAN preparada)
 
 **V1 é exclusivamente a apresentação PAP; V2 inclui TODO o trabalho pós-PAP.**
 O produto final será uma só aplicação V2. A árvore `v2-modernization/`
@@ -9,11 +9,18 @@ O produto final será uma só aplicação V2. A árvore `v2-modernization/`
 | Fase | GitHub issue | Estado atual |
 | --- | --- | --- |
 | Autenticação Identity e sessões | [#27](https://github.com/Rafarrix/Gamefilled/issues/27) | Fluxos base e SQL CI aprovados; sem deploy |
-| Biblioteca, ratings, reviews | [#28](https://github.com/Rafarrix/Gamefilled/issues/28) | **Em desenvolvimento**: schema GUID, serviço e testes |
+| Biblioteca, ratings, reviews | [#28](https://github.com/Rafarrix/Gamefilled/issues/28) | Identity SQL, biblioteca, pesquisa e detalhe IGDB implementados no código; paridade visual ainda por avaliar |
 | Comunidade, amigos, notificações | [#29](https://github.com/Rafarrix/Gamefilled/issues/29) | Por migrar |
 | Steam opcional | [#30](https://github.com/Rafarrix/Gamefilled/issues/30) | Planeador de importação iniciado, API pendente |
 | FY na home e semelhantes no detalhe | [#31](https://github.com/Rafarrix/Gamefilled/issues/31) | Planeado com design atual |
 | Auditoria integral, moderação e cutover | [#32](https://github.com/Rafarrix/Gamefilled/issues/32) | Pendente |
+
+**Marco de validação privada:** [PR #39](https://github.com/Rafarrix/Gamefilled/pull/39)
+prepara uma preview **isolada na LAN**, com novo SQL, HTTPS e checklist
+[preview/ACCEPTANCE.md](../preview/ACCEPTANCE.md). **Não está
+instalada na VM.** Vamos subir e testar só após verificação de recursos,
+backups e configuração local segura. A preview é temporária; a meta
+continua a ser uma única V2 definitiva.
 
 **Ordem de execução:** biblioteca → comunidade → Steam → recomendações →
 teste integral → moderação e lançamento. Segurança contínua; frontend
