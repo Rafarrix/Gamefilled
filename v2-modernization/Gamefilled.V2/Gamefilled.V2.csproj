@@ -22,6 +22,12 @@
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../wwwroot/css/library-v2.css" Link="wwwroot/css/library-v2.css"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../wwwroot/css/game.css" Link="wwwroot/css/game.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../wwwroot/css/game-v2.css" Link="wwwroot/css/game-v2.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../wwwroot/css/game-experience.css" Link="wwwroot/css/game-experience.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../wwwroot/css/library-personal.css" Link="wwwroot/css/library-personal.css"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
