@@ -1,0 +1,40 @@
+@page "/"
+@{
+    Layout = null;
+    ViewData["Title"] = "Gamefilled V2 · Private preview";
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+</head>
+<body class="gf-preview">
+    <main class="gf-home-section" style="max-width:960px;margin:9vh auto;padding:24px">
+        <span class="gf-eyebrow">Private LAN preview · Testing only</span>
+        <h1>Gamefilled V2</h1>
+        <p>This is an isolated technical preview of our new backend.
+           The current Gamefilled website is unchanged. Game and account
+           data saved here is for testing only.</p>
+        <nav aria-label="Preview navigation"
+             style="display:flex;gap:14px;flex-wrap:wrap;margin-top:24px">
+            <a class="gf-btn gf-btn--secondary" href="/games/search">Find games</a>
+            <a class="gf-btn gf-btn--secondary" href="/library/all">My library</a>
+            <a class="gf-btn gf-btn--secondary" href="/account/register">Register</a>
+            <a class="gf-btn gf-btn--secondary" href="/account/login">Sign in</a>
+            <a class="gf-btn gf-btn--secondary" href="/account/logout">Sign out</a>
+        </nav>
+        <section style="margin-top:32px">
+            <h2>What to evaluate</h2>
+            <p>Register and verify an account, browse search and game details,
+               add games to your library, rate and review them, and test
+               logout/password recovery. The full community, Steam integration
+               and final visual polish are not yet available here.</p>
+            <p><a href="/health/ready">Check preview database readiness</a></p>
+        </section>
+    </main>
+</body>
+</html>
