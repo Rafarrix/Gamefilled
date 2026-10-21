@@ -166,8 +166,7 @@ public sealed class DatabaseIdentityLibraryPagesTests
         }
 
         // B cannot remove A's game using the very same IGDB game ID.
-        await PostFormAsync(b, "/library/all", "/library/all?handler=Remove",
-            ("gameId", "7301"), ("section", "all"));
+        await PostFormAsync(b, "/games/7301", "/games/7301?handler=Remove");
 
         using (var aPage = await a.GetAsync("/library/played"))
         {
