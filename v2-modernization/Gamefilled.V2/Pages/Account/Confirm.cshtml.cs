@@ -40,8 +40,17 @@ public sealed class ConfirmModel(UserManager<GamefilledUser> users) : PageModel
             return Page();
         }
 
+        if (await users.IsEmailConfirmedAsync(user))
+        {
+            Invalid = true;
+            return Page();
+        }
+
         var result = await users.ConfirmEmailAsync(user, token);
-        Completed = result.Succeeded;
+        // Rotate the stamp after confirmation so the same token cannot be
+        // accepted a second time and any earlier auth tickets are invalidated.
+        Completed = result.Succeeded
+            && (await users.UpdateSecurityStampAsync(user)).Succeeded;
         Invalid = !Completed;
         // Confirmation does not automatically log the user in.
         return Page();
