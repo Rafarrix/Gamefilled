@@ -122,6 +122,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 app.UseForwardedHeaders();
+if (app.Environment.IsEnvironment("Testing"))
+    app.UseDeveloperExceptionPage();
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/account", StringComparison.OrdinalIgnoreCase))
