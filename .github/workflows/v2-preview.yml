@@ -27,6 +27,11 @@ jobs:
           docker compose --project-name gamefilled-v2-preview-ci \
             --env-file preview/.env.preview.example \
             -f compose.preview.yaml config --quiet
+      - name: Validate preview TLS/Caddy configuration
+        run: |
+          docker run --rm \
+            -v "$PWD/preview/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Build isolated modern V2 image
         run: |
           docker build --file preview/Dockerfile --target web \
