@@ -36,6 +36,17 @@ public sealed class GameLibraryService(
             .ToListAsync(ct);
     }
 
+    public Task<GameLibraryEntry?> MyGameAsync(
+        ClaimsPrincipal viewer, int igdbGameId, CancellationToken ct = default)
+    {
+        var userId = RequireViewer(viewer);
+        if (igdbGameId <= 0)
+            throw new ArgumentOutOfRangeException(nameof(igdbGameId));
+
+        return database.GameLibraryEntries.AsNoTracking()
+            .SingleOrDefaultAsync(e => e.UserId == userId && e.IgdbGameId == igdbGameId, ct);
+    }
+
     public async Task<GameLibraryEntry> SaveStatusAsync(
         ClaimsPrincipal viewer, int igdbGameId, string? status, CancellationToken ct = default)
     {

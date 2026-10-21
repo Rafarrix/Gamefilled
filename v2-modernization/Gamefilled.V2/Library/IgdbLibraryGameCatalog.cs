@@ -84,7 +84,7 @@ public sealed class IgdbLibraryGameCatalog(
         catch (ArgumentOutOfRangeException) { return null; }
     }
 
-    private static string? SafeCoverUrl(string? imageId)
+    internal static string? SafeCoverUrl(string? imageId)
     {
         if (string.IsNullOrWhiteSpace(imageId)
             || !Regex.IsMatch(imageId, @"\A[a-zA-Z0-9_-]{1,60}\z",

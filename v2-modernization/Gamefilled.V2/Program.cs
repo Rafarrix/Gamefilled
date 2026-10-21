@@ -1,6 +1,7 @@
 using Gamefilled.V2.Data;
 using Gamefilled.V2.Identity;
 using Gamefilled.V2.Library;
+using Gamefilled.V2.Games;
 using Gamefilled.V2.Security;
 using Gamefilled.Application.Email;
 using Gamefilled.Infrastructure;
@@ -33,6 +34,7 @@ builder.Services.AddHttpClient<IgdbClient>(client =>
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 builder.Services.AddScoped<ILibraryGameCatalog, IgdbLibraryGameCatalog>();
+builder.Services.AddScoped<IGameDetailCatalog, IgdbGameDetailCatalog>();
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
     options.UseSqlServer(connection));
 

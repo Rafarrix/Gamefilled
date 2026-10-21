@@ -1,0 +1,179 @@
+@page "/games/{id:int}"
+@model Gamefilled.V2.Pages.Games.GameModel
+@using Gamefilled.V2.Library
+@{
+    Layout = null;
+    var game = Model.Game!;
+    ViewData["Title"] = game.Name + " · Gamefilled";
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/game.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/game-v2.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/game-experience.css" asp-append-version="true" />
+</head>
+<body>
+<div class="gf-game-page">
+    <div class="bl-shell">
+        <div class="bl-top">
+            <div class="bl-cover">
+                @if (!string.IsNullOrWhiteSpace(game.CoverUrl))
+                {
+                    <img src="@game.CoverUrl" alt="@game.Name cover" loading="lazy" />
+                }
+                else
+                {
+                    <div class="bl-cover-fallback"><span>Cover unavailable</span></div>
+                }
+            </div>
+            <div class="bl-main">
+                <div class="bl-title-row">
+                    <div class="bl-title-wrap">
+                        <h1 class="bl-title">@game.Name</h1>
+                        <div class="bl-byline">
+                            @if (game.ReleaseYear.HasValue)
+                            {
+                                <span class="bl-release">@game.ReleaseYear</span>
+                            }
+                            <span>Gamefilled game details</span>
+                        </div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(game.Summary))
+                {
+                    <p class="bl-summary">@game.Summary</p>
+                }
+                <div class="bl-rows">
+                    @if (game.Genres.Count > 0)
+                    {
+                        <div class="bl-row">
+                            <span class="bl-row__label">Genres</span>
+                            <span class="bl-row__value">
+                                @foreach (var genre in game.Genres)
+                                {
+                                    <span class="bl-chip">@genre</span>
+                                }
+                            </span>
+                        </div>
+                    }
+                    @if (game.Platforms.Count > 0)
+                    {
+                        <div class="bl-row">
+                            <span class="bl-row__label">Platforms</span>
+                            <span class="bl-row__value">
+                                @foreach (var platform in game.Platforms)
+                                {
+                                    <span class="bl-chip">@platform</span>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Feedback))
+        {
+            <p class="gf-game-feedback" role="status">@Model.Feedback</p>
+        }
+
+        <section class="gf-personal-game" aria-labelledby="my-game-heading">
+            <div class="gf-section-heading">
+                <div>
+                    <span class="gf-section-heading__eyebrow">Your collection</span>
+                    <h2 id="my-game-heading">My game</h2>
+                </div>
+            </div>
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <div class="gf-personal-game__guest">
+                    <p><a href="/account/login">Sign in</a> to save a game, rate it and write your review.</p>
+                </div>
+            }
+            else
+            {
+                <div class="gf-personal-game__controls">
+                    <form method="post" asp-page-handler="Status" class="gf-status-actions">
+                        @foreach (var status in new (string Value, string Label)[]
+                        {
+                            (GameLibraryStatus.Played, "Played"),
+                            (GameLibraryStatus.Playing, "Playing"),
+                            (GameLibraryStatus.Backlog, "Backlog"),
+                            (GameLibraryStatus.Wishlist, "Wishlist")
+                        })
+                        {
+                            <button type="submit" name="status" value="@status.Value"
+                                    class="gf-status-action @(Model.MyEntry?.Status == status.Value ? "is-active" : "")"
+                                    aria-pressed="@(Model.MyEntry?.Status == status.Value ? "true" : "false")">
+                                @status.Label
+                            </button>
+                        }
+                    </form>
+                    <div class="gf-review-editor">
+                        <h3>My review</h3>
+                        <form method="post" asp-page-handler="Review" class="gf-review-form">
+                            <label for="rating">Rating (1–10)</label>
+                            <input id="rating" type="number" name="rating" min="1" max="10"
+                                   value="@Model.MyEntry?.Rating" class="form-control" />
+                            <label for="reviewText">Review</label>
+                            <textarea id="reviewText" name="reviewText" maxlength="5000"
+                                      rows="5" class="form-control">@Model.MyEntry?.ReviewText</textarea>
+                            <label class="gf-spoiler-check">
+                                <input type="checkbox" name="containsSpoilers" value="true"
+                                       checked="@Model.MyEntry?.ContainsSpoilers" />
+                                Contains spoilers
+                            </label>
+                            <div class="gf-review-form__buttons">
+                                <button type="submit" class="btn btn-main">Save review</button>
+                            </div>
+                        </form>
+                        @if (Model.MyEntry is not null)
+                        {
+                            <form method="post" asp-page-handler="Remove">
+                                <button class="btn btn-outline-light" type="submit">Remove from library</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+
+        @if (game.SimilarGames.Count > 0)
+        {
+            <section class="gf-universe-section" aria-labelledby="similar-games-heading">
+                <div class="gf-universe-section__head">
+                    <h2 id="similar-games-heading" class="gf-universe-section__title">Games you may like</h2>
+                </div>
+                <div class="gf-universe-list">
+                    @foreach (var similar in game.SimilarGames)
+                    {
+                        <a class="gf-universe-game" href="/games/@similar.Id">
+                            <div class="gf-universe-game__cover">
+                                @if (!string.IsNullOrWhiteSpace(similar.CoverUrl))
+                                {
+                                    <img src="@similar.CoverUrl" alt="@similar.Name cover" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="gf-universe-game__fallback">Game</span>
+                                }
+                            </div>
+                            <div class="gf-universe-game__content">
+                                <span class="gf-universe-game__name">@similar.Name</span>
+                                <span class="gf-universe-game__year">@(similar.ReleaseYear?.ToString() ?? "Release unknown")</span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+        <p><a href="/library/all">Back to my library</a></p>
+    </div>
+</div>
+</body>
+</html>

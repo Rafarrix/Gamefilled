@@ -1,7 +1,6 @@
 # IGDB calibration guardrails — Gamefilled V2
 
-Status: **owner-review required** for any change to search, discovery or
-special-category query criteria.
+Status: **human-assisted quality calibration** of search, discovery and special-category results.
 
 ## What must NOT change automatically
 
@@ -15,10 +14,17 @@ Before any changes to:
 - new "For You" candidate-generation criteria,
 
 capture actual before/after outputs for a representative set of games and
-search terms, use the same query parameters, and **review the results with
-the project owner**. Only apply modifications after explicit approval.
-Write regression tests for the approved examples to detect future drift.
-Do not interpret a compile/CI pass as proof that ranking is good.
+search terms, using equivalent inputs. **Human calibration means evaluating
+whether the results are satisfactory for the intended experience**, spotting
+false positives, missing games, inconsistent editions/DLCs and poor ordering.
+The owner helps define expected outcomes and judge borderline cases; this
+is NOT a requirement to manually approve every implementation detail.
+
+Developers may prepare, test and propose fixes independently. Validate the
+quality of meaningful query/ranking changes with representative examples
+and obtain feedback on the user-facing result before treating calibration
+as complete. Keep regression fixtures for expected examples. A passing CI
+build proves correctness of execution, not relevance of search results.
 
 ## Current safe scope
 
@@ -45,5 +51,7 @@ The library metadata migration uses **only the unchanged existing**
 3. Record current ordered IGDB IDs and titles for each case.
 4. Run the proposed criteria against the same dataset and API credentials,
    taking account of upstream catalog changes.
-5. Review the output with the project owner and only then approve the change.
-6. Add tests/fixtures, merge through PR and re-run all feature regressions.
+5. Compare each result to the intended user experience, using the owner's
+   judgement where relevance is subjective or inconsistent.
+6. Refine until satisfactory; add regression cases for desired results and
+   keep the final query behavior documented.

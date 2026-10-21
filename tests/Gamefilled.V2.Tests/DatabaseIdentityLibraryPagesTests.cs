@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Gamefilled.V2.Data;
 using Gamefilled.V2.Identity;
 using Gamefilled.V2.Library;
+using Gamefilled.V2.Games;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Hosting;
@@ -34,6 +35,8 @@ public sealed class DatabaseIdentityLibraryPagesTests
             {
                 services.RemoveAll<ILibraryGameCatalog>();
                 services.AddSingleton<ILibraryGameCatalog>(new FakeLibraryCatalog());
+                services.RemoveAll<IGameDetailCatalog>();
+                services.AddSingleton<IGameDetailCatalog>(new FakeGameDetailCatalog());
             });
         });
 
@@ -59,6 +62,21 @@ public sealed class DatabaseIdentityLibraryPagesTests
         using var anonymous = Client(factory);
         using var blocked = await anonymous.GetAsync("/library/all");
         Assert.Equal(HttpStatusCode.Redirect, blocked.StatusCode);
+
+        using (var guestDetail = await anonymous.GetAsync("/games/9302"))
+        {
+            Assert.Equal(HttpStatusCode.OK, guestDetail.StatusCode);
+            var html = await guestDetail.Content.ReadAsStringAsync();
+            Assert.Contains("Example Game 9302", html);
+            Assert.Contains("Games you may like", html);
+            Assert.DoesNotContain("<script>alert", html);
+            Assert.Contains("&lt;script&gt;", html);
+            Assert.Contains("href=\"/account/login\"", html);
+        }
+        using (var missing = await anonymous.GetAsync("/games/929299"))
+        {
+            Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        }
 
         using var a = Client(factory);
         using var b = Client(factory);
@@ -145,6 +163,51 @@ public sealed class DatabaseIdentityLibraryPagesTests
         {
             Assert.DoesNotContain("IGDB #7301", await aPage.Content.ReadAsStringAsync());
         }
+
+        // Game detail is the preferred add-to-library entry point. It may
+        // display public IGDB data, but only the signed-in viewer may write.
+        using (var noCsrf = await a.PostAsync("/games/9302?handler=Status",
+            Form(("status", "playing"))))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, noCsrf.StatusCode);
+        }
+        await PostFormAsync(a, "/games/9302", "/games/9302?handler=Status",
+            ("status", "playing"));
+        using (var ownDetail = await a.GetAsync("/games/9302"))
+        {
+            Assert.Equal(HttpStatusCode.OK, ownDetail.StatusCode);
+            Assert.Contains("aria-pressed=\"true\"", await ownDetail.Content.ReadAsStringAsync());
+        }
+        await PostFormAsync(a, "/games/9302", "/games/9302?handler=Review",
+            ("rating", "8"), ("reviewText", "Nice game"), ("containsSpoilers", "true"));
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
+            var entry = await db.GameLibraryEntries.SingleAsync(x => x.IgdbGameId == 9302);
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<GamefilledUser>>();
+            var userA = await users.FindByEmailAsync(emailA);
+            Assert.Equal(userA!.Id, entry.UserId);
+            Assert.Equal("playing", entry.Status);
+            Assert.Equal(8, entry.Rating);
+            Assert.True(entry.ContainsSpoilers);
+        }
+        using (var bDetail = await b.GetAsync("/games/9302"))
+        {
+            Assert.Equal(HttpStatusCode.OK, bDetail.StatusCode);
+            Assert.DoesNotContain("Nice game", await bDetail.Content.ReadAsStringAsync());
+        }
+        await PostFormAsync(b, "/games/9302", "/games/9302?handler=Remove");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
+            Assert.Equal(1, await db.GameLibraryEntries.CountAsync(x => x.IgdbGameId == 9302));
+        }
+        await PostFormAsync(a, "/games/9302", "/games/9302?handler=Remove");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
+            Assert.Equal(0, await db.GameLibraryEntries.CountAsync(x => x.IgdbGameId == 9302));
+        }
     }
 
     private static HttpClient Client(WebApplicationFactory<Program> factory) =>
@@ -199,4 +262,21 @@ public sealed class DatabaseIdentityLibraryPagesTests
             return Task.FromResult(result);
         }
     }
+    private sealed class FakeGameDetailCatalog : IGameDetailCatalog
+    {
+        public Task<GameDetailInfo?> GetAsync(int id, CancellationToken ct = default)
+        {
+            GameDetailInfo? result = id == 9302
+                ? new GameDetailInfo(
+                    id, "Example Game 9302",
+                    "Great game <script>alert(1)</script>",
+                    "https://images.igdb.com/igdb/image/upload/t_cover_big/co567.jpg",
+                    2025,
+                    ["Adventure"], ["PC"],
+                    [new GameDetailCard(9303, "Suggested game", null, 2024)])
+                : null;
+            return Task.FromResult(result);
+        }
+    }
+
 }
