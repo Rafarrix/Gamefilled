@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,21 @@ if (string.IsNullOrWhiteSpace(connection))
 {
     throw new InvalidOperationException(
         "Gamefilled V2 modernization requires ConnectionStrings:V2ModernDatabase for an isolated SQL database.");
+}
+
+// Only preview uses file-system keys here. Keep login and email tokens
+// valid after a container restart. Live production will use a reviewed key store.
+if (builder.Environment.IsEnvironment("Preview"))
+{
+    var keyPath = builder.Configuration["DataProtection:KeysDirectory"];
+    if (string.IsNullOrWhiteSpace(keyPath)
+        || !Path.IsPathFullyQualified(keyPath)
+        || !Directory.Exists(keyPath))
+        throw new InvalidOperationException("Preview Data Protection key directory must exist.");
+
+    builder.Services.AddDataProtection()
+        .SetApplicationName("Gamefilled-V2-Preview")
+        .PersistKeysToFileSystem(new DirectoryInfo(keyPath));
 }
 
 builder.Services.AddRazorPages();
@@ -196,6 +212,23 @@ app.UseAuthorization();
 // Account recovery and richer user flows will follow after staging SQL validation.
 app.MapGet("/health/live", () => Results.Ok(new { status = "healthy", service = "gamefilled-v2-modern" }))
     .AllowAnonymous();
+
+// Preview readiness is separate from liveness; never disclose SQL details.
+app.MapGet("/health/ready", async (
+    GamefilledIdentityDbContext database,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        return await database.Database.CanConnectAsync(cancellationToken)
+            ? Results.Ok(new { status = "ready" })
+            : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (Exception) when (!cancellationToken.IsCancellationRequested)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+}).AllowAnonymous();
 
 app.MapGet("/identity/me", (System.Security.Claims.ClaimsPrincipal principal) =>
 {
