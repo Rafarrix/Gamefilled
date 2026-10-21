@@ -29,13 +29,13 @@ It does not yet replace the **currently deployed revision of V2** on web-01.
 - Confirm off-host backup and tested restore before using production SQL.
   Do not delete existing accounts without explicit cutover confirmation.
 
-To generate the initial migration safely with the repository's pinned EF
+To generate future migrations safely with the repository's pinned EF
 tool in a checked-out branch (the SDK and a test-only connection string
 must be configured):
 
 ```bash
 dotnet tool restore
-dotnet tool run dotnet-ef migrations add InitialIdentity \
+dotnet tool run dotnet-ef migrations add NameOfNextSchemaChange \
   --project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
   --startup-project v2-modernization/Gamefilled.V2/Gamefilled.V2.csproj \
   --context GamefilledIdentityDbContext \
@@ -47,8 +47,12 @@ Review them for unintended operations before using `database update`.
 
 ## Not implemented yet
 
-- Generated and committed initial Identity migration, staged SQL database
-  and database-backed integration tests.
+- The **InitialIdentity migration has now been generated and committed**:
+  `20261021192111_InitialIdentity`. It creates only seven `AspNet*`
+  Identity tables and seven indexes in a new database; it has never been
+  applied to the existing Gamefilleddb.
+- A staged SQL database and database-backed integration tests are still
+  pending.
 - Real registration/login/logout, verified-email and password reset flows.
 - Resend transport hookup using a secret mounted outside source/image.
 - Complete games, library, review, profile, social, notification and
