@@ -151,6 +151,7 @@ jobs:
           --health-retries 20
     env:
       ASPNETCORE_ENVIRONMENT: Testing
+      GAMEFILLED_V2_SQL_INTEGRATION: "1"
       ConnectionStrings__V2ModernDatabase: "Server=127.0.0.1,14334;Database=GamefilledV2ModernCI;User Id=sa;Password=TestOnly_Sql_2026_ChangeMe!;Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
       Gamefilled__PublicOrigin: https://dev.gamefilled.pt
     steps:
