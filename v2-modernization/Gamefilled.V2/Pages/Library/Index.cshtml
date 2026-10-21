@@ -59,26 +59,10 @@
             <p role="status" class="gf-library-feedback">@Model.Feedback</p>
         }
         <section class="gf-library-toolbar" aria-label="Library controls">
-            <form method="post" asp-page-handler="Status" class="gf-library-search">
-                <input type="hidden" name="section" value="@Model.Section" />
-                <label for="new-game-id">IGDB game ID</label>
-                <input id="new-game-id" type="number" name="gameId" min="1" required
-                       placeholder="Game ID" aria-describedby="game-id-help" />
-                <label for="new-status">Status</label>
-                <select id="new-status" name="status">
-                    <option value="backlog">Backlog</option>
-                    <option value="playing">Playing</option>
-                    <option value="played">Played</option>
-                    <option value="wishlist">Wishlist</option>
-                </select>
-                <button type="submit" class="gf-btn gf-btn--secondary">Save game</button>
-            </form>
+            <a href="/games/search" class="gf-btn gf-btn--secondary">
+                Find a game to add
+            </a>
         </section>
-        <p id="game-id-help" class="gf-library-import-note">
-            Library preview: metadata is read from the existing IGDB lookup; your saved
-            statuses and reviews remain in Gamefilled. The game-page add flow
-            will replace this temporary numeric field after the detail page migration.
-        </p>
         @if (Model.Entries.Count == 0)
         {
             <section class="gf-empty-state gf-library-empty" aria-label="Empty library">

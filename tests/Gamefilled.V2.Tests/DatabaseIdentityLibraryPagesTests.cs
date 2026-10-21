@@ -37,6 +37,8 @@ public sealed class DatabaseIdentityLibraryPagesTests
                 services.AddSingleton<ILibraryGameCatalog>(new FakeLibraryCatalog());
                 services.RemoveAll<IGameDetailCatalog>();
                 services.AddSingleton<IGameDetailCatalog>(new FakeGameDetailCatalog());
+                services.RemoveAll<IGameSearchCatalog>();
+                services.AddSingleton<IGameSearchCatalog>(new FakeGameSearchCatalog());
             });
         });
 
@@ -62,6 +64,17 @@ public sealed class DatabaseIdentityLibraryPagesTests
         using var anonymous = Client(factory);
         using var blocked = await anonymous.GetAsync("/library/all");
         Assert.Equal(HttpStatusCode.Redirect, blocked.StatusCode);
+
+        // Public search should preserve the existing IGDB order and direct
+        // users to game details; account data is never needed for discovery.
+        using (var search = await anonymous.GetAsync("/games/search?q=example"))
+        {
+            Assert.Equal(HttpStatusCode.OK, search.StatusCode);
+            var body = await search.Content.ReadAsStringAsync();
+            Assert.Contains("Example &amp; Game", body);
+            Assert.Contains("href=\"/games/7301\"", body);
+            Assert.DoesNotContain("<script>", body);
+        }
 
         using (var guestDetail = await anonymous.GetAsync("/games/9302"))
         {
@@ -104,8 +117,16 @@ public sealed class DatabaseIdentityLibraryPagesTests
             Assert.Equal(HttpStatusCode.BadRequest, csrfMissing.StatusCode);
         }
 
-        await PostFormAsync(a, "/library/all", "/library/all?handler=Status",
-            ("gameId", "7301"), ("status", "playing"), ("section", "all"));
+        using (var originalLibrary = await a.GetAsync("/library/all"))
+        {
+            var body = await originalLibrary.Content.ReadAsStringAsync();
+            Assert.Contains("href=\"/games/search\"", body);
+            Assert.DoesNotContain("new-game-id", body);
+        }
+
+        // Add via search -> game details (not by entering a raw IGDB ID).
+        await PostFormAsync(a, "/games/7301", "/games/7301?handler=Status",
+            ("status", "playing"));
 
         using (var aPage = await a.GetAsync("/library/playing"))
         {
@@ -145,8 +166,7 @@ public sealed class DatabaseIdentityLibraryPagesTests
         }
 
         // B cannot remove A's game using the very same IGDB game ID.
-        await PostFormAsync(b, "/library/all", "/library/all?handler=Remove",
-            ("gameId", "7301"), ("section", "all"));
+        await PostFormAsync(b, "/games/7301", "/games/7301?handler=Remove");
 
         using (var aPage = await a.GetAsync("/library/played"))
         {
@@ -273,6 +293,11 @@ public sealed class DatabaseIdentityLibraryPagesTests
     {
         public Task<GameDetailInfo?> GetAsync(int id, CancellationToken ct = default)
         {
+            if (id == 7301)
+                return Task.FromResult<GameDetailInfo?>(new GameDetailInfo(
+                    id, "Example & Game", "Catalog result", null, 2025,
+                    ["Adventure"], ["PC"], []));
+
             GameDetailInfo? result = id == 9302
                 ? new GameDetailInfo(
                     id, "Example Game 9302",
@@ -301,6 +326,19 @@ public sealed class DatabaseIdentityLibraryPagesTests
                     CommunityRatingCount = 17
                 }
                 : null;
+            return Task.FromResult(result);
+        }
+    }
+
+    private sealed class FakeGameSearchCatalog : IGameSearchCatalog
+    {
+        public Task<IReadOnlyList<GameDetailCard>> SearchAsync(
+            string? query, CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<GameDetailCard> result = string.Equals(
+                query, "example", StringComparison.OrdinalIgnoreCase)
+                ? [new GameDetailCard(7301, "Example & Game", null, 2025)]
+                : [];
             return Task.FromResult(result);
         }
     }

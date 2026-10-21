@@ -35,6 +35,7 @@ builder.Services.AddHttpClient<IgdbClient>(client =>
 });
 builder.Services.AddScoped<ILibraryGameCatalog, IgdbLibraryGameCatalog>();
 builder.Services.AddScoped<IGameDetailCatalog, IgdbGameDetailCatalog>();
+builder.Services.AddScoped<IGameSearchCatalog, IgdbGameSearchCatalog>();
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
     options.UseSqlServer(connection));
 
@@ -102,6 +103,17 @@ builder.Services.AddRateLimiter(options =>
                     QueueLimit = 0,
                     AutoReplenishment = true
                 }));
+    // Anonymous public search has a bounded per-client budget.
+    options.AddPolicy("catalog-search", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            "search:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
     options.AddPolicy("email-send", context =>
         !HttpMethods.IsPost(context.Request.Method)
             ? RateLimitPartition.GetNoLimiter("email-form-read")
