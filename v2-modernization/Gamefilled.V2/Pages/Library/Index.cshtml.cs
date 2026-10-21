@@ -12,19 +12,30 @@ namespace Gamefilled.V2.Pages.Library;
 /// </summary>
 [Authorize]
 [EnableRateLimiting("library-write")]
-public sealed class IndexModel(GameLibraryService library) : PageModel
+public sealed record LibraryGameCard(GameLibraryEntry Entry, LibraryGameMetadata? Metadata)
+{
+    public string Name => Metadata?.Name ?? $"Game {Entry.IgdbGameId}";
+    public string? CoverUrl => Metadata?.CoverUrl;
+    public int? ReleaseYear => Metadata?.ReleaseYear;
+}
+
+public sealed class IndexModel(GameLibraryService library, ILibraryGameCatalog catalog) : PageModel
 {
     public const string All = "all";
 
     public string Section { get; private set; } = All;
-    public IReadOnlyList<GameLibraryEntry> Entries { get; private set; } = [];
+    public IReadOnlyList<LibraryGameCard> Entries { get; private set; } = [];
+    public int PageNumber { get; private set; } = 1;
+    public int TotalPages { get; private set; } = 1;
+    public int TotalItems { get; private set; }
     public IReadOnlyDictionary<string, int> Counts { get; private set; }
         = new Dictionary<string, int>();
 
     [TempData]
     public string? Feedback { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(string? section, CancellationToken ct)
+    public async Task<IActionResult> OnGetAsync(
+        string? section, int page = 1, CancellationToken ct = default)
     {
         var normalized = NormalizeSection(section);
         if (normalized is null)
@@ -34,9 +45,16 @@ public sealed class IndexModel(GameLibraryService library) : PageModel
         var all = await library.MyGamesAsync(User, ct);
         Counts = all.GroupBy(x => x.Status)
             .ToDictionary(x => x.Key, x => x.Count());
-        Entries = normalized == All
+        var matching = normalized == All
             ? all
             : all.Where(x => x.Status == normalized).ToList();
+        TotalItems = matching.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling(TotalItems / 24d));
+        PageNumber = Math.Clamp(page, 1, TotalPages);
+        var selected = matching.Skip((PageNumber - 1) * 24).Take(24).ToList();
+        var names = await catalog.GetByIdsAsync(selected.Select(x => x.IgdbGameId), ct);
+        Entries = selected.Select(x => new LibraryGameCard(
+            x, names.GetValueOrDefault(x.IgdbGameId))).ToList();
 
         Response.Headers.CacheControl = "private, no-store";
         return Page();
