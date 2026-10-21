@@ -138,8 +138,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 app.UseForwardedHeaders();
-if (app.Environment.IsEnvironment("Testing"))
-    app.UseDeveloperExceptionPage();
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/account", StringComparison.OrdinalIgnoreCase))
@@ -153,17 +151,13 @@ app.Use(async (context, next) =>
 
 if (!app.Environment.IsDevelopment())
 {
-    // Keep staging/CI exceptions inspectable in the isolated TestServer,
-    // without leaking exception details from any real deployment.
-    if (!app.Environment.IsEnvironment("Testing"))
-    {
-        app.UseExceptionHandler(errorApp =>
-            errorApp.Run(context =>
-            {
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                return Task.CompletedTask;
-            }));
-    }
+    // Never expose stack traces to clients outside local development.
+    app.UseExceptionHandler(errorApp =>
+        errorApp.Run(context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            return Task.CompletedTask;
+        }));
     app.UseHsts();
 }
 
