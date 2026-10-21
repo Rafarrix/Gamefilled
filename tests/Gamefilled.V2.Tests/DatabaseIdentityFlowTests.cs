@@ -23,9 +23,13 @@ public sealed class DatabaseIdentityFlowTests
     [Fact]
     public async Task Registration_requires_email_confirmation_before_sign_in()
     {
+        // Explicit opt-in: other non-DB tests temporarily configure a dummy
+        // connection string inside the same test process.
+        if (Environment.GetEnvironmentVariable("GAMEFILLED_V2_SQL_INTEGRATION") != "1")
+            return;
+
         var connection = Environment.GetEnvironmentVariable("ConnectionStrings__V2ModernDatabase");
-        if (string.IsNullOrWhiteSpace(connection))
-            return; // The separate SQL integration job provides this.
+        Assert.False(string.IsNullOrWhiteSpace(connection));
 
         var mail = new CapturingSender();
         using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(host =>
