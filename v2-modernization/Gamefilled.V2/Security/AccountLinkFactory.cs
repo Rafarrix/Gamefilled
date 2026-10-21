@@ -10,6 +10,12 @@ namespace Gamefilled.V2.Security;
 public sealed class AccountLinkFactory(IConfiguration configuration)
 {
     public string ConfirmationUrl(Guid userId, string identityToken)
+        => SecurityActionUrl("confirm", userId, identityToken);
+
+    public string ResetPasswordUrl(Guid userId, string identityToken)
+        => SecurityActionUrl("reset-password", userId, identityToken);
+
+    private string SecurityActionUrl(string action, Guid userId, string identityToken)
     {
         var rawOrigin = configuration["Gamefilled:PublicOrigin"];
         if (!Uri.TryCreate(rawOrigin, UriKind.Absolute, out var origin)
@@ -25,7 +31,7 @@ public sealed class AccountLinkFactory(IConfiguration configuration)
         }
 
         var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(identityToken));
-        return $"{origin.GetLeftPart(UriPartial.Authority)}/account/confirm?userId={userId:D}&code={Uri.EscapeDataString(code)}";
+        return $"{origin.GetLeftPart(UriPartial.Authority)}/account/{action}?userId={userId:D}&code={Uri.EscapeDataString(code)}";
     }
 
     public static string? DecodeConfirmationCode(string? code)
