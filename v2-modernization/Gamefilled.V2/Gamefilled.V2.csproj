@@ -28,6 +28,8 @@
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../wwwroot/css/game-experience.css" Link="wwwroot/css/game-experience.css"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../wwwroot/css/game-universe.css" Link="wwwroot/css/game-universe.css"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../wwwroot/css/library-personal.css" Link="wwwroot/css/library-personal.css"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
