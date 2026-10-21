@@ -76,7 +76,8 @@ public sealed class IdentityFoundationTests : IClassFixture<ModernIdentityApplic
         var db = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
         var migrations = db.GetService<IMigrationsAssembly>();
 
-        var migrationType = Assert.Single(migrations.Migrations.Values);
+        var migrationType = migrations.Migrations.Single(
+            item => item.Key.EndsWith("_InitialIdentity", StringComparison.Ordinal)).Value;
         var migration = migrations.CreateMigration(migrationType, db.Database.ProviderName!);
 
         Assert.Equal(7, migration.UpOperations.OfType<CreateTableOperation>().Count());
@@ -84,6 +85,24 @@ public sealed class IdentityFoundationTests : IClassFixture<ModernIdentityApplic
         Assert.All(migration.UpOperations, operation =>
             Assert.True(operation is CreateTableOperation or CreateIndexOperation,
                 $"Unsafe operation in initial Identity migration: {operation.GetType().Name}"));
+    }
+
+    [Fact]
+    public void Library_migration_adds_only_its_own_table_and_indexes()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
+        var assembly = db.GetService<IMigrationsAssembly>();
+        var type = assembly.Migrations.Single(
+            item => item.Key.EndsWith("_AddGameLibrary", StringComparison.Ordinal)).Value;
+        var migration = assembly.CreateMigration(type, db.Database.ProviderName!);
+
+        var table = Assert.Single(migration.UpOperations.OfType<CreateTableOperation>());
+        Assert.Equal("GameLibraryEntries", table.Name);
+        Assert.Equal(2, migration.UpOperations.OfType<CreateIndexOperation>().Count());
+        Assert.All(migration.UpOperations, op =>
+            Assert.True(op is CreateTableOperation or CreateIndexOperation,
+                $"Unexpected operation in additive library migration: {op.GetType().Name}"));
     }
 
     [Fact]

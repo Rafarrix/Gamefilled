@@ -99,6 +99,69 @@ namespace Gamefilled.V2.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Gamefilled.V2.Library.GameLibraryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ContainsSpoilers")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<int>("IgdbGameId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReviewText")
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "IgdbGameId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_GameLibraryEntries_UserId_IgdbGameId");
+
+                    b.HasIndex("UserId", "UpdatedAtUtc")
+                        .IsDescending(false, true);
+
+                    b.ToTable("GameLibraryEntries", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GameLibraryEntries_IgdbGameId", "[IgdbGameId] > 0");
+
+                            t.HasCheckConstraint("CK_GameLibraryEntries_Rating", "[Rating] IS NULL OR [Rating] BETWEEN 1 AND 10");
+
+                            t.HasCheckConstraint("CK_GameLibraryEntries_ReviewLength", "[ReviewText] IS NULL OR LEN([ReviewText]) <= 5000");
+
+                            t.HasCheckConstraint("CK_GameLibraryEntries_Status", "[Status] IN (N'played', N'playing', N'backlog', N'wishlist')");
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")
@@ -228,6 +291,17 @@ namespace Gamefilled.V2.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Gamefilled.V2.Library.GameLibraryEntry", b =>
+                {
+                    b.HasOne("Gamefilled.V2.Identity.GamefilledUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

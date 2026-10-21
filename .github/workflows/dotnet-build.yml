@@ -188,5 +188,5 @@ jobs:
         run: |
           dotnet test tests/Gamefilled.V2.Tests/Gamefilled.V2.Tests.csproj \
             --configuration Release \
-            --filter "FullyQualifiedName~DatabaseIdentityFlowTests" \
+            --filter "FullyQualifiedName~DatabaseIdentityFlowTests|FullyQualifiedName~DatabaseIdentityLibraryTests" \
             --logger "trx;LogFileName=identity-sql.trx"
