@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Gamefilled.V2.Data;
+using Gamefilled.V2.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,7 @@ namespace Gamefilled.V2.Library;
 /// </summary>
 public sealed class GameLibraryService(
     GamefilledIdentityDbContext database,
-    UserManager<Identity.GamefilledUser> users)
+    UserManager<GamefilledUser> users)
 {
     private Guid RequireViewer(ClaimsPrincipal viewer)
     {
