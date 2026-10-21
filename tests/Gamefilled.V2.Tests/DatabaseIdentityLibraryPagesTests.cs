@@ -69,6 +69,13 @@ public sealed class DatabaseIdentityLibraryPagesTests
             var html = await guestDetail.Content.ReadAsStringAsync();
             Assert.Contains("Example Game 9302", html);
             Assert.Contains("Games you may like", html);
+            Assert.Contains("Screenshots and trailers", html);
+            Assert.Contains("Game Universe", html);
+            Assert.Contains("Releases by platform", html);
+            Assert.Contains("Watch Game trailer on YouTube", html);
+            Assert.Contains("Developer", html);
+            Assert.Contains("Studio &amp; Partners", html);
+            Assert.DoesNotContain("onerror=", html);
             Assert.DoesNotContain("<script>alert", html);
             Assert.Contains("&lt;script&gt;", html);
             Assert.Contains("href=\"/account/login\"", html);
@@ -274,6 +281,25 @@ public sealed class DatabaseIdentityLibraryPagesTests
                     2025,
                     ["Adventure"], ["PC"],
                     [new GameDetailCard(9303, "Suggested game", null, 2024)])
+                {
+                    Screenshots = [
+                        new GameDetailMedia(
+                            "https://images.igdb.com/igdb/image/upload/t_screenshot_big/co789.jpg",
+                            "Screenshot")
+                    ],
+                    Videos = [
+                        new GameDetailVideo(
+                            "https://www.youtube.com/watch?v=abcdefghijk",
+                            "https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg",
+                            "Game trailer")
+                    ],
+                    ReleaseTimeline = [new GameDetailRelease(2025, "2025", "PC")],
+                    Universe = [new GameDetailUniverseSection(
+                        "DLC", [new GameDetailCard(9304, "Game expansion", null, 2026)])],
+                    Companies = [new GameDetailCompany("Studio & Partners", "Developer")],
+                    CommunityRating = 89.5,
+                    CommunityRatingCount = 17
+                }
                 : null;
             return Task.FromResult(result);
         }
