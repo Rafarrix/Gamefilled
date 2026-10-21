@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -63,6 +66,24 @@ public sealed class IdentityFoundationTests : IClassFixture<ModernIdentityApplic
         Assert.Equal(Microsoft.AspNetCore.Http.CookieSecurePolicy.Always, cookie.Cookie.SecurePolicy);
         Assert.True(cookie.Cookie.HttpOnly);
         Assert.Equal(Microsoft.AspNetCore.Http.SameSiteMode.Lax, cookie.Cookie.SameSite);
+    }
+
+    [Fact]
+    public void Initial_identity_migration_creates_only_new_tables_and_indexes()
+    {
+        // Inspect the generated EF migration in memory; no SQL connection needed.
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<GamefilledIdentityDbContext>();
+        var migrations = db.GetService<IMigrationsAssembly>();
+
+        var migrationType = Assert.Single(migrations.Migrations.Values);
+        var migration = migrations.CreateMigration(migrationType, db.Database.ProviderName!);
+
+        Assert.Equal(7, migration.UpOperations.OfType<CreateTableOperation>().Count());
+        Assert.Equal(7, migration.UpOperations.OfType<CreateIndexOperation>().Count());
+        Assert.All(migration.UpOperations, operation =>
+            Assert.True(operation is CreateTableOperation or CreateIndexOperation,
+                $"Unsafe operation in initial Identity migration: {operation.GetType().Name}"));
     }
 
     [Fact]
