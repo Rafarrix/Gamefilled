@@ -24,9 +24,8 @@ public sealed class DatabaseIdentityLibraryPagesTests
 
         using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(host =>
         {
-            // Diagnose exceptions directly in this isolated test host. Production
-            // continues to return generic 500s without leaking internals.
-            host.UseEnvironment("Development");
+            // The host deliberately surfaces unhandled exceptions in Testing only.
+            host.UseEnvironment("Testing");
             host.UseSetting("ConnectionStrings:V2ModernDatabase", connection);
         });
 
