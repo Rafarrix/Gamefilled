@@ -429,3 +429,9 @@ Gamefilled.csproj.user
 # Scripts/dumps locais da base de dados
 Database/
 *.sql
+
+# Gamefilled V2 private preview: local credentials, keys and test data
+preview/.env.preview
+preview/local/
+preview/*.crt
+preview/*.key

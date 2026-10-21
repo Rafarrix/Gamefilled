@@ -1,0 +1,42 @@
+name: V2 Private Preview Build
+
+on:
+  push:
+    branches:
+      - feature/v2-private-preview-stack
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'preview/**'
+      - 'compose.preview.yaml'
+      - 'v2-modernization/**'
+      - '.dockerignore'
+      - '.github/workflows/v2-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure preview can be configured without actual secrets
+        run: |
+          docker compose --project-name gamefilled-v2-preview-ci \
+            --env-file preview/.env.preview.example \
+            -f compose.preview.yaml config --quiet
+      - name: Validate preview TLS/Caddy configuration
+        run: |
+          docker run --rm \
+            -v "$PWD/preview/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Build isolated modern V2 image
+        run: |
+          docker build --file preview/Dockerfile --target web \
+            --tag gamefilled-v2-preview:ci .
+      - name: Build isolated EF migration runner
+        run: |
+          docker build --file preview/Dockerfile --target migrator \
+            --tag gamefilled-v2-preview-migrator:ci .
