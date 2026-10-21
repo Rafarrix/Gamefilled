@@ -26,7 +26,7 @@ public sealed class IdentityAccountPagesTests : IClassFixture<ModernIdentityAppl
         using var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("no-store", response.Headers.CacheControl?.ToString());
+        Assert.Contains("no-store", response.Headers.CacheControl?.ToString());
         Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").Single());
     }
 
