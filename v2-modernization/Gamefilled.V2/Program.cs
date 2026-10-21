@@ -1,5 +1,6 @@
 using Gamefilled.V2.Data;
 using Gamefilled.V2.Identity;
+using Gamefilled.V2.Library;
 using Gamefilled.V2.Security;
 using Gamefilled.Application.Email;
 using Gamefilled.Infrastructure;
@@ -21,6 +22,7 @@ if (string.IsNullOrWhiteSpace(connection))
 }
 
 builder.Services.AddRazorPages();
+builder.Services.AddScoped<GameLibraryService>();
 builder.Services.AddDbContext<GamefilledIdentityDbContext>(options =>
     options.UseSqlServer(connection));
 
