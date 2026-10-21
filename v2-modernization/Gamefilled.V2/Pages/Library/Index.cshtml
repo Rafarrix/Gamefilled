@@ -1,0 +1,146 @@
+@page "/library/{section?}"
+@using Gamefilled.V2.Library
+@model Gamefilled.V2.Pages.Library.IndexModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Your library · Gamefilled";
+    var sections = new (string Key, string Name, string Icon)[]
+    {
+        ("all", "All games", "fas fa-layer-group"),
+        (GameLibraryStatus.Played, "Played", "fas fa-circle-check"),
+        (GameLibraryStatus.Playing, "Playing", "fas fa-gamepad"),
+        (GameLibraryStatus.Backlog, "Backlog", "fas fa-list"),
+        (GameLibraryStatus.Wishlist, "Wishlist", "fas fa-heart")
+    };
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/library-v2.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/library-personal.css" asp-append-version="true" />
+</head>
+<body>
+<div class="gf-library-page">
+    <section class="gf-library-hero">
+        <div class="gf-library-shell gf-library-hero__inner is-own">
+            <div class="gf-library-title">
+                <span class="gf-eyebrow">Your Gamefilled collection</span>
+                <h1><i class="fas fa-layer-group" aria-hidden="true"></i> My library</h1>
+                <p>Your games, status, ratings and reviews — only visible to you in this preview.</p>
+            </div>
+            <div class="gf-library-total">
+                <strong>@Model.Counts.Values.Sum()</strong>
+                <span>games</span>
+            </div>
+        </div>
+    </section>
+    <main class="gf-library-shell gf-library-main">
+        <nav class="gf-library-tabs" aria-label="Library sections">
+            @foreach (var item in sections)
+            {
+                var count = item.Key == "all"
+                    ? Model.Counts.Values.Sum()
+                    : Model.Counts.GetValueOrDefault(item.Key);
+                <a href="/library/@item.Key"
+                   class="@(Model.Section == item.Key ? "is-active" : "")"
+                   aria-current="@(Model.Section == item.Key ? "page" : null)">
+                    <i class="@item.Icon" aria-hidden="true"></i>
+                    <span>@item.Name</span>
+                    <strong>@count</strong>
+                </a>
+            }
+        </nav>
+        @if (!string.IsNullOrEmpty(Model.Feedback))
+        {
+            <p role="status" class="gf-library-feedback">@Model.Feedback</p>
+        }
+        <section class="gf-library-toolbar" aria-label="Library controls">
+            <form method="post" asp-page-handler="Status" class="gf-library-search">
+                <input type="hidden" name="section" value="@Model.Section" />
+                <label for="new-game-id">IGDB game ID</label>
+                <input id="new-game-id" type="number" name="gameId" min="1" required
+                       placeholder="Game ID" aria-describedby="game-id-help" />
+                <label for="new-status">Status</label>
+                <select id="new-status" name="status">
+                    <option value="backlog">Backlog</option>
+                    <option value="playing">Playing</option>
+                    <option value="played">Played</option>
+                    <option value="wishlist">Wishlist</option>
+                </select>
+                <button type="submit" class="gf-btn gf-btn--secondary">Save game</button>
+            </form>
+        </section>
+        <p id="game-id-help" class="gf-library-import-note">
+            Integration preview: games are currently referenced by their IGDB IDs.
+            Titles, artwork and the add-from-game-page experience will be restored with the catalog integration.
+        </p>
+        @if (Model.Entries.Count == 0)
+        {
+            <section class="gf-empty-state gf-library-empty" aria-label="Empty library">
+                <h2>No games in this section yet</h2>
+                <p>Your games will appear here as you add them to your collection.</p>
+            </section>
+        }
+        else
+        {
+            <section class="gf-library-grid" aria-label="Your saved games">
+                @foreach (var game in Model.Entries)
+                {
+                    <article class="gf-library-card">
+                        <div class="gf-library-card__body">
+                            <h2>IGDB #@game.IgdbGameId</h2>
+                            <p>Status: @game.Status</p>
+                            @if (game.Rating is not null)
+                            {
+                                <p>Rating: @game.Rating/10</p>
+                            }
+                            <form method="post" asp-page-handler="Status">
+                                <input type="hidden" name="gameId" value="@game.IgdbGameId" />
+                                <input type="hidden" name="section" value="@Model.Section" />
+                                <label for="status-@game.IgdbGameId">Change status</label>
+                                <select name="status" id="status-@game.IgdbGameId">
+                                    @foreach (var status in sections.Where(x => x.Key != "all"))
+                                    {
+                                        <option value="@status.Key" selected="@(status.Key == game.Status)">
+                                            @status.Name
+                                        </option>
+                                    }
+                                </select>
+                                <button type="submit">Update status</button>
+                            </form>
+                            <form method="post" asp-page-handler="Review">
+                                <input type="hidden" name="gameId" value="@game.IgdbGameId" />
+                                <input type="hidden" name="section" value="@Model.Section" />
+                                <label for="rating-@game.IgdbGameId">Rating (1–10)</label>
+                                <input type="number" min="1" max="10" name="rating"
+                                       id="rating-@game.IgdbGameId" value="@game.Rating" />
+                                <label for="review-@game.IgdbGameId">Review</label>
+                                <textarea id="review-@game.IgdbGameId" maxlength="5000"
+                                          name="reviewText" rows="4">@game.ReviewText</textarea>
+                                <label>
+                                    <input type="checkbox" name="containsSpoilers" value="true"
+                                           checked="@game.ContainsSpoilers" />
+                                    Contains spoilers
+                                </label>
+                                <button type="submit">Save review</button>
+                            </form>
+                            <form method="post" asp-page-handler="Remove">
+                                <input type="hidden" name="gameId" value="@game.IgdbGameId" />
+                                <input type="hidden" name="section" value="@Model.Section" />
+                                <button type="submit" aria-label="Remove IGDB game @game.IgdbGameId from your library">
+                                    Remove
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                }
+            </section>
+        }
+    </main>
+</div>
+</body>
+</html>
