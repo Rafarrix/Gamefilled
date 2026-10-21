@@ -158,7 +158,7 @@ public sealed class DatabaseIdentityLibraryPagesTests
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
         var html = await page.Content.ReadAsStringAsync();
         var token = Regex.Match(html,
-            "<input(?=[^>]*name=\\\"__RequestVerificationToken\\\")(?=[^>]*value=\\\"([^\\\"]+)\\\")[^>]*>",
+            "<input(?=[^>]*name=\"__RequestVerificationToken\")(?=[^>]*value=\"([^\"]+)\")[^>]*>",
             RegexOptions.IgnoreCase);
         Assert.True(token.Success, "A Razor POST form must contain the antiforgery token.");
         var fields = form.Select(item => new KeyValuePair<string, string>(item.Name, item.Value))
