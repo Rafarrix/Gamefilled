@@ -21,7 +21,7 @@ public static class GamefilledIdentityFormPolicy
 
     public static bool IsSafeReturnUrl(string? returnUrl) =>
         !string.IsNullOrWhiteSpace(returnUrl)
-        && returnUrl.StartsWith('/', StringComparison.Ordinal)
+        && returnUrl.StartsWith("/", StringComparison.Ordinal)
         && !returnUrl.StartsWith("//", StringComparison.Ordinal)
         && !returnUrl.StartsWith("/\\", StringComparison.Ordinal)
         && !returnUrl.Contains('\\')
