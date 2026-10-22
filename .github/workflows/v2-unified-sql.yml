@@ -1,4 +1,4 @@
-name: Generate V2 Unified Identity SQL Migration
+name: Unified V2 Identity SQL Integration
 
 on:
   pull_request:
@@ -8,47 +8,78 @@ on:
       - 'Data/GamefilledV2DbContextFactory.cs'
       - 'Data/V2Migrations/**'
       - 'Identity/**'
+      - 'Application/Identity/**'
+      - 'tests/Gamefilled.Tests/UnifiedIdentitySqlTests.cs'
       - '.github/workflows/v2-unified-sql.yml'
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  schema:
-    name: Create and inspect isolated V2 schema
+  sql-integration:
+    name: Apply unified V2 schema to disposable SQL Server
     runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Express
+          MSSQL_SA_PASSWORD: "TestOnly_Sql_2026_ChangeMe!"
+        ports:
+          - 14336:1433
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
     env:
-      GAMEFILLED_V2_DESIGN_CONNECTION: "Server=127.0.0.1,1;Database=GamefilledV2IntegratedCI;User Id=sa;Password=TestOnly_Unused_2026!;Encrypt=False;Connect Timeout=1"
       ASPNETCORE_ENVIRONMENT: Testing
+      GAMEFILLED_V2_SQL_INTEGRATION: "1"
+      GAMEFILLED_V2_DESIGN_CONNECTION: "Server=127.0.0.1,14336;Database=GamefilledV2IntegratedCI;User Id=sa;Password=TestOnly_Sql_2026_ChangeMe!;Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - name: Restore tools and project
+      - name: Restore and build original Gamefilled + tests
         run: |
           dotnet tool restore
-          dotnet restore Gamefilled.csproj
-          dotnet build Gamefilled.csproj --configuration Release --no-restore
-      - name: Generate initial consolidated Identity SQL migration on disposable design connection
+          dotnet restore Gamefilled.sln
+          dotnet build Gamefilled.sln --configuration Release --no-restore
+      - name: Ensure committed EF Identity snapshot exactly matches model
+        run: |
+          dotnet tool run dotnet-ef migrations has-pending-model-changes \
+            --context GamefilledV2DbContext \
+            --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+            --configuration Release --no-build
+      - name: Apply migration ONLY to disposable GamefilledV2IntegratedCI database
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -f Data/V2Migrations/GamefilledV2DbContextModelSnapshot.cs ]]; then
-            dotnet tool run dotnet-ef migrations has-pending-model-changes \
-              --context GamefilledV2DbContext --project Gamefilled.csproj \
-              --startup-project Gamefilled.csproj --configuration Release
-          else
-            dotnet tool run dotnet-ef migrations add InitialUnifiedIdentity \
-              --context GamefilledV2DbContext --project Gamefilled.csproj \
-              --startup-project Gamefilled.csproj --configuration Release \
-              --output-dir Data/V2Migrations
-            python3 - <<'PY'
-          from pathlib import Path
-          for path in sorted(Path('Data/V2Migrations').glob('*.cs')):
-              print('GF_MIGRATION_FILE_START:' + str(path), flush=True)
-              print(path.read_text(), end='\n', flush=True)
-              print('GF_MIGRATION_FILE_END:' + str(path), flush=True)
-          PY
-          fi
+          for attempt in $(seq 1 15); do
+            if dotnet tool run dotnet-ef database update \
+              --context GamefilledV2DbContext \
+              --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+              --configuration Release --no-build >v2-schema-sql.log 2>&1; then
+              echo 'PASS: Unified V2 schema applied on disposable GitHub SQL Server.'
+              break
+            fi
+            if [[ "$attempt" -eq 15 ]]; then
+              echo 'FAIL: Unified SQL migration was not successful.'
+              tail -n 70 v2-schema-sql.log | sed -E 's/Password=[^; ]+/Password=[REDACTED]/g'
+              exit 1
+            fi
+            sleep 4
+          done
+      - name: Reapply migration idempotently
+        run: |
+          dotnet tool run dotnet-ef database update \
+            --context GamefilledV2DbContext \
+            --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+            --configuration Release --no-build > /dev/null
+      - name: Verify actual SQL constraints and account isolation
+        run: |
+          dotnet test tests/Gamefilled.Tests/Gamefilled.Tests.csproj \
+            --configuration Release --no-build \
+            --filter FullyQualifiedName~UnifiedIdentitySqlTests
