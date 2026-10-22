@@ -1,0 +1,54 @@
+name: Generate V2 Unified Identity SQL Migration
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'Data/GamefilledV2DbContext.cs'
+      - 'Data/GamefilledV2DbContextFactory.cs'
+      - 'Data/V2Migrations/**'
+      - 'Identity/**'
+      - '.github/workflows/v2-unified-sql.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    name: Create and inspect isolated V2 schema
+    runs-on: ubuntu-latest
+    env:
+      GAMEFILLED_V2_DESIGN_CONNECTION: "Server=127.0.0.1,1;Database=GamefilledV2IntegratedCI;User Id=sa;Password=TestOnly_Unused_2026!;Encrypt=False;Connect Timeout=1"
+      ASPNETCORE_ENVIRONMENT: Testing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore tools and project
+        run: |
+          dotnet tool restore
+          dotnet restore Gamefilled.csproj
+          dotnet build Gamefilled.csproj --configuration Release --no-restore
+      - name: Generate initial consolidated Identity SQL migration on disposable design connection
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f Data/V2Migrations/GamefilledV2DbContextModelSnapshot.cs ]]; then
+            dotnet tool run dotnet-ef migrations has-pending-model-changes \
+              --context GamefilledV2DbContext --project Gamefilled.csproj \
+              --startup-project Gamefilled.csproj --configuration Release
+          else
+            dotnet tool run dotnet-ef migrations add InitialUnifiedIdentity \
+              --context GamefilledV2DbContext --project Gamefilled.csproj \
+              --startup-project Gamefilled.csproj --configuration Release \
+              --output-dir Data/V2Migrations
+            python3 - <<'PY'
+          from pathlib import Path
+          for path in sorted(Path('Data/V2Migrations').glob('*.cs')):
+              print('GF_MIGRATION_FILE_START:' + str(path), flush=True)
+              print(path.read_text(), end='\n', flush=True)
+              print('GF_MIGRATION_FILE_END:' + str(path), flush=True)
+          PY
+          fi
