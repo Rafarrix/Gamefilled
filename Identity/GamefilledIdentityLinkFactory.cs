@@ -31,7 +31,7 @@ public sealed class GamefilledIdentityLinkFactory(IConfiguration configuration)
         }
 
         var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(identityToken));
-        return $"{origin.GetLeftPart(UriPartial.Authority)}/account/{action}?userId={userId:D}&code={Uri.EscapeDataString(code)}";
+        return $"{origin.GetLeftPart(UriPartial.Authority)}/users/{action}?userId={userId:D}&code={Uri.EscapeDataString(code)}";
     }
 
     public static string? DecodeConfirmationCode(string? code)
