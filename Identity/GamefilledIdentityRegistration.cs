@@ -77,6 +77,8 @@ public static class GamefilledIdentityRegistration
 
         services.AddScoped<GamefilledIdentityAccountService>();
         services.AddScoped<GamefilledIdentitySignInService>();
+        services.AddScoped<GamefilledIdentityProfileService>();
+        services.AddScoped<GamefilledIdentityAccountSettingsService>();
         services.AddSingleton<GamefilledIdentityLinkFactory>();
         return services;
     }
