@@ -26,7 +26,7 @@ public sealed class GamefilledIdentityAccountService(
         bool acceptedTerms, CancellationToken ct = default)
     {
         if (!acceptedTerms || !IsValidUsername(username)
-            || !IsValidEmail(email) || !IsValidPasswordInput(password))
+            || !IsValidEmail(email) || !GamefilledIdentityFormPolicy.IsAllowedPassword(password))
             return false;
 
         var account = new GamefilledAccount
