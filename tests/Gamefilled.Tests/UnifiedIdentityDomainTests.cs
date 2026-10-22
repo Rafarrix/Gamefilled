@@ -48,7 +48,8 @@ public sealed class UnifiedIdentityDomainTests
             typeof(GamefilledFavoriteGame),
             typeof(GamefilledFollow),
             typeof(GamefilledActivity),
-            typeof(GamefilledNotification)
+            typeof(GamefilledNotification),
+            typeof(GamefilledBlock)
         })
         {
             var entity = db.Model.FindEntityType(entityType);
@@ -83,6 +84,13 @@ public sealed class UnifiedIdentityDomainTests
         Assert.True(follow.GetIndexes().Any(i => i.IsUnique &&
             i.Properties.Select(p => p.Name).SequenceEqual(
                 [nameof(GamefilledFollow.FollowerId), nameof(GamefilledFollow.FollowingId)])));
+
+        var blocks = designModel.FindEntityType(typeof(GamefilledBlock))!;
+        Assert.Contains(blocks.GetCheckConstraints(), check =>
+            check.Name == "CK_GF_Blocks_NoSelfBlock");
+        Assert.Contains(blocks.GetIndexes(), index => index.IsUnique &&
+            index.Properties.Select(p => p.Name).SequenceEqual(
+                [nameof(GamefilledBlock.BlockerId), nameof(GamefilledBlock.BlockedId)]));
 
         var favorites = designModel.FindEntityType(typeof(GamefilledFavoriteGame))!;
         Assert.True(favorites.GetIndexes().Any(i => i.IsUnique &&
