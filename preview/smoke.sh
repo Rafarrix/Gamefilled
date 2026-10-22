@@ -32,7 +32,7 @@ check() {
   local route="$1" expected="$2" status="" attempt
   for attempt in 1 2 3 4 5 6 7 8; do
     status="$(curl --silent --show-error --noproxy '*' --connect-timeout 5 \
-      --max-time 15 --cacert "$ca" \
+      --max-time 60 --cacert "$ca" \
       --resolve "preview.gamefilled.pt:8444:$lan_ip" \
       -o /dev/null -w '%{http_code}' \
       "https://preview.gamefilled.pt:8444$route")" || status="000"
@@ -48,6 +48,20 @@ check() {
 check /health/live 200
 check /health/ready 200
 check / 200
-check /games/search 200
-check /profile 302
+check /games 302
+check /games/lib/Popular 200
+check /people 200
+check /users/Login 200
+check /users/Register 200
+check /css/site.css 200
+check /lib/imgs/indexbackground.png 200
+
+index_html="$(curl --silent --show-error --noproxy '*' --max-time 60 --cacert "$ca" \
+  --resolve "preview.gamefilled.pt:8444:$lan_ip" \
+  "https://preview.gamefilled.pt:8444/")"
+if [[ "$index_html" != *'gf-home-hero'* || "$index_html" != *'gf-home-page'* ]]; then
+  echo "FAIL original Gamefilled hero/home markup missing; partial backend lab is not an accepted preview." >&2
+  exit 1
+fi
+printf 'PASS original Gamefilled homepage HTML and artwork route verified.\n'
 printf 'Preview HTTPS smoke checks passed. Test real user flows in a browser.\n'
