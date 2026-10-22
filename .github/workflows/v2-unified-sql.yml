@@ -10,6 +10,8 @@ on:
       - 'Identity/**'
       - 'Application/Identity/**'
       - 'tests/Gamefilled.Tests/UnifiedIdentitySqlTests.cs'
+      - 'tests/Gamefilled.Tests/UnifiedIdentityAccountFlowSqlTests.cs'
+      - 'Identity/GamefilledIdentity*.cs'
       - '.github/workflows/v2-unified-sql.yml'
 
 permissions:
@@ -82,4 +84,4 @@ jobs:
         run: |
           dotnet test tests/Gamefilled.Tests/Gamefilled.Tests.csproj \
             --configuration Release --no-build \
-            --filter FullyQualifiedName~UnifiedIdentitySqlTests
+            --filter "FullyQualifiedName~UnifiedIdentitySqlTests|FullyQualifiedName~UnifiedIdentityAccountFlowSqlTests"
