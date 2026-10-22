@@ -44,8 +44,16 @@ verify_host() {
   local free_mem_kib free_disk_kib
   free_mem_kib="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"
   free_disk_kib="$(df -Pk "$root" | awk 'NR==2 {print $4}')"
-  [[ "${free_mem_kib:-0}" -ge 5242880 ]] ||
-    die "less than 5 GiB RAM is available; review VM resources before a second SQL"
+  # Initial deployment needs headroom for SQL + first image builds. On subsequent
+  # updates the already-running preview SQL uses some of that memory; require
+  # 3 GiB remaining for the image build instead of incorrectly demanding 5 GiB.
+  if [[ -n "$(dc ps -q sql)" ]]; then
+    [[ "${free_mem_kib:-0}" -ge 3145728 ]] ||
+      die "less than 3 GiB RAM available for a running-preview update; increase VM resources before building"
+  else
+    [[ "${free_mem_kib:-0}" -ge 5242880 ]] ||
+      die "less than 5 GiB RAM available for a first preview deployment; review VM resources"
+  fi
   [[ "${free_disk_kib:-0}" -ge 10485760 ]] ||
     die "less than 10 GiB free on checkout filesystem; review storage first"
   dc config --quiet

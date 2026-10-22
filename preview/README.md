@@ -30,8 +30,11 @@ docker compose ls
 ss -lnt | grep 8444 || true
 ~~~
 
-Verificar capacidade disponível: pelo menos 5 GiB de RAM disponível na VM
-e 10 GiB de espaço livre para a preview. O SQL tem limite de 3 GiB, mas o
+Verificar capacidade disponível: pelo menos 5 GiB de RAM disponível antes
+do primeiro arranque; em atualizações com a SQL da própria preview já ativa,
+pelo menos 3 GiB adicionais disponíveis para reconstruir as imagens.
+Rever os recursos da VM se falhar a verificação. Exigir sempre
+10 GiB de espaço livre para a preview. O SQL tem limite de 3 GiB, mas o
 projeto total consome mais. Confirmar que 172.28.81.0/24 não colide com
 outras redes Docker ou VPN e que a porta 8444 está livre.
 
