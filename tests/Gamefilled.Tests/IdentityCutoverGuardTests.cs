@@ -25,6 +25,7 @@ public sealed class IdentityCutoverGuardTests
             ["Infrastructure/ProtectedPageModel.cs"] = 1,
             ["Infrastructure/RequireLoginFilter.cs"] = 1,
             ["Pages/Index.cshtml.cs"] = 2,
+            ["Pages/settings/Index.cshtml.cs"] = 3,
             ["Pages/Shared/_Layout.cshtml"] = 3,
             ["Pages/api/NotificationUnread.cshtml.cs"] = 1,
             ["Pages/games/Game.cshtml.cs"] = 2,
