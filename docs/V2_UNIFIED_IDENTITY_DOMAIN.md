@@ -80,6 +80,29 @@ and no GUID schema migration has been generated/applied or provisioned on
   the visual theme. Keep login, library and profile handlers under one
   verified Identity principal; **do not enable one route early**.
 
+## Account/profile migration services (staged)
+
+- `GamefilledIdentityProfileService`: replacement for Session-backed
+  header/profile identity, with a single GUID principal; stores display
+  name, bio, avatar/banner and profile privacy through `UserManager`.
+  Validates image URLs (HTTPS or local paths) and bio length before writes.
+- `GamefilledIdentityAccountSettingsService`: password change verifies
+  the existing password and delegates hashing and security-stamp
+  invalidation to Identity. Email change **does not update the SQL email**
+  when requested: the new inbox must confirm a fresh Identity
+  `GenerateChangeEmailTokenAsync` token before `ChangeEmailAsync` commits
+  it, handling address-uniqueness races.
+- `GamefilledIdentityLinkFactory` also builds a fixed, trusted HTTPS
+  new-email confirmation link. Links are not derived from incoming Host.
+- `UnifiedIdentitySettingsSqlTests` executes real owner/other-user
+  separation, password changes, stamp updates, and new-email confirmation
+  using the disposable GitHub Actions SQL database.
+
+**No runtime route, layout or session authorization change yet.** The
+original `Pages/Shared/_Layout.cshtml` and `Pages/settings/**` are kept
+intact. These services must replace the actual PageModel dependencies
+in the coordinated final cutover after the other modules have migrated.
+
 ## Required next implementation gates
 
 1. Generate and code-review an `InitialUnifiedIdentity` EF migration
