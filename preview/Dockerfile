@@ -16,11 +16,13 @@ ENTRYPOINT ["dotnet", "tool", "run", "dotnet-ef", "database", "update", \
     "--context", "GamefilledIdentityDbContext", "--no-build", "--configuration", "Release"]
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS web
+ARG GAMEFILLED_PREVIEW_REVISION=local
 WORKDIR /app
 COPY --from=builder --chown=app:app /publish .
 USER app
 ENV ASPNETCORE_URLS=http://+:8080 \
     ASPNETCORE_ENVIRONMENT=Preview \
+    Preview__Revision=${GAMEFILLED_PREVIEW_REVISION} \
     DOTNET_EnableDiagnostics=0
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Gamefilled.V2.dll"]
