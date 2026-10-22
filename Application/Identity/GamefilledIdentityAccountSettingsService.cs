@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Gamefilled.Application.Email;
 using Gamefilled.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gamefilled.Application.Identity;
 
@@ -87,7 +88,17 @@ public sealed class GamefilledIdentityAccountSettingsService(
 
         // Identity validates token against the account, its security stamp,
         // AND the exact proposed target address before updating account email.
-        var changed = await users.ChangeEmailAsync(account, email!, token);
+        IdentityResult changed;
+        try
+        {
+            changed = await users.ChangeEmailAsync(account, email!, token);
+        }
+        catch (DbUpdateException)
+        {
+            // Another user may have registered this address after the email
+            // was sent. The unique SQL index wins the race safely.
+            return false;
+        }
         if (!changed.Succeeded) return false;
 
         // Also update username only if it had been the old email? We preserve
