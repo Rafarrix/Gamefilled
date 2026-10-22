@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace Gamefilled.Data;
@@ -19,8 +20,15 @@ public sealed class GamefilledV2DbContextFactory : IDesignTimeDbContextFactory<G
                 + "Encrypt=False;Connect Timeout=1";
         }
 
-        if (connection.Contains("Database=Gamefilleddb;", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Refusing to scaffold V2 Identity against live Gamefilleddb.");
+        var parsed = new SqlConnectionStringBuilder(connection);
+        // Whitelist disposable, dedicated Identity database names. Explicitly
+        // reject Gamefilleddb (dev), GamefilledFullPreview (legacy preview)
+        // and ambiguous connection strings before any EF tooling can use them.
+        if (!parsed.InitialCatalog.StartsWith("GamefilledV2", StringComparison.OrdinalIgnoreCase)
+            && !parsed.InitialCatalog.Equals("GamefilledFullPreviewIdentity",
+                StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                "V2 Identity design-time operations require an isolated V2 database.");
 
         return new GamefilledV2DbContext(
             new DbContextOptionsBuilder<GamefilledV2DbContext>()
