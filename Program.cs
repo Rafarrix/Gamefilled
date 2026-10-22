@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,21 @@ if (string.IsNullOrWhiteSpace(defaultConnection))
     throw new InvalidOperationException(
         "Missing connection string 'ConnectionStrings:DefaultConnection'. " +
         "Configure it with user secrets, an ignored appsettings file, or an environment variable.");
+}
+
+// Persist preview-only session/cookie keys across container restarts.
+// The existing development environment is unaffected.
+if (builder.Environment.IsEnvironment("Preview"))
+{
+    var keyPath = builder.Configuration["DataProtection:KeysDirectory"];
+    if (string.IsNullOrWhiteSpace(keyPath)
+        || !Path.IsPathFullyQualified(keyPath)
+        || !Directory.Exists(keyPath))
+        throw new InvalidOperationException("Preview Data Protection key directory must exist.");
+
+    builder.Services.AddDataProtection()
+        .SetApplicationName("Gamefilled-Full-Preview")
+        .PersistKeysToFileSystem(new DirectoryInfo(keyPath));
 }
 
 /* ============================================================================
