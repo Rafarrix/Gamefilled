@@ -37,7 +37,7 @@ encouraged. This is **a migration guard, not a security certification**.
 | Games and saved library | `Pages/games/Game.cshtml.cs`, `Pages/u/Library.cshtml.cs`, `Pages/u/Activity.cshtml.cs`, `Pages/settings/FavoriteGames.cshtml.cs` | GUID ownership FKs and authenticated server-side authorization; no IGDB query calibration changes |
 | Profile and social | `Pages/u/Profile.cshtml.cs`, `Pages/u/Friends.cshtml.cs`, `Pages/people/Index.cshtml.cs`, `Pages/users/Follow.cshtml.cs`, `Followers.cshtml.cs`, `Following.cshtml.cs` | One canonical Identity user ID; authorized follow/visibility and privacy boundaries |
 | Notifications | `Pages/api/NotificationUnread.cshtml.cs`, `Infrastructure/ProtectedPageModel.cs` | Claims principal ownership, authenticated API; preserve POST-only CSRF notification actions |
-| Settings | `Pages/settings/Account.cshtml.cs`, `Blocked.cshtml.cs`, `Defaults.cshtml.cs`, `Infractions.cshtml.cs`, `Integrations.cshtml.cs`, `Notifications.cshtml.cs`, `Profile.cshtml.cs` | Protected policies; email changes confirmed at the replacement inbox and secure profile edits |
+| Settings | `Pages/settings/Account.cshtml.cs`, `Blocked.cshtml.cs`, `Defaults.cshtml.cs`, `Infractions.cshtml.cs`, `Integrations.cshtml.cs`, `Index.cshtml.cs`, `Notifications.cshtml.cs`, `Profile.cshtml.cs` | Protected policies; email changes confirmed at the replacement inbox and secure profile edits |
 | Session infrastructure | `Infrastructure/RequireLoginFilter.cs`, `Application/Social/UserPresenceMiddleware.cs` | Claims and Identity security stamps; separate user presence from authentication authority |
 
 **Additional requirements:** search for indirect user lookups in DbContext
