@@ -26,6 +26,7 @@ RUN mkdir -p /app/migrations && \
       --project Gamefilled.csproj \
       --startup-project Gamefilled.csproj \
       --configuration ${BUILD_CONFIGURATION} \
+      --context AppDbContext \
       --no-build \
       --output /app/migrations/efbundle
 
