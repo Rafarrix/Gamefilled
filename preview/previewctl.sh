@@ -68,7 +68,7 @@ confirm_deploy() {
   local expected
   if [[ -n "$(dc ps -q sql)" ]]; then
     expected="UPDATE PREVIEW"
-    note "Existing preview SQL: create a preview database backup and review EF migrations."
+    note "Existing preview SQL: full-product schema uses NEW GamefilledFullPreview; do not alter GamefilledV2Preview."
   else
     expected="START PREVIEW"
     note "A second SQL Server may increase VM RAM/CPU/disk consumption."
@@ -86,7 +86,7 @@ deploy() {
   note "Building reviewed revision $PREVIEW_REVISION."
   dc build web migrator
   dc up -d sql
-  note "Applying migrations ONLY to GamefilledV2Preview."
+  note "Applying main Gamefilled schema migrations ONLY to GamefilledFullPreview on preview SQL."
   local ok=0
   for attempt in 1 2 3 4 5 6; do
     if dc --profile setup run --rm migrator; then ok=1; break; fi
