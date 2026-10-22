@@ -36,8 +36,7 @@ public sealed class NotificationUnreadModel : PageModel
                     : $"{item.ActorName} started following you.",
                 actorName = item.ActorName,
                 avatarUrl = item.ActorAvatarUrl,
-                createdAt = DateTime.SpecifyKind(item.CreatedAt, DateTimeKind.Utc),
-                openUrl = $"/notifications?handler=Open&id={item.Id}"
+                createdAt = DateTime.SpecifyKind(item.CreatedAt, DateTimeKind.Utc)
             };
         }).ToArray();
 

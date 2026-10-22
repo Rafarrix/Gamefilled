@@ -103,6 +103,11 @@
                                     <span class="notification-indicator" hidden></span>
                                 </button>
 
+                                @* Anti-forgery token shared by notification POST forms created in JS. *@
+                                <form id="gf-notification-open-token" method="post" hidden>
+                                    @Html.AntiForgeryToken()
+                                </form>
+
                                 <div class="gf-notification-menu" id="notification-menu" role="dialog" aria-label="Notification preview" hidden>
                                     <div class="gf-notification-menu__header">
                                         <div>

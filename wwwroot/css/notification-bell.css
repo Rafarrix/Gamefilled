@@ -130,7 +130,16 @@
     scrollbar-color: rgba(74, 222, 128, .42) transparent;
 }
 
+.gf-notification-form {
+    margin: 0;
+}
+
 .gf-notification-preview {
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
     min-height: 68px;
     padding: 9px 10px;
     display: grid;
