@@ -9,8 +9,8 @@ ASP.NET Core Identity domain, not another website.
 - `Identity/GamefilledAccount.cs` contains one `IdentityUser<Guid>`
   (email, profile, avatar, bio and visibility).
 - `Identity/GamefilledDomain.cs` contains the account-owned game entries,
-  featured favorites, follow graph, activity and notification entities,
-  all with GUID user ownership, not the old integer session user ID.
+  featured favorites, follow graph, activity, notifications and **blocking**
+  entities, all with GUID user ownership, not the old integer session user ID.
 - `Data/GamefilledV2DbContext.cs` is one
   `IdentityDbContext<GamefilledAccount, IdentityRole<Guid>, Guid>`.
   Normalized emails have a unique database index. Game/library status,
@@ -18,6 +18,14 @@ ASP.NET Core Identity domain, not another website.
   uniqueness, GUID foreign keys and ownership links.
 - `tests/Gamefilled.Tests/UnifiedIdentityDomainTests.cs` checks the
   canonical model's EF metadata, uniqueness and foreign key types.
+- `Application/Identity/GamefilledV2LibraryService.cs`,
+  `GamefilledV2NotificationService.cs` and `GamefilledV2SocialService.cs`
+  contain reusable claim-owned library, review, recipient-scoped notification,
+  follow/unfollow and block/unblock operations. Private profiles cannot be
+  followed without a future explicit consent mechanism.
+- `tests/Gamefilled.Tests/UnifiedIdentityOwnershipTests.cs` provides
+  isolated ownership, review persistence, block and redirect-safety tests.
+  These are NOT equivalent to SQL migration tests or browser acceptance.
 - `Data/GamefilledV2DbContextFactory.cs` allows *design-time* migration
   generation without defaulting to the real development DB.
 - The existing legacy EF baseline/migration bundle explicitly uses
