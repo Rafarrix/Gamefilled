@@ -102,8 +102,10 @@ public sealed class UnifiedIdentitySettingsSqlTests
         Assert.Equal(firstEmail,
             (await users.FindByIdAsync(accountId.ToString("D")))!.Email);
 
-        var link = new Uri(mail.Messages[0].Text.Split(' ').First(x =>
-            x.StartsWith("https://preview.gamefilled.pt:8444/")));
+        var linkText = System.Text.RegularExpressions.Regex.Match(
+            mail.Messages[0].Text, @"https://[^\s]+").Value;
+        Assert.False(string.IsNullOrWhiteSpace(linkText));
+        var link = new Uri(linkText);
         var query = QueryHelpers.ParseQuery(link.Query);
         var code = query["code"].ToString();
         var encodedEmail = query["email"].ToString();
