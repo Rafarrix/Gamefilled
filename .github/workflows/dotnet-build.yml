@@ -71,6 +71,7 @@ jobs:
           dotnet tool run dotnet-ef migrations has-pending-model-changes \
             --project Gamefilled.csproj \
             --startup-project Gamefilled.csproj \
+            --context AppDbContext \
             --configuration Release \
             --no-build 2>&1 | tee migration-check.log
 
