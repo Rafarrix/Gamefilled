@@ -15,6 +15,28 @@ public sealed class GamefilledIdentityLinkFactory(IConfiguration configuration)
     public string ResetPasswordUrl(Guid userId, string identityToken)
         => SecurityActionUrl("reset-password", userId, identityToken);
 
+    // New-address confirmation: Identity binds the token to BOTH user and
+    // target email. Encode the address, do not allow request Host as origin.
+    public string EmailChangeUrl(Guid userId, string newEmail, string identityToken)
+    {
+        var encoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(newEmail));
+        return SecurityActionUrl("confirm-email-change", userId, identityToken)
+            + "&email=" + Uri.EscapeDataString(encoded);
+    }
+
+    public static string? DecodeTargetEmail(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code) || code.Length > 512) return null;
+        try
+        {
+            return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
+
     private string SecurityActionUrl(string action, Guid userId, string identityToken)
     {
         var rawOrigin = configuration["Gamefilled:PublicOrigin"];
