@@ -24,7 +24,7 @@ public sealed class GamefilledIdentityForgotPasswordPageModel(
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         // Bound input is capped before any user lookup or email attempt.
-        if (Email.Length <= 254)
+        if (Email is { Length: <= 254 })
             await accounts.RequestPasswordResetAsync(Email, ct);
 
         RequestAccepted = true;
@@ -49,7 +49,7 @@ public sealed class GamefilledIdentityResendConfirmationPageModel(
 
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
-        if (Email.Length <= 254)
+        if (Email is { Length: <= 254 })
             await accounts.ResendConfirmationAsync(Email, ct);
 
         RequestAccepted = true;
