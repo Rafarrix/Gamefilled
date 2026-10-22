@@ -1,6 +1,6 @@
 # Gamefilled V2 Roadmap
 
-## Roadmap ativo — atualizado em 22/10/2026 (preview repetível preparada)
+## Roadmap ativo — atualizado em 22/10/2026 (correção de direção após avaliação visual)
 
 **V1 é exclusivamente a apresentação PAP; V2 inclui TODO o trabalho pós-PAP.**
 O produto final será uma só aplicação V2. A árvore `v2-modernization/`
@@ -19,12 +19,17 @@ O produto final será uma só aplicação V2. A árvore `v2-modernization/`
 preparou uma preview **isolada na LAN**. O procedimento de atualização
 repetível está em [preview/README.md](../preview/README.md) e a checklist
 visual em [preview/ACCEPTANCE.md](../preview/ACCEPTANCE.md).
-**A preview ainda não está instalada na VM**: requer verificação de recursos,
-backup e configuração local segura. Queremos mantê-la disponível para
-avaliação ao longo do desenvolvimento; a meta continua a ser **uma única
-V2 definitiva** depois de todos os gates.
+**A preview técnica foi colocada em funcionamento na VM de laboratório em 22/10/2026**
+(com health/ready e HTTPS validados), mas revelou uma falha de produto fundamental:
+compila apenas `v2-modernization/Gamefilled.V2` em vez da aplicação principal
+`Gamefilled.csproj`, e **não apresenta a interface ou funcionalidades completas
+do atual Gamefilled V2**. Não deve ser apresentada nem aceite como preview
+fiel do produto. Classificá-la como *laboratório do backend Identity* até
+integrarmos o backend modernizado no site principal. Ver
+[contrato de integração e paridade](V2_PRODUCT_INTEGRATION.md).
 
-**Ordem de execução:** biblioteca → comunidade → Steam → recomendações →
+**Ordem de execução corrigida:** integração real Identity + interface existente →
+biblioteca e reviews no mesmo produto → comunidade → Steam → recomendações →
 teste integral → moderação e lançamento. Segurança contínua; frontend
 polido gradualmente **sem abandonar o design atual**. As checklists
 originais abaixo são um registo histórico de um plano anterior, não a
