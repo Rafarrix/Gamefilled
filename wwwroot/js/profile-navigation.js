@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const menu = document.getElementById('notification-menu');
     const menuList = document.getElementById('notification-menu-list');
     const menuSummary = document.getElementById('notification-menu-summary');
+    const notificationCsrf = document.querySelector('#gf-notification-open-token input[name="__RequestVerificationToken"]')?.value;
 
     const relativeTime = value => {
         const date = new Date(value);
@@ -80,10 +81,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         menuList.replaceChildren();
 
+        if (!notificationCsrf) {
+            renderState('Notification actions unavailable', 'Open your inbox to view updates.');
+            return;
+        }
+
         items.forEach(item => {
-            const link = document.createElement('a');
+            // Opening a notification marks it as read. Use POST with CSRF,
+            // not a GET that can be triggered by link preview/prefetch.
+            const id = Number(item.id);
+            if (!Number.isSafeInteger(id) || id <= 0) return;
+
+            const form = document.createElement('form');
+            form.className = 'gf-notification-form';
+            form.method = 'post';
+            form.action = '/notifications?handler=Open';
+
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'id';
+            idInput.value = String(id);
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '__RequestVerificationToken';
+            csrfInput.value = notificationCsrf;
+
+            const link = document.createElement('button');
+            link.type = 'submit';
             link.className = `gf-notification-preview${item.isRead ? '' : ' is-unread'}`;
-            link.href = item.openUrl || '/notifications';
 
             const avatarWrap = document.createElement('span');
             avatarWrap.className = 'gf-notification-preview__avatar';
@@ -121,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 link.appendChild(arrow);
             }
 
-            menuList.appendChild(link);
+            form.append(idInput, csrfInput, link);
+            menuList.appendChild(form);
         });
     };
 
