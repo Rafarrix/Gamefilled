@@ -64,3 +64,13 @@ public sealed class GamefilledNotification
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? ReadAtUtc { get; set; }
 }
+
+public sealed class GamefilledBlock
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid BlockerId { get; set; }
+    public GamefilledAccount Blocker { get; set; } = null!;
+    public Guid BlockedId { get; set; }
+    public GamefilledAccount Blocked { get; set; } = null!;
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+}
