@@ -59,6 +59,43 @@ public sealed class UnifiedIdentityOwnershipTests
     }
 
     [Fact]
+    public async Task V2_follows_respect_private_profiles_and_mutual_blocks()
+    {
+        await using var database = CreateDatabase();
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var c = Guid.NewGuid();
+
+        database.Users.AddRange(
+            new GamefilledAccount { Id = a, UserName = "alpha" },
+            new GamefilledAccount { Id = b, UserName = "beta" },
+            new GamefilledAccount { Id = c, UserName = "private", IsProfilePrivate = true });
+        await database.SaveChangesAsync();
+
+        var social = new GamefilledV2SocialService(database);
+        Assert.False(await social.FollowAsync(Viewer(a), a));
+        Assert.False(await social.FollowAsync(Viewer(a), c));
+        Assert.True(await social.FollowAsync(Viewer(a), b));
+        Assert.False(await social.FollowAsync(Viewer(a), b)); // idempotent
+        Assert.True(await social.FollowAsync(Viewer(b), a));
+        Assert.Equal(2, await database.Follows.CountAsync());
+
+        // Blocking either direction removes the connection in both directions.
+        Assert.True(await social.BlockAsync(Viewer(b), a));
+        Assert.Empty(await database.Follows.ToListAsync());
+        Assert.False(await social.FollowAsync(Viewer(a), b));
+        Assert.False(await social.FollowAsync(Viewer(b), a));
+        Assert.False(await social.BlockAsync(Viewer(b), a));
+        Assert.True(await social.UnblockAsync(Viewer(b), a));
+        Assert.True(await social.FollowAsync(Viewer(a), b));
+        Assert.False(await social.UnfollowAsync(Viewer(b), a));
+        Assert.True(await social.UnfollowAsync(Viewer(a), b));
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            social.FollowAsync(new ClaimsPrincipal(), b));
+    }
+
+    [Fact]
     public async Task V2_notifications_reject_other_users_and_external_redirects()
     {
         await using var database = CreateDatabase();
