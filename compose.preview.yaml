@@ -52,8 +52,8 @@ services:
       Preview__Revision: "${PREVIEW_REVISION:-local}"
       ReverseProxy__TrustedNetwork: "172.28.81.2/32"
       DataProtection__KeysDirectory: "/app/keys"
-      IGDB__ClientId: "${PREVIEW_IGDB_CLIENT_ID:?Set PREVIEW_IGDB_CLIENT_ID}"
-      IGDB__ClientSecret: "${PREVIEW_IGDB_CLIENT_SECRET:?Set PREVIEW_IGDB_CLIENT_SECRET}"
+      IGDB__ClientId: "${PREVIEW_IGDB_CLIENT_ID:-}"
+      IGDB__ClientSecret: "${PREVIEW_IGDB_CLIENT_SECRET:-}"
     depends_on:
       - sql
     volumes:
