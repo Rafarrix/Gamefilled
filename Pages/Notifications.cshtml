@@ -59,8 +59,10 @@
                         ? "/lib/imgs/defaultavatar.png"
                         : item.ActorAvatarUrl;
 
-                    <a class="gf-notification-card @(!item.IsRead ? "is-unread" : string.Empty)"
-                       href="/notifications?handler=Open&id=@item.Id">
+                    <form method="post" asp-page-handler="Open" class="gf-notification-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="gf-notification-card @(!item.IsRead ? "is-unread" : string.Empty)">
                         <span class="gf-notification-card__avatar">
                             <img src="@avatar" alt="@item.ActorName avatar" loading="lazy" />
                             <i class="@item.Icon" aria-hidden="true"></i>
@@ -78,7 +80,8 @@
                         }
 
                         <i class="fas fa-arrow-right gf-notification-card__arrow" aria-hidden="true"></i>
-                    </a>
+                        </button>
+                    </form>
                 }
             </section>
 
