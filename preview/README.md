@@ -1,8 +1,14 @@
-# Gamefilled V2 — preview privada permanente no homelab
+# Gamefilled V2 — laboratório privado do backend (temporário)
 
-Objetivo: ter uma V2 modernizada **visitável em HTTPS na LAN** e atualizá-la
-quando um conjunto de mudanças estiver pronto. Não substitui a aplicação
-atual nem utiliza a base de dados de produção.
+**Aviso de produto (22/10/2026):** este ambiente está operacional, mas NÃO é
+a preview fiel do Gamefilled V2. Executa somente a aplicação parcial
+`v2-modernization/Gamefilled.V2`, com UI técnica reduzida; não contém a
+homepage, navegação, descoberta, detalhes, perfis e demais interface do
+`Gamefilled.csproj`. Serve apenas para validar backend Identity isolado,
+contas, biblioteca parcial e HTTPS. Não substituir o site atual, não fazer
+cutover, e não representar esta interface como o produto final. A prioridade
+passa a ser [integrar as alterações no Gamefilled real](../docs/V2_PRODUCT_INTEGRATION.md),
+sem regressões de interface. O deploy é manual e não usa a BD de produção.
 
 ## Ambiente isolado
 

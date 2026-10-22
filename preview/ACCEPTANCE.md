@@ -1,4 +1,11 @@
-# Gamefilled V2 — private browser preview acceptance
+# Gamefilled V2 — temporary backend-lab acceptance (NOT product UI acceptance)
+
+**Important (2026-10-22):** This runs a separate partial Razor Pages app and does NOT
+contain the complete Gamefilled UI. A passing checklist here does **not**
+mean V2 feature parity or acceptance for a real product preview; compare
+against `Gamefilled.csproj` with the mandatory requirements in
+`docs/V2_PRODUCT_INTEGRATION.md`. Do not approve launch or production
+cutover using only this worksheet.
 
 This is a **test-session worksheet**. Run only after the isolated preview
 is up and both `/health/live` and `/health/ready` report success. Use
