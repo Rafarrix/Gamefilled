@@ -41,6 +41,8 @@ services:
       context: .
       dockerfile: preview/Dockerfile
       target: web
+      args:
+        GAMEFILLED_PREVIEW_REVISION: "${PREVIEW_REVISION:-local}"
     environment:
       ASPNETCORE_ENVIRONMENT: Preview
       ConnectionStrings__V2ModernDatabase: "Server=sql,1433;Database=GamefilledV2Preview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"

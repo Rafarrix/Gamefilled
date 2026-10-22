@@ -22,9 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check preview shell scripts
+        run: bash -n preview/preflight.sh preview/previewctl.sh preview/smoke.sh
       - name: Ensure preview can be configured without actual secrets
         run: |
-          docker compose --project-name gamefilled-v2-preview-ci \
+          PREVIEW_LAN_IP=192.168.1.100 docker compose --project-name gamefilled-v2-preview-ci \
             --env-file preview/.env.preview.example \
             -f compose.preview.yaml config --quiet
       - name: Validate preview TLS/Caddy configuration

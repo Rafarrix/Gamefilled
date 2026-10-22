@@ -8,13 +8,20 @@ synthetic accounts and game data; do not import the running V2 database.
 
 - [ ] From a LAN browser, `https://preview.gamefilled.pt:8444` uses the
       preview Caddy certificate and no public WAN port forwarding.
+- [ ] The preview homepage shows the Git commit deployed, matching
+      `bash preview/previewctl.sh status`.
+- [ ] `bash preview/previewctl.sh smoke` verifies trusted TLS, landing page,
+      both health routes, game search and anonymous profile access denial.
 - [ ] Cookies use `Secure`, `HttpOnly` and `SameSite=Lax`.
 - [ ] Browser checks: desktop, mobile width and keyboard tab navigation.
 - [ ] No application SQL port or Kestrel backend port is exposed on LAN.
 - [ ] `/health/ready` returns non-200 if preview SQL is unavailable.
 - [ ] Authentication and confirmation still work after a **preview-only**
       web container restart (persistent Data Protection keys).
-- [ ] The current `dev.gamefilled.pt` behaves exactly as before.
+- [ ] The currently running Gamefilled site (e.g. `gamefilled.home.arpa`
+      or its existing private alias) behaves exactly as before.
+- [ ] The preview SQL volume and container names are distinct from those
+      of the current `Gamefilleddb`.
 
 ## 2. Accounts and session flows
 
@@ -52,9 +59,20 @@ synthetic accounts and game data; do not import the running V2 database.
       or edit the first account's game, even using crafted requests.
 - [ ] Anonymous POST and POST without CSRF fail closed.
 
-## 5. Not yet part of this preview's acceptance
+## 5. Private profile (PR #40)
 
-Friend/follow graph, notifications, community feed, Steam account linking,
+- [ ] The authenticated viewer opens `/profile` and sees their own username,
+      display name, join month, and real library counts.
+- [ ] Editing a display name updates only the viewer's account and safely
+      displays special characters as text; no raw HTML executes.
+- [ ] A second account has independent counters and display name.
+- [ ] Anonymous visitors cannot open the private profile and a POST without
+      a CSRF token is rejected.
+
+## 6. Not yet part of this preview's acceptance
+
+Public profiles, friend/follow graph, notifications, community feed,
+Steam account linking,
 personalized FY homepage, moderation, GDPR export, final UI parity and
 WAN/public launch. They remain tracked as separate roadmap items.
 
