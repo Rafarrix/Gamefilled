@@ -1,0 +1,85 @@
+@page "/profile"
+@using Gamefilled.V2.Library
+@model Gamefilled.V2.Pages.Profile.IndexModel
+@{
+    Layout = null;
+    ViewData["Title"] = "My profile · Gamefilled";
+    var statuses = new (string Key, string Label)[]
+    {
+        (GameLibraryStatus.Played, "Played"),
+        (GameLibraryStatus.Playing, "Playing"),
+        (GameLibraryStatus.Backlog, "Backlog"),
+        (GameLibraryStatus.Wishlist, "Wishlist")
+    };
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/library-v2.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/library-personal.css" asp-append-version="true" />
+</head>
+<body>
+<div class="gf-library-page">
+    <section class="gf-library-hero">
+        <div class="gf-library-shell gf-library-hero__inner is-own">
+            <div class="gf-library-title">
+                <span class="gf-eyebrow">Your private Gamefilled space</span>
+                <h1>@(string.IsNullOrWhiteSpace(Model.DisplayName) ? Model.Username : Model.DisplayName)</h1>
+                <p>@@@Model.Username · Member since @Model.MemberSinceUtc.ToString("MMMM yyyy")</p>
+                <p>This profile is visible only to you in the preview. Public visibility and social features are not enabled yet.</p>
+            </div>
+            <div class="gf-library-total">
+                <strong>@Model.TotalGames</strong>
+                <span>saved games</span>
+            </div>
+        </div>
+    </section>
+    <main class="gf-library-shell gf-library-main">
+        <nav class="gf-library-toolbar" aria-label="Profile navigation">
+            <a class="gf-btn gf-btn--secondary" href="/library/all">My library</a>
+            <a class="gf-btn gf-btn--secondary" href="/games/search">Find games</a>
+            <a class="gf-btn gf-btn--secondary" href="/">Home</a>
+        </nav>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Feedback))
+        {
+            <p role="status" class="gf-library-feedback">@Model.Feedback</p>
+        }
+
+        <section aria-label="Library overview">
+            <h2>My collection</h2>
+            <div class="gf-library-grid">
+                @foreach (var status in statuses)
+                {
+                    <article class="gf-library-card">
+                        <div class="gf-library-card__body">
+                            <h3>@status.Label</h3>
+                            <p>@Model.StatusCounts.GetValueOrDefault(status.Key) games</p>
+                            <a href="/library/@status.Key">View @status.Label.ToLowerInvariant()</a>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section aria-label="Edit my profile" class="gf-library-card">
+            <div class="gf-library-card__body">
+                <h2>Profile settings</h2>
+                <p>Your username is fixed for now. Your display name can be changed privately.</p>
+                <form method="post">
+                    <div asp-validation-summary="All" role="alert"></div>
+                    <label asp-for="DisplayName">Display name (optional, up to 100 characters)</label>
+                    <input asp-for="DisplayName" maxlength="100" autocomplete="nickname" />
+                    <button type="submit" class="gf-btn gf-btn--secondary">Save profile</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
