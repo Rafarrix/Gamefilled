@@ -1,0 +1,85 @@
+name: Unified V2 Identity SQL Integration
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'Data/GamefilledV2DbContext.cs'
+      - 'Data/GamefilledV2DbContextFactory.cs'
+      - 'Data/V2Migrations/**'
+      - 'Identity/**'
+      - 'Application/Identity/**'
+      - 'tests/Gamefilled.Tests/UnifiedIdentitySqlTests.cs'
+      - '.github/workflows/v2-unified-sql.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sql-integration:
+    name: Apply unified V2 schema to disposable SQL Server
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Express
+          MSSQL_SA_PASSWORD: "TestOnly_Sql_2026_ChangeMe!"
+        ports:
+          - 14336:1433
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ASPNETCORE_ENVIRONMENT: Testing
+      GAMEFILLED_V2_SQL_INTEGRATION: "1"
+      GAMEFILLED_V2_DESIGN_CONNECTION: "Server=127.0.0.1,14336;Database=GamefilledV2IntegratedCI;User Id=sa;Password=TestOnly_Sql_2026_ChangeMe!;Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore and build original Gamefilled + tests
+        run: |
+          dotnet tool restore
+          dotnet restore Gamefilled.sln
+          dotnet build Gamefilled.sln --configuration Release --no-restore
+      - name: Ensure committed EF Identity snapshot exactly matches model
+        run: |
+          dotnet tool run dotnet-ef migrations has-pending-model-changes \
+            --context GamefilledV2DbContext \
+            --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+            --configuration Release --no-build
+      - name: Apply migration ONLY to disposable GamefilledV2IntegratedCI database
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 15); do
+            if dotnet tool run dotnet-ef database update \
+              --context GamefilledV2DbContext \
+              --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+              --configuration Release --no-build >v2-schema-sql.log 2>&1; then
+              echo 'PASS: Unified V2 schema applied on disposable GitHub SQL Server.'
+              break
+            fi
+            if [[ "$attempt" -eq 15 ]]; then
+              echo 'FAIL: Unified SQL migration was not successful.'
+              tail -n 70 v2-schema-sql.log | sed -E 's/Password=[^; ]+/Password=[REDACTED]/g'
+              exit 1
+            fi
+            sleep 4
+          done
+      - name: Reapply migration idempotently
+        run: |
+          dotnet tool run dotnet-ef database update \
+            --context GamefilledV2DbContext \
+            --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+            --configuration Release --no-build > /dev/null
+      - name: Verify actual SQL constraints and account isolation
+        run: |
+          dotnet test tests/Gamefilled.Tests/Gamefilled.Tests.csproj \
+            --configuration Release --no-build \
+            --filter FullyQualifiedName~UnifiedIdentitySqlTests

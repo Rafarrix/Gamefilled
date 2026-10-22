@@ -24,11 +24,24 @@ public sealed class GamefilledV2DbContextFactory : IDesignTimeDbContextFactory<G
         // Whitelist disposable, dedicated Identity database names. Explicitly
         // reject Gamefilleddb (dev), GamefilledFullPreview (legacy preview)
         // and ambiguous connection strings before any EF tooling can use them.
-        if (!parsed.InitialCatalog.StartsWith("GamefilledV2", StringComparison.OrdinalIgnoreCase)
-            && !parsed.InitialCatalog.Equals("GamefilledFullPreviewIdentity",
-                StringComparison.OrdinalIgnoreCase))
+        // The migration command must never be able to select an arbitrary
+        // database merely by prefixing its name with GamefilledV2.
+        var permittedDatabases = new[]
+        {
+            "GamefilledV2DesignOnly",
+            "GamefilledV2IntegratedCI",
+            "GamefilledV2Integrated"
+        };
+        var permittedServers = new[]
+        {
+            "127.0.0.1,1",    // deliberately unreachable while scaffolding
+            "127.0.0.1,14336", // disposable GitHub Actions SQL
+            "sql,1433"       // isolated Docker Compose SQL on docker-01
+        };
+        if (!permittedDatabases.Contains(parsed.InitialCatalog, StringComparer.OrdinalIgnoreCase)
+            || !permittedServers.Contains(parsed.DataSource, StringComparer.OrdinalIgnoreCase))
             throw new InvalidOperationException(
-                "V2 Identity design-time operations require an isolated V2 database.");
+                "Refusing V2 Identity migration: SQL server/database is not an isolated staging target.");
 
         return new GamefilledV2DbContext(
             new DbContextOptionsBuilder<GamefilledV2DbContext>()
