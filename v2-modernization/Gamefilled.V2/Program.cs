@@ -119,6 +119,21 @@ builder.Services.AddRateLimiter(options =>
                     QueueLimit = 0,
                     AutoReplenishment = true
                 }));
+    // Profile edits are isolated by authenticated Identity user and bounded.
+    options.AddPolicy("profile-write", context =>
+        !HttpMethods.IsPost(context.Request.Method)
+            ? RateLimitPartition.GetNoLimiter("profile-read")
+            : RateLimitPartition.GetFixedWindowLimiter(
+                context.User.Identity?.IsAuthenticated == true
+                    ? "profile:" + (context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown")
+                    : "profile-anon:" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 12,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                }));
     // Anonymous public search has a bounded per-client budget.
     options.AddPolicy("catalog-search", context =>
         RateLimitPartition.GetFixedWindowLimiter(
