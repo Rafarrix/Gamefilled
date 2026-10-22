@@ -1,174 +1,59 @@
-# Gamefilled V2 — laboratório privado do backend (temporário)
+# Gamefilled V2 — preview do SITE COMPLETO
 
-**Aviso de produto (22/10/2026):** este ambiente está operacional, mas NÃO é
-a preview fiel do Gamefilled V2. Executa somente a aplicação parcial
-`v2-modernization/Gamefilled.V2`, com UI técnica reduzida; não contém a
-homepage, navegação, descoberta, detalhes, perfis e demais interface do
-`Gamefilled.csproj`. Serve apenas para validar backend Identity isolado,
-contas, biblioteca parcial e HTTPS. Não substituir o site atual, não fazer
-cutover, e não representar esta interface como o produto final. A prioridade
-passa a ser [integrar as alterações no Gamefilled real](../docs/V2_PRODUCT_INTEGRATION.md),
-sem regressões de interface. O deploy é manual e não usa a BD de produção.
+**Atualização 22/10/2026:** esta stack foi alterada para publicar o projeto principal
+`Gamefilled.csproj` no host privado `https://preview.gamefilled.pt:8444`, e não
+o micro-site técnico de `v2-modernization/Gamefilled.V2`.
 
-## Ambiente isolado
+## O que está incluído
 
-- Compose project: **gamefilled-v2-preview**, nunca o projeto atual.
-- SQL Server Express e volume separados: **GamefilledV2Preview** (não Gamefilleddb).
-- ASP.NET Core Identity + Caddy, certificados TLS internos.
-- URL de browser: **https://preview.gamefilled.pt:8444** (apenas LAN).
-- O início da página mostra o commit da imagem em execução.
-- O primeiro ambiente é **técnico**: autenticação, pesquisa, detalhe de jogos,
-  biblioteca, reviews e perfil privado. A homepage e a comunidade da V2 ainda
-  não têm paridade com o site existente.
+- A homepage REAL do Gamefilled: capa de jogos, header, Trending, New and fresh, cartões, imagens e estilos originais.
+- Páginas e rotas existentes de jogos, pesquisa e filtros, empresas, pessoas, perfis, biblioteca, registo/login e definições.
+- Todas as alterações do projeto principal já integradas na `master`, incluindo as que ainda não foram publicadas no `dev.gamefilled.pt`.
+- A base de dados **GamefilledFullPreview**, criada na SQL **da preview**. A base **Gamefilleddb** do `web-01` não é tocada.
+- A base de dados `GamefilledV2Preview` dos anteriores testes do Identity permanece guardada noutro schema/database no mesmo volume SQL.
 
-Nenhum merge no GitHub inicia containers ou mexe no Proxmox. O deploy
-é manual e só a partir de um checkout independente.
+## O que ainda NÃO está incluído
 
-## Gate antes de iniciar — executar na VM Debian
+O código moderno de Identity, confirmação de email, reset de palavra-passe e
+nova biblioteca GUID continua em `v2-modernization/Gamefilled.V2`, mas ainda
+não foi integrado no Gamefilled principal. **Não afirmar que essa segurança
+está ativada no site completo.** A integração segura dos handlers, modelos
+de sessão e relacionamentos de BD será efetuada no projeto principal sem
+substituir as views e CSS originais. Ver `docs/V2_PRODUCT_INTEGRATION.md`.
 
-Nunca assumir o IP 192.168.1.21 ou 192.168.1.85 sem confirmar. Consultar:
+## Atualizar a docker-01
 
-~~~bash
-ip -4 -br addr
-free -h
-df -h
-docker compose ls
-ss -lnt | grep 8444 || true
-~~~
+Sem publicar DNS, abrir portas do router ou copiar segredos:
 
-Verificar capacidade disponível: pelo menos 5 GiB de RAM disponível antes
-do primeiro arranque; em atualizações com a SQL da própria preview já ativa,
-pelo menos 3 GiB adicionais disponíveis para reconstruir as imagens.
-Rever os recursos da VM se falhar a verificação. Exigir sempre
-10 GiB de espaço livre para a preview. O SQL tem limite de 3 GiB, mas o
-projeto total consome mais. Confirmar que 172.28.81.0/24 não colide com
-outras redes Docker ou VPN e que a porta 8444 está livre.
-
-**Antes de mexer no homelab:** backup externo e restauro testado dos dados
-importantes da aplicação atual; verificar que a aplicação existente continua
-saudável. Permitir TCP 8444 na firewall da VM/Proxmox **só à LAN real**.
-Rever o comportamento de Docker port publishing e testar que não é acessível
-da WAN. Sem port forwarding no router, UPnP, túnel ou DNS público.
-
-## Checkout exclusivo e segredos
-
-Na VM, como utilizador com permissões Docker:
-
-~~~bash
-sudo mkdir -p /opt/gamefilled-preview
-sudo chown "$USER":"$USER" /opt/gamefilled-preview
-git clone --branch master https://github.com/Rafarrix/Gamefilled.git /opt/gamefilled-preview/repo
-cd /opt/gamefilled-preview/repo
-cp preview/.env.preview.example preview/.env.preview
-mkdir -p preview/local/keys preview/local/secrets
-chmod 600 preview/.env.preview
-~~~
-
-Editar preview/.env.preview **localmente** e fornecer PREVIEW_LAN_IP
-correspondente à VM, uma password SQL de preview única e aleatória (20+
-caracteres) e as credenciais IGDB. O exemplo deixa o IP vazio de propósito.
-
-Colocar a chave Resend real e exclusiva para testes, autorizada a enviar
-para gamefilled.pt, em preview/local/secrets/resend_api_key. Não mostrar
-credenciais em chats, logs, screenshots ou comandos no histórico. São
-necessários emails reais para validar a confirmação da conta de teste.
-
-~~~bash
-sudo chown -R 1654:1654 preview/local/keys
-sudo chmod 700 preview/local/keys
-sudo chgrp 1654 preview/local/secrets
-sudo chmod 750 preview/local/secrets
-sudo chgrp 1654 preview/local/secrets/resend_api_key
-sudo chmod 640 preview/local/secrets/resend_api_key
-~~~
-
-## Primeiro arranque (manual, com confirmação)
-
-~~~bash
-cd /opt/gamefilled-preview/repo
-bash preview/previewctl.sh check
-bash preview/previewctl.sh deploy
-~~~
-
-O comando deploy pede para escrever **START PREVIEW**. Constrói a revisão
-aprovada da master; inicia apenas a SQL da preview, executa as migrations
-**em GamefilledV2Preview**, inicia o web/Caddy e verifica os principais
-endereços HTTPS com o certificado local. Não mexe na stack atual.
-
-## Abrir no Windows
-
-No Windows, iniciar o Bloco de Notas como administrador e editar
-C:\Windows\System32\drivers\etc\hosts, acrescentando uma linha:
-
-~~~text
-IP_REAL_DA_VM preview.gamefilled.pt
-~~~
-
-Substituir IP_REAL_DA_VM pelo IP real validado no Debian. Não apontar
-DNS público para a preview. Depois da primeira inicialização, exportar
-o **certificado público** da CA Caddy, nunca a chave privada:
-
-~~~bash
-docker compose --project-name gamefilled-v2-preview \
-  --env-file preview/.env.preview -f compose.preview.yaml \
-  exec -T caddy cat /data/caddy/pki/authorities/local/root.crt > preview-root.crt
-openssl x509 -in preview-root.crt -noout -fingerprint -sha256
-~~~
-
-Copiar preview-root.crt para o computador pessoal por um canal de
-confiança, validar que o fingerprint SHA-256 coincide e importar no
-armazenamento **Current User → Trusted Root Certification Authorities**.
-Confiar numa CA permite-lhe emitir certificados aceites pelo browser:
-instalar apenas a CA verificada da tua própria preview.
-
-Abrir **https://preview.gamefilled.pt:8444**. As contas e os dados
-de teste são separados dos existentes.
-
-## Testar e atualizar ocasionalmente
-
-~~~bash
-cd /opt/gamefilled-preview/repo
-bash preview/previewctl.sh status
-bash preview/previewctl.sh smoke
-~~~
-
-status mostra quais os serviços ativos e a revisão instalada, sem revelar
-segredos. smoke verifica TLS, a homepage, health live/ready, pesquisa e a
-necessidade de autenticação no perfil. Fazer também os testes funcionais
-em preview/ACCEPTANCE.md e comparar visualmente com a V2 atual.
-
-Quando uma funcionalidade tiver CI aprovada e merge na master, validar
-o plano para migrations e criar um **backup da base da própria preview**
-se for necessário preservar contas e reviews de teste. A atualização é:
-
-~~~bash
+```bash
 cd /opt/gamefilled-preview/repo
 git pull --ff-only origin master
 bash preview/previewctl.sh check
 bash preview/previewctl.sh deploy
 bash preview/previewctl.sh status
-~~~
+```
 
-Se SQL da preview estiver ativo, pede **UPDATE PREVIEW**. Apenas o
-projeto de preview é reconstruído e reiniciado. O commit visível no site
-distingue a versão anterior da nova. Um merge no GitHub **não atualiza
-automaticamente** o que está no browser.
+Quando a SQL existente estiver ativa, confirmar `UPDATE PREVIEW`.
+O deploy constrói a imagem **principal** do Gamefilled e o seu EF bundle,
+cria/aplica as migrations só à nova `GamefilledFullPreview` e, apenas
+após sucesso, troca o container web da preview. Mantém os volumes SQL e
+Caddy, incluindo o certificado já instalado no Windows. Nunca usar
+`docker compose down -v` nem apontar ligações para a SQL do web-01.
 
-## Parar, rollback e limites
+## Critérios de aceitação
 
-~~~bash
-bash preview/previewctl.sh stop
-~~~
+Os testes automáticos devem validar o HTTPS, as rotas e os ficheiros CSS/imagens
+originais e recusar uma homepage sem `gf-home-page`/`gf-home-hero`.
+Depois confirmar manualmente imagens, pesquisa IGDB, game details, login,
+registo, perfis, people, company, biblioteca e responsividade, lado a lado
+com o `dev.gamefilled.pt`. A nova BD nasce vazia: criar contas de teste
+descartáveis; não esperar ver as contas da BD de desenvolvimento.
 
-Para voltar a iniciar, usar deploy após as verificações. Não usar
-docker compose down -v. Se uma atualização falhar, recuperar a imagem
-anterior de um commit testado e, se necessário, restaurar apenas o backup
-da base da preview (não existe rollback automático de migrations). Não
-eliminar volumes da produção.
+**A preview completa só será considerada modernizada** quando o backend
+Identity estiver integrado no site principal e todos os fluxos de segurança
+e funcionalidades passarem os testes de regressão. Até lá é a cópia
+completa do frontend e backend atual da branch principal, para podermos
+avaliar mudanças visuais e de funcionalidades sem tocar no desenvolvimento.
 
-Limitações: a preview usa SQL sa apenas numa rede privada interna,
-Data Protection keys locais, e não está preparada para acesso público.
-Faltam paridade da homepage, comunidade, moderação, políticas de
-privacidade, testes de carga, cópias de segurança externas completas
-e credenciais de base de dados com privilégios reduzidos. A relevância
-de pesquisas/rankings IGDB continua sujeita a calibração humana.
+Riscos de memória: a VM tem ~6 GiB RAM; monitorizar a SQL e a compilação.
+Os ficheiros `.env.preview` e segredos locais nunca são publicados no Git.

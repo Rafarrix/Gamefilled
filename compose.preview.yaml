@@ -1,7 +1,8 @@
-# Completely independent and temporary V2-preview project.
+# Full original Gamefilled app in a private product preview; not the partial Identity lab.
 # Invoke ONLY with: docker compose --project-name gamefilled-v2-preview
 #    --env-file preview/.env.preview -f compose.preview.yaml ...
-# Never run 'down -v' against the existing /opt/gamefilled compose project.
+# GamefilledFullPreview and GamefilledV2Preview are distinct databases on the preview SQL volume.
+# NEVER point this stack at web-01 / Gamefilleddb. Never run down -v.
 services:
   sql:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -23,11 +24,13 @@ services:
     profiles: ["setup"]
     build:
       context: .
-      dockerfile: preview/Dockerfile
+      dockerfile: Dockerfile
       target: migrator
     environment:
       ASPNETCORE_ENVIRONMENT: PreviewMigration
-      ConnectionStrings__V2ModernDatabase: "Server=sql,1433;Database=GamefilledV2Preview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
+    command:
+      - "--connection"
+      - "Server=sql,1433;Database=GamefilledFullPreview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
     depends_on:
       - sql
     networks:
@@ -39,24 +42,22 @@ services:
   web:
     build:
       context: .
-      dockerfile: preview/Dockerfile
-      target: web
+      dockerfile: Dockerfile
+      target: runtime
       args:
         GAMEFILLED_PREVIEW_REVISION: "${PREVIEW_REVISION:-local}"
     environment:
       ASPNETCORE_ENVIRONMENT: Preview
-      ConnectionStrings__V2ModernDatabase: "Server=sql,1433;Database=GamefilledV2Preview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=10"
-      Gamefilled__PublicOrigin: "https://preview.gamefilled.pt:8444"
+      ConnectionStrings__DefaultConnection: "Server=sql,1433;Database=GamefilledFullPreview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
+      Preview__Revision: "${PREVIEW_REVISION:-local}"
       ReverseProxy__TrustedNetwork: "172.28.81.2/32"
       DataProtection__KeysDirectory: "/app/keys"
-      Resend__ApiKeyFile: "/run/secrets/resend_api_key"
       IGDB__ClientId: "${PREVIEW_IGDB_CLIENT_ID:-}"
       IGDB__ClientSecret: "${PREVIEW_IGDB_CLIENT_SECRET:-}"
     depends_on:
       - sql
     volumes:
       - ./preview/local/keys:/app/keys
-      - ./preview/local/secrets/resend_api_key:/run/secrets/resend_api_key:ro
     networks:
       - database
       - edge
