@@ -13,31 +13,50 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/css/design-system.css" asp-append-version="true" />
 </head>
-<body class="gf-preview">
-    <main class="gf-home-section" style="max-width:960px;margin:9vh auto;padding:24px">
-        <span class="gf-eyebrow">Private LAN preview · Testing only</span>
-        <h1>Gamefilled V2</h1>
-        <p><strong>Preview revision:</strong> <code>@(PreviewSettings["Preview:Revision"] ?? "local")</code></p>
-        <p>This is an isolated technical preview of our new backend.
-           The current Gamefilled website is unchanged. Game and account
-           data saved here is for testing only.</p>
-        <nav aria-label="Preview navigation"
-             style="display:flex;gap:14px;flex-wrap:wrap;margin-top:24px">
-            <a class="gf-btn gf-btn--secondary" href="/games/search">Find games</a>
-            <a class="gf-btn gf-btn--secondary" href="/library/all">My library</a>
-            <a class="gf-btn gf-btn--secondary" href="/profile">My profile</a>
-            <a class="gf-btn gf-btn--secondary" href="/account/register">Register</a>
-            <a class="gf-btn gf-btn--secondary" href="/account/login">Sign in</a>
-            <a class="gf-btn gf-btn--secondary" href="/account/logout">Sign out</a>
-        </nav>
-        <section style="margin-top:32px">
-            <h2>What to evaluate</h2>
-            <p>Register and verify an account, browse search and game details,
-               add games to your library, rate and review them, and test
-               logout/password recovery. The full community, Steam integration
-               and final visual polish are not yet available here.</p>
-            <p><a href="/health/ready">Check preview database readiness</a></p>
+<body class="gf-page gf-preview" style="margin:0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif">
+    <header class="gf-page-hero">
+        <div class="gf-page-hero__inner">
+            <span class="gf-eyebrow">Private LAN preview · Testing only</span>
+            <h1 class="gf-page-title">Gamefilled <span style="color:var(--gf-green-soft)">V2</span></h1>
+            <p class="gf-page-lead">
+                Try the next generation of Gamefilled in a private testing environment.
+                The current website is unchanged, and accounts and games saved here are for testing only.
+            </p>
+            <p class="gf-help" style="margin-top:18px">
+                Preview revision: <code>@(PreviewSettings["Preview:Revision"] ?? "local")</code>
+            </p>
+            <nav aria-label="Preview navigation" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+                <a class="gf-btn gf-btn--primary" href="/games/search">Find games</a>
+                <a class="gf-btn gf-btn--secondary" href="/library/all">My library</a>
+                <a class="gf-btn gf-btn--secondary" href="/profile">My profile</a>
+                <a class="gf-btn gf-btn--secondary" href="/account/register">Register</a>
+                <a class="gf-btn gf-btn--secondary" href="/account/login">Sign in</a>
+                <a class="gf-btn gf-btn--secondary" href="/account/logout">Sign out</a>
+            </nav>
+        </div>
+    </header>
+    <main class="gf-page-shell">
+        <section class="gf-panel" aria-labelledby="preview-evaluate-title">
+            <div class="gf-panel__header">
+                <div>
+                    <h2 id="preview-evaluate-title">What to evaluate</h2>
+                    <p>These features use the new Identity backend and isolated preview database.</p>
+                </div>
+            </div>
+            <div class="gf-panel__body">
+                <p style="margin-top:0;color:var(--gf-text-soft);line-height:1.7">
+                    Register and verify an account, browse game search and details,
+                    add games to your library, rate and review them, and test logout/password recovery.
+                </p>
+                <p style="margin-bottom:0;color:var(--gf-text-muted);line-height:1.7">
+                    The full community, Steam integration and final visual polish are not yet available.
+                    This preview is not the final Gamefilled design.
+                </p>
+            </div>
         </section>
+        <p style="margin-top:24px">
+            <a class="gf-btn gf-btn--secondary" href="/health/ready">Check preview database readiness</a>
+        </p>
     </main>
 </body>
 </html>
