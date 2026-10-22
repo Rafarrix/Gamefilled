@@ -2,6 +2,8 @@ using Gamefilled.Data;
 using Gamefilled.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Xunit;
 
 namespace Gamefilled.Tests;
@@ -64,7 +66,9 @@ public sealed class UnifiedIdentityDomainTests
     public void Library_and_social_constraints_reject_duplicate_or_invalid_relations()
     {
         using var db = CreateModel();
-        var entry = db.Model.FindEntityType(typeof(GamefilledGameEntry))!;
+        // Constraint SQL lives in EF's design-time model, not its optimized runtime model.
+        var designModel = db.GetService<IDesignTimeModel>().Model;
+        var entry = designModel.FindEntityType(typeof(GamefilledGameEntry))!;
         Assert.True(entry.GetIndexes().Any(i => i.IsUnique &&
             i.Properties.Select(p => p.Name).SequenceEqual(
                 [nameof(GamefilledGameEntry.UserId), nameof(GamefilledGameEntry.IgdbGameId)])));
@@ -73,14 +77,14 @@ public sealed class UnifiedIdentityDomainTests
         Assert.Contains(entry.GetCheckConstraints(), c =>
             c.Name == "CK_GF_GameEntries_Status");
 
-        var follow = db.Model.FindEntityType(typeof(GamefilledFollow))!;
+        var follow = designModel.FindEntityType(typeof(GamefilledFollow))!;
         Assert.Contains(follow.GetCheckConstraints(), c =>
             c.Name == "CK_GF_Follows_NoSelfFollow");
         Assert.True(follow.GetIndexes().Any(i => i.IsUnique &&
             i.Properties.Select(p => p.Name).SequenceEqual(
                 [nameof(GamefilledFollow.FollowerId), nameof(GamefilledFollow.FollowingId)])));
 
-        var favorites = db.Model.FindEntityType(typeof(GamefilledFavoriteGame))!;
+        var favorites = designModel.FindEntityType(typeof(GamefilledFavoriteGame))!;
         Assert.True(favorites.GetIndexes().Any(i => i.IsUnique &&
             i.Properties.Select(p => p.Name).SequenceEqual(
                 [nameof(GamefilledFavoriteGame.UserId), nameof(GamefilledFavoriteGame.SortOrder)])));
