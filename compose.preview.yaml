@@ -92,6 +92,8 @@ networks:
     ipam:
       config:
         - subnet: 172.28.81.0/24
+          # Reserve .2 for Caddy; keep dynamically assigned web IPs in a distinct pool.
+          ip_range: 172.28.81.128/25
 
 volumes:
   preview-sql:
