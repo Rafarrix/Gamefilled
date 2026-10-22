@@ -61,6 +61,25 @@ The current `GamefilledFullPreview` runtime still uses legacy sessions,
 and no GUID schema migration has been generated/applied or provisioned on
 `docker-01`. Do not claim new auth security is active in the browser yet.
 
+
+## Branded Razor form integration, staged safely
+
+- `Application/Identity/PageModels/GamefilledIdentityLoginPageModel.cs`
+  and `GamefilledIdentityRegisterPageModel.cs` preserve every input field
+  expected by `Pages/users/Login.cshtml` and `Pages/users/Register.cshtml`.
+- Email confirmation, resend, generic forgot-password and token-reset
+  handlers are prepared in `Application/Identity/PageModels/`, but **not
+  exposed as routes** until the complete coordinated cutover.
+- Strong password policy is checked before telling the user that a
+  registration was accepted, matching the official Identity validator.
+- Existing Gamefilled auth page artwork, background, markup and CSS are
+  unchanged. Contract tests assert this and fail if a generic UI replaces
+  the originals or if authentication middleware is enabled prematurely.
+- At cutover, update the `@model` references, registration pending/verified
+  messages, final password help text and recovery pages **without** changing
+  the visual theme. Keep login, library and profile handlers under one
+  verified Identity principal; **do not enable one route early**.
+
 ## Required next implementation gates
 
 1. Generate and code-review an `InitialUnifiedIdentity` EF migration
