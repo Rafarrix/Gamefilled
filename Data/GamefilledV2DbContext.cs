@@ -21,6 +21,7 @@ public sealed class GamefilledV2DbContext
     public DbSet<GamefilledFollow> Follows => Set<GamefilledFollow>();
     public DbSet<GamefilledActivity> Activities => Set<GamefilledActivity>();
     public DbSet<GamefilledNotification> Notifications => Set<GamefilledNotification>();
+    public DbSet<GamefilledBlock> Blocks => Set<GamefilledBlock>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -129,6 +130,22 @@ public sealed class GamefilledV2DbContext
                 .HasForeignKey(x => x.ActorUserId).OnDelete(DeleteBehavior.Restrict);
             entry.HasIndex(x => new { x.UserId, x.ReadAtUtc, x.CreatedAtUtc })
                 .IsDescending(false, false, true);
+        });
+
+        builder.Entity<GamefilledBlock>(entry =>
+        {
+            entry.ToTable("GamefilledBlocks", table =>
+                table.HasCheckConstraint("CK_GF_Blocks_NoSelfBlock",
+                    "[BlockerId] <> [BlockedId]"));
+            entry.HasKey(x => x.Id);
+            entry.Property(x => x.Id).ValueGeneratedNever();
+            entry.Property(x => x.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+            entry.HasOne(x => x.Blocker).WithMany()
+                .HasForeignKey(x => x.BlockerId).OnDelete(DeleteBehavior.Restrict);
+            entry.HasOne(x => x.Blocked).WithMany()
+                .HasForeignKey(x => x.BlockedId).OnDelete(DeleteBehavior.Restrict);
+            entry.HasIndex(x => new { x.BlockerId, x.BlockedId }).IsUnique();
+            entry.HasIndex(x => x.BlockedId);
         });
     }
 }
