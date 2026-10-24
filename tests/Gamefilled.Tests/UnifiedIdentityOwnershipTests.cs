@@ -51,6 +51,21 @@ public sealed class UnifiedIdentityOwnershipTests
         Assert.Equal(9, aGames[0].Rating);
         Assert.Equal("Excellent game", aGames[0].ReviewText);
 
+        // The original Gamefilled records status and review actions for
+        // profile timelines. Identity must preserve that active behavior.
+        var activities = await database.Activities
+            .Where(e => e.UserId == a && e.IgdbGameId == 11)
+            .OrderBy(e => e.CreatedAtUtc).ToListAsync();
+        Assert.Equal(3, activities.Count);
+        Assert.Equal(2, activities.Count(e => e.Type == "game_status_changed"));
+        Assert.Single(activities.Where(e => e.Type == "reviewed_game"));
+        Assert.Contains(activities, e =>
+            e.Type == "game_status_changed"
+            && e.MetaJson is not null && e.MetaJson.Contains("playing"));
+        Assert.Contains(activities, e =>
+            e.Type == "reviewed_game"
+            && e.MetaJson is not null && e.MetaJson.Contains("9"));
+
         Assert.Empty(await library.MyGamesAsync(Viewer(b)));
         Assert.False(await library.RemoveAsync(Viewer(b), 11));
         Assert.Single(await library.MyGamesAsync(Viewer(a)));
@@ -79,6 +94,14 @@ public sealed class UnifiedIdentityOwnershipTests
         Assert.False(await social.FollowAsync(Viewer(a), b)); // idempotent
         Assert.True(await social.FollowAsync(Viewer(b), a));
         Assert.Equal(2, await database.Follows.CountAsync());
+
+        Assert.Equal(2, await database.Activities.CountAsync(
+            e => e.Type == "followed_user"));
+        Assert.Equal(1, await database.Notifications.CountAsync(
+            n => n.UserId == b && n.ActorUserId == a && n.Type == "new_follower"));
+        Assert.Equal(1, await database.Notifications.CountAsync(
+            n => n.UserId == a && n.ActorUserId == b && n.Type == "mutual_connection"));
+        Assert.Equal(0, await database.Notifications.CountAsync(n => n.UserId == c));
 
         // Blocking either direction removes the connection in both directions.
         Assert.True(await social.BlockAsync(Viewer(b), a));
@@ -121,6 +144,10 @@ public sealed class UnifiedIdentityOwnershipTests
         var notifications = new GamefilledV2NotificationService(database);
         Assert.Equal(2, await notifications.UnreadCountAsync(Viewer(a)));
         Assert.Equal(0, await notifications.UnreadCountAsync(Viewer(b)));
+        var bell = await notifications.GetPreviewAsync(Viewer(a));
+        Assert.Equal(2, bell.UnreadCount);
+        Assert.Equal(2, bell.Items.Count);
+        Assert.All(bell.Items, n => Assert.Equal("A player", n.ActorName));
         Assert.Null(await notifications.MarkReadAsync(Viewer(b), first));
         Assert.Equal(2, await notifications.UnreadCountAsync(Viewer(a)));
 
@@ -128,6 +155,12 @@ public sealed class UnifiedIdentityOwnershipTests
         Assert.Equal(1, await notifications.UnreadCountAsync(Viewer(a)));
         Assert.Null(await notifications.MarkReadAsync(Viewer(a), external));
         Assert.Equal(0, await notifications.UnreadCountAsync(Viewer(a)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            notifications.MarkAllReadAsync(new ClaimsPrincipal()));
+        await notifications.MarkAllReadAsync(Viewer(b));
+        await notifications.MarkAllReadAsync(Viewer(a));
+        Assert.All((await notifications.GetPreviewAsync(Viewer(a))).Items,
+            n => Assert.True(n.IsRead));
 
         Assert.False(GamefilledV2NotificationService.IsSafeLocalPath("//evil.example"));
         Assert.False(GamefilledV2NotificationService.IsSafeLocalPath("/\\evil.example"));
