@@ -39,6 +39,26 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # One-shot setup container holding SQL admin credentials. It never runs
+  # as the web user and is excluded from normal Compose up/start commands.
+  db-provisioner:
+    profiles: ["setup"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: db-provisioner
+    environment:
+      GF_DB_ADMIN_CONNECTION: "Server=sql,1433;Database=master;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
+      GF_DB_APP_PASSWORD: "${PREVIEW_APP_SQL_PASSWORD:?Set PREVIEW_APP_SQL_PASSWORD}"
+      GF_DB_TARGET: "GamefilledFullPreview"
+    depends_on:
+      - sql
+    networks:
+      - database
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
   web:
     build:
       context: .
@@ -48,7 +68,7 @@ services:
         GAMEFILLED_PREVIEW_REVISION: "${PREVIEW_REVISION:-local}"
     environment:
       ASPNETCORE_ENVIRONMENT: Preview
-      ConnectionStrings__DefaultConnection: "Server=sql,1433;Database=GamefilledFullPreview;User Id=sa;Password=${PREVIEW_SQL_PASSWORD:?Set PREVIEW_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
+      ConnectionStrings__DefaultConnection: "Server=sql,1433;Database=GamefilledFullPreview;User Id=gf_preview_app;Password=${PREVIEW_APP_SQL_PASSWORD:?Set PREVIEW_APP_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
       Preview__Revision: "${PREVIEW_REVISION:-local}"
       ReverseProxy__TrustedNetwork: "172.28.81.2/32"
       DataProtection__KeysDirectory: "/app/keys"

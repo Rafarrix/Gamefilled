@@ -30,6 +30,21 @@ RUN mkdir -p /app/migrations && \
       --no-build \
       --output /app/migrations/efbundle
 
+# Privileged provisioner belongs to a separate one-shot image, never the web.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS db-provisioner-build
+WORKDIR /src
+COPY tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj ./tools/Gamefilled.DbProvisioner/
+RUN dotnet restore tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj
+COPY tools/Gamefilled.DbProvisioner/Program.cs ./tools/Gamefilled.DbProvisioner/
+RUN dotnet publish tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj \
+    -c Release -o /app/db-provisioner --no-restore /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS db-provisioner
+WORKDIR /app
+COPY --from=db-provisioner-build --chown=app:app /app/db-provisioner ./
+USER app
+ENTRYPOINT ["dotnet", "Gamefilled.DbProvisioner.dll"]
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrator
 WORKDIR /app
 

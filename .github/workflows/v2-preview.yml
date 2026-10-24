@@ -10,6 +10,9 @@ on:
     paths:
       - 'preview/**'
       - 'compose.preview.yaml'
+      - 'Dockerfile'
+      - 'tools/Gamefilled.DbProvisioner/**'
+      - 'Gamefilled.csproj'
       - 'v2-modernization/**'
       - '.dockerignore'
       - '.github/workflows/v2-preview.yml'
@@ -34,6 +37,11 @@ jobs:
           docker run --rm \
             -v "$PWD/preview/Caddyfile:/etc/caddy/Caddyfile:ro" \
             caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Build least-privileged SQL runtime account setup image
+        run: |
+          docker build --file Dockerfile --target db-provisioner \
+            --tag gamefilled-v2-db-provisioner:ci .
+
       - name: Build full original Gamefilled product preview
         run: |
           docker build --file Dockerfile --target runtime \

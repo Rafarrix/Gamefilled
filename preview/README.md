@@ -21,6 +21,51 @@ está ativada no site completo.** A integração segura dos handlers, modelos
 de sessão e relacionamentos de BD será efetuada no projeto principal sem
 substituir as views e CSS originais. Ver `docs/V2_PRODUCT_INTEGRATION.md`.
 
+## Separação de privilégios SQL (novo)
+
+Antes, o container ASP.NET Core autenticava-se diretamente como `sa`
+(SQL sysadmin). Isso permitia a uma eventual falha na aplicação ter
+privilégios completos no SQL Server. Agora o container `web` usa
+`gf_preview_app`, com **apenas db_datareader e db_datawriter na
+`GamefilledFullPreview`**, sem `db_owner`, `db_ddladmin` ou
+`sysadmin`. A conta administrativa continua a existir **somente** no
+serviço SQL e nas tarefas one-shot de migration/provisioning.
+
+### Migração manual obrigatória da configuração local
+
+Na `docker-01`, **antes de fazer git pull/deploy**, abre o ficheiro
+ignorado `/opt/gamefilled-preview/repo/preview/.env.preview` e acrescenta:
+
+```text
+PREVIEW_APP_SQL_PASSWORD=<UMA_PASSWORD_ALEATORIA_NOVA_DE_24_A_100_CARACTERES>
+```
+
+Para obter um valor forte **no próprio host**, gera-o localmente com
+`openssl rand -base64 48` (não partilhes o resultado, nem o coloques no
+GitHub ou nesta conversa). Mantém `PREVIEW_SQL_PASSWORD` anterior
+**inalterado**: é a credencial da SQL existente e não deve ser rodada
+sem processo próprio de rotação.
+
+Na atualização, a sequência passa a:
+1. Preflight exige os dois passwords **diferentes** e válidos.
+2. Build do site principal, migrator e provisioner.
+3. Aplica as migrations existentes só à `GamefilledFullPreview`
+   com credenciais administrativas de setup.
+4. Cria/revalida `gf_preview_app` e as permissões de leitura e escrita
+   **apenas** nessa base; verifica que não pode alterar schema, criar
+   tabelas ou executar operações como administrador.
+5. Só então substitui `web` e valida o HTTPS e as páginas originais.
+
+Se a preparação falhar, **não avança** para substituir o container web.
+A password do runtime não é mostrada nos logs. Em caso de erro,
+partilha **apenas a mensagem sem credenciais**, nunca `docker compose
+config` com passwords expostas.
+
+O projeto de configuração e CI usa a mesma conta e os mesmos limites,
+mas testa numa instância SQL descartável, não no homelab.
+**Não atualizar a web-01**. A migração futura do Identity terá a mesma
+separação: conta de setup para migrations e conta de aplicação mínima.
+
 ## Atualizar a docker-01
 
 Sem publicar DNS, abrir portas do router ou copiar segredos:
@@ -35,7 +80,7 @@ bash preview/previewctl.sh status
 
 Quando a SQL existente estiver ativa, confirmar `UPDATE PREVIEW`.
 O deploy constrói a imagem **principal** do Gamefilled e o seu EF bundle,
-cria/aplica as migrations só à nova `GamefilledFullPreview` e, apenas
+cria/aplica as migrations só à `GamefilledFullPreview` e, apenas
 após sucesso, troca o container web da preview. Mantém os volumes SQL e
 Caddy, incluindo o certificado já instalado no Windows. Nunca usar
 `docker compose down -v` nem apontar ligações para a SQL do web-01.

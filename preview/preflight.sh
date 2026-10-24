@@ -15,6 +15,7 @@ config_value() {
 }
 PREVIEW_LAN_IP="$(config_value PREVIEW_LAN_IP)"
 PREVIEW_SQL_PASSWORD="$(config_value PREVIEW_SQL_PASSWORD)"
+PREVIEW_APP_SQL_PASSWORD="$(config_value PREVIEW_APP_SQL_PASSWORD)"
 PREVIEW_IGDB_CLIENT_ID="$(config_value PREVIEW_IGDB_CLIENT_ID)"
 PREVIEW_IGDB_CLIENT_SECRET="$(config_value PREVIEW_IGDB_CLIENT_SECRET)"
 
@@ -23,6 +24,10 @@ PREVIEW_IGDB_CLIENT_SECRET="$(config_value PREVIEW_IGDB_CLIENT_SECRET)"
   fail "preview must bind to a private LAN address, never 0.0.0.0"
 [[ "${PREVIEW_SQL_PASSWORD:-}" != *REPLACE* && "${#PREVIEW_SQL_PASSWORD}" -ge 20 ]] ||
   fail "generate a random SQL preview password (20+ chars), not the example value"
+[[ "${PREVIEW_APP_SQL_PASSWORD:-}" != *REPLACE* && "${#PREVIEW_APP_SQL_PASSWORD}" -ge 24 && "${#PREVIEW_APP_SQL_PASSWORD}" -le 100 ]] ||
+  fail "generate a SEPARATE random app SQL password (24-100 chars), not the placeholder value"
+[[ "${PREVIEW_APP_SQL_PASSWORD}" != "${PREVIEW_SQL_PASSWORD}" ]] ||
+  fail "admin and application SQL passwords must differ"
 [[ -n "${PREVIEW_IGDB_CLIENT_ID:-}" && -n "${PREVIEW_IGDB_CLIENT_SECRET:-}" ]] ||
   fail "set IGDB credentials in the local ignored preview env file"
 [[ -f "$secret_file" && -s "$secret_file" ]] ||
