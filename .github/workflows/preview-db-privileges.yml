@@ -1,0 +1,88 @@
+name: Gamefilled Preview Database Privileges
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'compose.preview.yaml'
+      - 'Dockerfile'
+      - 'tools/Gamefilled.DbProvisioner/**'
+      - '.github/workflows/preview-db-privileges.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  least-privilege:
+    name: Test restricted Gamefilled SQL user
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Express
+          MSSQL_SA_PASSWORD: "CI_Admin_SQL_2026_DoNotReuse!"
+        ports:
+          - 14336:1433
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ASPNETCORE_ENVIRONMENT: Testing
+      ConnectionStrings__DefaultConnection: "Server=127.0.0.1,14336;Database=GamefilledPreviewPrivilegeCI;User Id=sa;Password=CI_Admin_SQL_2026_DoNotReuse!;Encrypt=True;TrustServerCertificate=True;Connect Timeout=15"
+      GF_DB_ADMIN_CONNECTION: "Server=127.0.0.1,14336;Database=master;User Id=sa;Password=CI_Admin_SQL_2026_DoNotReuse!;Encrypt=True;TrustServerCertificate=True;Connect Timeout=15"
+      GF_DB_APP_PASSWORD: "CI_Runtime_SQL_2026_RandomOnly!42"
+      GF_DB_TARGET: "GamefilledPreviewPrivilegeCI"
+      GF_PREVIEW_DB_CI: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore main EF schema and account provisioner
+        run: |
+          dotnet tool restore
+          dotnet restore Gamefilled.csproj
+          dotnet restore tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj
+          dotnet build Gamefilled.csproj -c Release --no-restore
+          dotnet build tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj -c Release --no-restore
+      - name: Create disposable Gamefilled database
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 15); do
+            if dotnet tool run dotnet-ef database update \
+              --project Gamefilled.csproj --startup-project Gamefilled.csproj \
+              --context AppDbContext --configuration Release --no-build \
+              > /tmp/preview-schema.log 2>&1; then
+              echo 'PASS isolated EF database migration'
+              exit 0
+            fi
+            if [ "$attempt" -eq 15 ]; then
+              echo 'SQL schema setup failed; see non-secret diagnostics.'
+              exit 1
+            fi
+            sleep 4
+          done
+      - name: Create restricted account and assert SQL privileges
+        run: |
+          dotnet run --no-build -c Release \
+            --project tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj
+      - name: Ensure repeat provisioning remains safe
+        run: |
+          dotnet run --no-build -c Release \
+            --project tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj
+      - name: Refuse non-preview databases
+        shell: bash
+        run: |
+          set -euo pipefail
+          if GF_DB_TARGET=Gamefilleddb dotnet run --no-build -c Release \
+              --project tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj \
+              > /dev/null 2>&1; then
+            echo 'SECURITY FAILURE: live database was accepted'
+            exit 1
+          fi
+          echo 'PASS: live database target rejected'
