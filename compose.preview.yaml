@@ -41,6 +41,26 @@ services:
 
   # One-shot setup container holding SQL admin credentials. It never runs
   # as the web user and is excluded from normal Compose up/start commands.
+  # One-shot, read-only readiness audit; deliberately not part of normal up.
+  migration-audit:
+    profiles: ["audit"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migration-audit
+    environment:
+      GF_AUDIT_CONNECTION: "Server=sql,1433;Database=GamefilledFullPreview;User Id=gf_preview_app;Password=${PREVIEW_APP_SQL_PASSWORD:?Set PREVIEW_APP_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True;Connect Timeout=30"
+    depends_on:
+      - sql
+    networks:
+      - database
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
   db-provisioner:
     profiles: ["setup"]
     build:
