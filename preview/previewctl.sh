@@ -101,6 +101,15 @@ deploy() {
   note "Preview started; checking HTTPS endpoints."
   bash preview/smoke.sh
 }
+audit() {
+  # No schema changes or account copies. This uses ONLY the non-admin SQL
+  # runtime login, inside the isolated database Docker network.
+  verify_host
+  note "Building the read-only migration audit tool (web stays untouched)."
+  dc --profile audit build migration-audit
+  note "Legacy-to-Identity readiness counts follow; no PII or hashes."
+  dc --profile audit run --rm --no-deps migration-audit
+}
 status() {
   ensure_checkout
   note "Local Git: $(git rev-parse --short=12 HEAD)"
@@ -119,9 +128,10 @@ case "${1:-}" in
   check) verify_host ;;
   deploy) deploy ;;
   status) status ;;
+  audit) audit ;;
   smoke) ensure_checkout; bash preview/smoke.sh ;;
   stop) stop_preview ;;
   *)
-    printf 'Usage: bash preview/previewctl.sh {check|deploy|status|smoke|stop}\n'
+    printf 'Usage: bash preview/previewctl.sh {check|deploy|status|smoke|audit|stop}\n'
     exit 2 ;;
 esac

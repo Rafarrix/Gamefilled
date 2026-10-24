@@ -85,6 +85,28 @@ após sucesso, troca o container web da preview. Mantém os volumes SQL e
 Caddy, incluindo o certificado já instalado no Windows. Nunca usar
 `docker compose down -v` nem apontar ligações para a SQL do web-01.
 
+## Auditoria de compatibilidade com ASP.NET Core Identity (sem alterações)
+
+A cópia real da base de dados **ainda não começou**. Antes disso,
+o novo comando permite medir incompatibilidades entre as contas e relações
+antigas e a nova estrutura GUID:
+
+```bash
+cd /opt/gamefilled-preview/repo
+bash preview/previewctl.sh audit
+```
+
+O comando compila e executa um container **só de leitura**, na rede SQL
+interna, com as credenciais limitadas de `gf_preview_app`. Imprime
+apenas números agregados: contas, biblioteca, favoritos, seguidores,
+histórico e notificações, e contagens dos campos que ainda não podem ser
+importados sem reconciliação. Não lista usernames, emails nem hashes
+de passwords. **Não muda o site nem a base de dados.**
+
+A lista de bloqueios e plano de migração sem perda de dados estão em
+`docs/V2_LEGACY_DATA_MIGRATION.md`. A autenticação atual permanece
+inalterada até a transição completa ser validada.
+
 ## Critérios de aceitação
 
 Os testes automáticos devem validar o HTTPS, as rotas e os ficheiros CSS/imagens

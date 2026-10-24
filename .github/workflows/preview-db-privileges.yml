@@ -7,6 +7,7 @@ on:
       - 'compose.preview.yaml'
       - 'Dockerfile'
       - 'tools/Gamefilled.DbProvisioner/**'
+      - 'tools/Gamefilled.MigrationAudit/**'
       - '.github/workflows/preview-db-privileges.yml'
 
 permissions:
@@ -47,8 +48,10 @@ jobs:
           dotnet tool restore
           dotnet restore Gamefilled.csproj
           dotnet restore tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj
+          dotnet restore tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj
           dotnet build Gamefilled.csproj -c Release --no-restore
           dotnet build tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj -c Release --no-restore
+          dotnet build tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj -c Release --no-restore
       - name: Create disposable Gamefilled database
         shell: bash
         run: |
@@ -75,6 +78,22 @@ jobs:
         run: |
           dotnet run --no-build -c Release \
             --project tools/Gamefilled.DbProvisioner/Gamefilled.DbProvisioner.csproj
+      - name: Read-only audit uses restricted SQL account
+        shell: bash
+        env:
+          GF_AUDIT_CONNECTION: "Server=127.0.0.1,14336;Database=GamefilledPreviewPrivilegeCI;User Id=gf_preview_app;Password=CI_Runtime_SQL_2026_RandomOnly!42;Encrypt=True;TrustServerCertificate=True;Connect Timeout=15"
+        run: |
+          set -euo pipefail
+          dotnet run --no-build -c Release --project tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj > /tmp/audit-output.log
+          cat /tmp/audit-output.log
+          grep -Fxq 'accounts=0' /tmp/audit-output.log
+          grep -Fq 'RESULT: No audit blockers detected' /tmp/audit-output.log
+          if GF_AUDIT_CONNECTION="Server=127.0.0.1,14336;Database=Gamefilleddb;User Id=gf_preview_app;Password=test;Encrypt=True" dotnet run --no-build -c Release --project tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj > /dev/null 2>&1; then
+            echo 'SECURITY FAILURE: audit allowed a development DB'
+            exit 1
+          fi
+          echo 'PASS: audit rejects development database'
+
       - name: Refuse non-preview databases
         shell: bash
         run: |
