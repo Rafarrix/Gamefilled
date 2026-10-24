@@ -45,6 +45,21 @@ COPY --from=db-provisioner-build --chown=app:app /app/db-provisioner ./
 USER app
 ENTRYPOINT ["dotnet", "Gamefilled.DbProvisioner.dll"]
 
+# Setup-only, read-only audit for mapping old Gamefilled data to Identity.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS migration-audit-build
+WORKDIR /src
+COPY tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj ./tools/Gamefilled.MigrationAudit/
+RUN dotnet restore tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj
+COPY tools/Gamefilled.MigrationAudit/Program.cs ./tools/Gamefilled.MigrationAudit/
+RUN dotnet publish tools/Gamefilled.MigrationAudit/Gamefilled.MigrationAudit.csproj \
+    -c Release -o /app/migration-audit --no-restore /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migration-audit
+WORKDIR /app
+COPY --from=migration-audit-build --chown=app:app /app/migration-audit ./
+USER app
+ENTRYPOINT ["dotnet", "Gamefilled.MigrationAudit.dll"]
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrator
 WORKDIR /app
 
