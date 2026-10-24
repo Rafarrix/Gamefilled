@@ -30,6 +30,31 @@ RUN mkdir -p /app/migrations && \
       --no-build \
       --output /app/migrations/efbundle
 
+# Clean Identity V2 schema bundle is separate from the legacy AppDbContext
+# migrator. It is for a NEW, isolated database and is never part of web startup.
+FROM build AS identity-migration-bundle
+ARG BUILD_CONFIGURATION=Release
+ENV ASPNETCORE_ENVIRONMENT=ContainerBuild \
+    GAMEFILLED_V2_DESIGN_CONNECTION="Server=127.0.0.1,1;Database=GamefilledV2DesignOnly;User Id=sa;Password=BuildOnly_123!;Encrypt=False;Connect Timeout=1"
+
+RUN dotnet tool restore
+RUN mkdir -p /app/identity-migrations && \
+    dotnet tool run dotnet-ef migrations bundle \
+      --project Gamefilled.csproj \
+      --startup-project Gamefilled.csproj \
+      --configuration ${BUILD_CONFIGURATION} \
+      --context GamefilledV2DbContext \
+      --no-build \
+      --output /app/identity-migrations/v2efbundle
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS identity-migrator
+WORKDIR /app
+COPY --from=identity-migration-bundle /app/identity-migrations/v2efbundle ./v2efbundle
+COPY appsettings.example.json ./appsettings.json
+RUN chmod 0555 /app/v2efbundle && chown -R app:app /app
+USER app
+ENTRYPOINT ["./v2efbundle", "--no-color"]
+
 # Privileged provisioner belongs to a separate one-shot image, never the web.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS db-provisioner-build
 WORKDIR /src

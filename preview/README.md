@@ -21,6 +21,36 @@ está ativada no site completo.** A integração segura dos handlers, modelos
 de sessão e relacionamentos de BD será efetuada no projeto principal sem
 substituir as views e CSS originais. Ver `docs/V2_PRODUCT_INTEGRATION.md`.
 
+## Inicializar uma base Identity vazia, sem migrar contas descartáveis
+
+Após aprovação do PR, a criação da base Identity unificada é **manual**,
+num passo independente do deploy do site:
+
+```bash
+cd /opt/gamefilled-preview/repo
+git pull --ff-only origin master
+bash preview/previewctl.sh check
+bash preview/previewctl.sh init-identity-db
+```
+
+Confirma com `CREATE V2 IDENTITY DATABASE` (exatamente). O comando
+cria/aplica as migrations EF para **`GamefilledV2Integrated`** dentro
+do SQL Server de `docker-01`, reutilizando a instância SQL isolada,
+sem importar a conta temporária ou quaisquer dados da base antiga.
+
+**Isto NÃO substitui o site nem ativa Identity.** O `web` continua a
+usar `GamefilledFullPreview`, com as contas descartáveis existentes.
+A base antiga e os volumes permanecem intactos para rollback. Não uses
+`docker compose down -v` nem elimines bases manualmente nesta fase.
+A conta `sa` é utilizada apenas pelo container temporário das migrations,
+nunca pelo site em execução. O `init-identity-db` é repetível (migrations
+idempotentes) e não cria contas.
+
+A ativação definitiva ficará dependente da matriz de funcionalidade em
+`docs/V2_ACTIVE_FEATURE_PARITY.md`, com login, reviews, biblioteca, favoritos,
+social, perfis e notificações testados no browser. É proibido permitir
+simultaneamente Identity e Session para autorizar utilizadores.
+
 ## Separação de privilégios SQL (novo)
 
 Antes, o container ASP.NET Core autenticava-se diretamente como `sa`
