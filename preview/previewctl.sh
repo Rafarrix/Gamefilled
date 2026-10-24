@@ -110,6 +110,26 @@ audit() {
   note "Legacy-to-Identity readiness counts follow; no PII or hashes."
   dc --profile audit run --rm --no-deps migration-audit
 }
+init_identity_db() {
+  verify_host
+  note "This initializes ONLY NEW GamefilledV2Integrated on the preview SQL container."
+  note "GamefilledFullPreview, GamefilledV2Preview and the running web are NOT modified."
+  note "Never use this command against development or production hosts."
+  note "Type exactly: CREATE V2 IDENTITY DATABASE"
+  local typed
+  IFS= read -r typed
+  [[ "$typed" == "CREATE V2 IDENTITY DATABASE" ]] ||
+    die "identity database initialization not confirmed; nothing changed"
+
+  note "Building dedicated Identity EF migration image."
+  dc --profile identity build identity-migrator
+  [[ -n "$(dc ps -q sql)" ]] ||
+    die "preview SQL container must already be running; no changes performed"
+  note "Applying Identity migrations ONLY to GamefilledV2Integrated."
+  dc --profile identity run --rm --no-deps identity-migrator ||
+    die "Identity SQL initialization failed; legacy website not replaced"
+  note "Unified Identity SQL schema ready on preview. Old site/login remains unchanged."
+}
 status() {
   ensure_checkout
   note "Local Git: $(git rev-parse --short=12 HEAD)"
@@ -129,9 +149,10 @@ case "${1:-}" in
   deploy) deploy ;;
   status) status ;;
   audit) audit ;;
+  init-identity-db) init_identity_db ;;
   smoke) ensure_checkout; bash preview/smoke.sh ;;
   stop) stop_preview ;;
   *)
-    printf 'Usage: bash preview/previewctl.sh {check|deploy|status|smoke|audit|stop}\n'
+    printf 'Usage: bash preview/previewctl.sh {check|deploy|status|smoke|audit|init-identity-db|stop}\n'
     exit 2 ;;
 esac
