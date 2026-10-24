@@ -32,11 +32,51 @@ public sealed class GamefilledV2SocialService(GamefilledV2DbContext database)
             x => x.FollowerId == actor && x.FollowingId == targetId, ct);
         if (exists) return false;
 
+        var now = DateTime.UtcNow;
+        var reverseFollowExists = await database.Follows.AsNoTracking()
+            .AnyAsync(x => x.FollowerId == targetId && x.FollowingId == actor, ct);
+        var notificationType = reverseFollowExists
+            ? "mutual_connection" : "new_follower";
+
+        // Preserve the existing site's follow activity and notification
+        // semantics as part of the SAME database transaction as the follow.
         database.Follows.Add(new GamefilledFollow
         {
             FollowerId = actor,
-            FollowingId = targetId
+            FollowingId = targetId,
+            CreatedAtUtc = now
         });
+        database.Activities.Add(new GamefilledActivity
+        {
+            UserId = actor,
+            TargetUserId = targetId,
+            Type = "followed_user",
+            CreatedAtUtc = now
+        });
+
+        var duplicateWindow = now.AddMinutes(-10);
+        var recentlyNotified = await database.Notifications.AsNoTracking().AnyAsync(
+            n => n.UserId == targetId && n.ActorUserId == actor
+                && n.Type == notificationType && n.CreatedAtUtc >= duplicateWindow, ct);
+
+        if (!recentlyNotified)
+        {
+            var actorName = await database.Users.AsNoTracking()
+                .Where(u => u.Id == actor)
+                .Select(u => u.UserName)
+                .SingleOrDefaultAsync(ct);
+            database.Notifications.Add(new GamefilledNotification
+            {
+                UserId = targetId,
+                ActorUserId = actor,
+                Type = notificationType,
+                TargetUrl = string.IsNullOrWhiteSpace(actorName)
+                    ? "/people"
+                    : "/u/" + Uri.EscapeDataString(actorName),
+                CreatedAtUtc = now
+            });
+        }
+
         await database.SaveChangesAsync(ct);
         return true;
     }
