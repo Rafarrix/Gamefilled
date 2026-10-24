@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Gamefilled.Data;
 using Gamefilled.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +48,16 @@ public sealed class GamefilledV2LibraryService(GamefilledV2DbContext database)
             row.Status = valid;
         }
 
-        row.UpdatedAtUtc = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        row.UpdatedAtUtc = now;
+        database.Activities.Add(new GamefilledActivity
+        {
+            UserId = owner,
+            Type = "game_status_changed",
+            IgdbGameId = gameId,
+            MetaJson = JsonSerializer.Serialize(new { status = valid }),
+            CreatedAtUtc = now
+        });
         await database.SaveChangesAsync(ct);
         return row;
     }
@@ -80,7 +90,16 @@ public sealed class GamefilledV2LibraryService(GamefilledV2DbContext database)
         row.Rating = rating;
         row.ReviewText = string.IsNullOrWhiteSpace(review) ? null : review;
         row.ContainsSpoilers = spoilers;
-        row.UpdatedAtUtc = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        row.UpdatedAtUtc = now;
+        database.Activities.Add(new GamefilledActivity
+        {
+            UserId = owner,
+            Type = row.ReviewText is null ? "rated_game" : "reviewed_game",
+            IgdbGameId = gameId,
+            MetaJson = JsonSerializer.Serialize(new { rating, containsSpoilers = spoilers }),
+            CreatedAtUtc = now
+        });
         await database.SaveChangesAsync(ct);
         return row;
     }
