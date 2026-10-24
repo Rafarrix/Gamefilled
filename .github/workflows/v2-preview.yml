@@ -48,6 +48,11 @@ jobs:
           docker build --file Dockerfile --target migration-audit \
             --tag gamefilled-v2-migration-audit:ci .
 
+      - name: Build isolated unified Identity EF migration image
+        run: |
+          docker build --file Dockerfile --target identity-migrator \
+            --tag gamefilled-v2-identity-migrator:ci .
+
       - name: Build full original Gamefilled product preview
         run: |
           docker build --file Dockerfile --target runtime \
