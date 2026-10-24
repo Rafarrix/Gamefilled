@@ -23,6 +23,11 @@ if (string.IsNullOrWhiteSpace(defaultConnection))
         "Configure it with user secrets, an ignored appsettings file, or an environment variable.");
 }
 
+// The preview web process MUST NEVER have SQL admin credentials, even when a
+// configuration override bypasses Docker Compose. Setup jobs use sa separately.
+if (builder.Environment.IsEnvironment("Preview"))
+    PreviewSqlSecurityPolicy.RequireLeastPrivilegeConnection(defaultConnection);
+
 // Persist preview-only session/cookie keys across container restarts.
 // The existing development environment is unaffected.
 if (builder.Environment.IsEnvironment("Preview"))
