@@ -16,6 +16,7 @@ on:
       - 'v2-modernization/**'
       - '.dockerignore'
       - '.github/workflows/v2-preview.yml'
+      - 'tools/Gamefilled.MigrationAudit/**'
 
 permissions:
   contents: read
@@ -41,6 +42,11 @@ jobs:
         run: |
           docker build --file Dockerfile --target db-provisioner \
             --tag gamefilled-v2-db-provisioner:ci .
+
+      - name: Build read-only account migration audit image
+        run: |
+          docker build --file Dockerfile --target migration-audit \
+            --tag gamefilled-v2-migration-audit:ci .
 
       - name: Build full original Gamefilled product preview
         run: |
