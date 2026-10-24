@@ -84,7 +84,7 @@ deploy() {
   export PREVIEW_REVISION
   PREVIEW_REVISION="$(git rev-parse --short=12 HEAD)"
   note "Building reviewed revision $PREVIEW_REVISION."
-  dc build web migrator
+  dc build web migrator db-provisioner
   dc up -d sql
   note "Applying main Gamefilled schema migrations ONLY to GamefilledFullPreview on preview SQL."
   local ok=0
@@ -94,6 +94,9 @@ deploy() {
     sleep 10
   done
   [[ "$ok" == 1 ]] || die "preview migration failed; web was not replaced"
+  note "Creating separate non-admin SQL runtime user on preview database."
+  dc --profile setup run --rm db-provisioner ||
+    die "SQL runtime provisioner failed; preview web image not replaced"
   dc up -d web caddy
   note "Preview started; checking HTTPS endpoints."
   bash preview/smoke.sh
